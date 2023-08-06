@@ -3,10 +3,10 @@ Qt6 based widget. Can construct a complex node-based graph (currently not very c
 
 # Dependencies
 
-Qt6: Core, Gui, Widgets
-VulkanSDK (somehow)
-googletest (for tests)
-Python 3 (for the googletest)
+1. Qt6: Core, Gui, Widgets
+2. VulkanSDK (somehow)
+3. googletest (for tests)
+4. Python 3 (for the googletest)
 
 # Building
 
