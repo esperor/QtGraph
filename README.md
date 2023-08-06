@@ -8,7 +8,7 @@ VulkanSDK (somehow)
 googletest (for tests)
 Python 3 (for the googletest)
 
-# Building:
+# Building
 
 1. Open root CMakeLists.txt and set Vulkan_INCLUDE_DIR for your VulkanSDK installation
 2. Open terminal in root folder, create build folder, cd inside it
