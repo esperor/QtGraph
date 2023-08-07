@@ -64,8 +64,50 @@ target_compile_options(QtGraph PRIVATE
     "/permissive-"
 )
 
+#
+# Gotta copy the QtGraph.dll to the tests folder
+#
+
+# target_compile_definitions(QtGraph PRIVATE
+#     "_CRT_SECURE_NO_WARNINGS"
+#     "GLFW_INCLUDE_NONE"
+
+#     PUBLIC
+#     $<$<CONFIG:Debug>:OE_DEBUG>
+#     $<$<CONFIG:Release>:OE_RELEASE>
+
+#     $<$<CONFIG:RelWithDebInfo>:OE_DEBUG>
+#     $<$<CONFIG:MinSizeRel>:OE_RELEASE>
+# )
+
+# set_property(TARGET QtGraph PROPERTY
+#     DLL_PATH 
+#     $<IF: 
+#         $<OR: $<CONFIG:Debug>, $<CONFIG:RelWithDebInfo> >, 
+#     ${CMAKE_SOURCE_DIR}/build/src/Debug, 
+#     ${CMAKE_SOURCE_DIR}/build/src/Debug>
+# )
+
+# add_custom_target(genexdebug POST_BUILD COMMAND ${CMAKE_COMMAND} -E echo "$<IF: 
+# $<OR: $<$<CONFIG:Debug>:1>, $<$<CONFIG:RelWithDebInfo>:1> >, 
+# ${CMAKE_SOURCE_DIR}/build/src/Debug, 
+# ${CMAKE_SOURCE_DIR}/build/src/Release>")
+
+# if (CMAKE_GENERATOR MATCHES "Visual Studio")
+#     if (OE_DEBUG)
+#         set(DLL_PATH ${CMAKE_SOURCE_DIR}/build/src/Debug)
+#     elseif(OE_RELEASE)
+#         set(DLL_PATH ${CMAKE_SOURCE_DIR}/build/src/Release)
+#     endif()
+# else()
+#     set(DLL_PATH ${CMAKE_SOURCE_DIR}/build/src)
+# endif()
+
+
 add_custom_command(
-        TARGET QtGraph POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-                ${CMAKE_SOURCE_DIR}/build/src/QtGraph.dll
-                ${CMAKE_SOURCE_DIR}/build/tests/QtGraph.dll)
+    TARGET QtGraph POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/build/src/QtGraph.dll
+            ${CMAKE_SOURCE_DIR}/build/tests/QtGraph.dll
+    DEPENDS tests
+)
