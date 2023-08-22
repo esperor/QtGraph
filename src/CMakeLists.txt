@@ -32,23 +32,70 @@ set(MOC_HEADERS
     ../include/QtGraph/TypeManagers/typemanager.h
 )
 
-# qt_wrap_cpp(SOURCES ${MOC_HEADERS})
+# add_custom_command(
+#     TARGET QtGraph POST_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E copy
+#             ${CMAKE_SOURCE_DIR}/build/src/QtGraph.dll
+#             ${CMAKE_SOURCE_DIR}/build/tests/QtGraph.dll
+#     DEPENDS QtGraph-
+# )
+
+# protoc pin.proto -I ../src/proto -I D:/github/google/googleapis --cpp_out=../src/proto/
+
+# qt_add_protobuf(DEPENDENCIES 
+#     GENERATE_PACKAGE_SUBFOLDERS
+#     PROTO_FILES
+#         ${PROTO_WELL_KNOWN}/google/type/color.proto
+#     OUTPUT_DIRECTORY
+#         ${CMAKE_SOURCE_DIR}/protos_generated
+# )
+
+# target_include_directories(DEPENDENCIES
+#     PRIVATE
+#     ${PROTOBUF_SRC}
+#     D:\\Github\\abseil-cpp\\Source\\abseil-cpp
+# )
+
+# qt_add_protobuf(QtGraphProtobuf
+#     PROTO_FILES
+# #        ${PROTO_WELL_KNOWN}/google/type/color.proto
+# #        proto/state.proto
+#         proto/pin.proto
+        
+#     PROTO_INCLUDES
+#         ${PROTO_WELL_KNOWN}
+#     OUTPUT_DIRECTORY
+#         ${CMAKE_SOURCE_DIR}/protos_generated
+#     OUTPUT_TARGETS PROTO_SRCS
+# )
+
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS proto/pin.proto)
+protobuf_generate_python(PROTO_PY proto/pin.proto)
 
 qt_add_library(QtGraph
-    SHARED
+    STATIC
     ${SOURCES}
+    ${PROTO_SRCS} ${PROTO_HDRS}
+#    ../protos_generated/pin.pb.cc
 )
 
+#set_property(TARGET QtGraph PROPERTY
+#    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 target_link_libraries(QtGraph
-    PRIVATE
+    PUBLIC
     Qt6::Core
     Qt6::Gui
     Qt6::Widgets
+    ${Protobuf_LIBRARIES}
+    protobuf::libprotobuf
 )
 
 target_include_directories(QtGraph PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/QtGraph
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_SOURCE_DIR}/include/QtGraph
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/src/proto
+    ${Protobuf_INCLUDE_DIRS}
 )
 
 target_include_directories(QtGraph INTERFACE
@@ -56,7 +103,10 @@ target_include_directories(QtGraph INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
-target_compile_definitions(QtGraph PRIVATE GRAPHLIB_LIBRARY)
+if (CREATE_DLL)
+    target_compile_definitions(QtGraph PRIVATE GRAPHLIB_LIBRARY)
+    target_compile_definitions(QtGraph INTERFACE IMPORT_GRAPHLIB)
+endif()
 
 # For the VS
 target_compile_options(QtGraph PRIVATE
@@ -104,10 +154,10 @@ target_compile_options(QtGraph PRIVATE
 # endif()
 
 
-add_custom_command(
-    TARGET QtGraph POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_SOURCE_DIR}/build/src/QtGraph.dll
-            ${CMAKE_SOURCE_DIR}/build/tests/QtGraph.dll
-    DEPENDS tests
-)
+# add_custom_command(
+#     TARGET QtGraph POST_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E copy
+#             ${CMAKE_SOURCE_DIR}/build/src/QtGraph.dll
+#             ${CMAKE_SOURCE_DIR}/build/tests/QtGraph.dll
+#     DEPENDS tests
+# )

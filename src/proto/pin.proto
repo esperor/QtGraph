@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+message Pin {
+    enum PinDirection {
+        DIRECTION_UNSPECIFIED = 0;
+        IN = 1;
+        OUT = 2;
+    }
+    message PinData {
+        
+    }
+
+    message Color {
+        
+    }
+
+    uint32 parent_node_ID = 1;
+    uint32 ID = 2;
+    Color color = 3;
+    PinDirection direction = 4;
+    string text = 5;
+    map<int32, PinData> connected_pins = 6;
+
+}
