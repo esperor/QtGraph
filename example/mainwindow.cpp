@@ -5,7 +5,7 @@
 #include "QtGraph/TypeManagers/nodetypemanager.h"
 #include "QtGraph/TypeManagers/pintypemanager.h"
 
-#include "QtGraph/TypeManagers/moc_typemanager.cpp"
+//#include "QtGraph/TypeManagers/moc_typemanager.cpp"
 
 using namespace GraphLib;
 

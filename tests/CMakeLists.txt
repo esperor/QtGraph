@@ -52,3 +52,11 @@ add_custom_command(
             ${CMAKE_SOURCE_DIR}/tests/test_files
             ${CMAKE_SOURCE_DIR}/build/tests/test_files              
 )
+
+add_custom_command(
+    TARGET tests POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy -t 
+    $<TARGET_FILE_DIR:tests> $<TARGET_RUNTIME_DLLS:tests>
+    COMMAND_EXPAND_LISTS
+    DEPENDS tests
+)

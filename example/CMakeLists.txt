@@ -34,7 +34,7 @@ set_target_properties(QtGraphExample PROPERTIES
 
 add_custom_command(
     TARGET QtGraphExample POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_SOURCE_DIR}/build/src/QtGraph.dll
-            ${CMAKE_SOURCE_DIR}/build/example/QtGraph.dll
+    COMMAND ${CMAKE_COMMAND} -E copy -t 
+    $<TARGET_FILE_DIR:QtGraphExample> $<TARGET_RUNTIME_DLLS:QtGraphExample>
+    COMMAND_EXPAND_LISTS
 )
