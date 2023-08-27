@@ -8,11 +8,11 @@ qt_add_executable(QtGraphExample
     ${SOURCES}
 )
 
+#set_property(TARGET QtGraphExample PROPERTY
+#    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 target_link_libraries(QtGraphExample PRIVATE
     QtGraph
-    Qt6::Core
-    Qt6::Gui
-    Qt6::Widgets
 )
 
 target_include_directories(QtGraphExample 

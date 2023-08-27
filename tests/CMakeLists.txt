@@ -20,17 +20,17 @@ endif()
 # Define tests
 enable_testing()
 
-add_executable(tests 
+qt_add_executable(tests 
     main.cpp
     tst_maincase.cpp    
 )
 
+#set_property(TARGET tests PROPERTY
+#    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 target_link_libraries(tests PRIVATE
     gtest_main
     QtGraph
-    Qt6::Core
-    Qt6::Gui
-    Qt6::Widgets
 )
 
 target_include_directories(tests 
@@ -54,7 +54,7 @@ add_custom_command(
 )
 
 add_custom_command(
-    TARGET tests POST_BUILD
+    TARGET tests
     COMMAND ${CMAKE_COMMAND} -E copy -t 
     $<TARGET_FILE_DIR:tests> $<TARGET_RUNTIME_DLLS:tests>
     COMMAND_EXPAND_LISTS

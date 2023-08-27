@@ -75,13 +75,15 @@ protobuf_generate_python(PROTO_PY proto/pin.proto)
 qt_add_library(QtGraph
     STATIC
     ${SOURCES}
-#    ${PROTO_SRCS}
     ${PROTO_SRCS} ${PROTO_HDRS}
 #    ../protos_generated/pin.pb.cc
 )
 
+#set_property(TARGET QtGraph PROPERTY
+#    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 target_link_libraries(QtGraph
-    PRIVATE
+    PUBLIC
     Qt6::Core
     Qt6::Gui
     Qt6::Widgets
@@ -101,7 +103,10 @@ target_include_directories(QtGraph INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
-target_compile_definitions(QtGraph PRIVATE GRAPHLIB_LIBRARY)
+if (CREATE_DLL)
+    target_compile_definitions(QtGraph PRIVATE GRAPHLIB_LIBRARY)
+    target_compile_definitions(QtGraph INTERFACE IMPORT_GRAPHLIB)
+endif()
 
 # For the VS
 target_compile_options(QtGraph PRIVATE

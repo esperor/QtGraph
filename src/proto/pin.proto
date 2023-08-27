@@ -1,6 +1,5 @@
 syntax = "proto3";
 
-
 message Pin {
     enum PinDirection {
         DIRECTION_UNSPECIFIED = 0;

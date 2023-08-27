@@ -44,13 +44,14 @@ add_subdirectory(src)
 
 option(BUILD_TESTS "" ON)
 option(BUILD_EXAMPLE "" ON)
-
-if (BUILD_TESTS)
-    message(STATUS "Configuring tests...")
-    add_subdirectory(tests)
-endif()
+option(CREATE_DLL "" OFF)
 
 if (BUILD_EXAMPLE)
     message(STATUS "Configuring example...")
     add_subdirectory(example)
+endif()
+
+if (BUILD_TESTS)
+    message(STATUS "Configuring tests...")
+    add_subdirectory(tests)
 endif()
