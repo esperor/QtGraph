@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <QObject>
@@ -38,24 +37,24 @@ public:
     AbstractPin(int ID, BaseNode *parent);
     ~AbstractPin();
 
-    void setID(int newID) { _ID = newID; }
+    void setID(int newID) { _data.pinID = newID; }
     void setConnected(bool isConnected);
     void setColor(QColor color) { _color = color; }
     void setNormalD(float newD) { _normalD = newD; }
     void setText(QString text) { _text = text; }
-    void setDirection(PinDirection dir) { _direction = dir; }
+    void setDirection(PinDirection dir) { _data.pinDirection = dir; }
     void addConnectedPin(PinData pin);
     void removeConnectedPinByID(int ID);
 
-    int ID() const { return _ID; }
+    int ID() const { return _data.pinID; }
     int getNodeID() const;
     bool isConnected() const { return _bIsConnected; }
     const QColor &getColor() const { return _color; }
     const float &getNormalD() const { return _normalD; }
     QString getText() const { return _text; }
     int getDesiredWidth(float zoom) const;
-    PinDirection getDirection() const { return _direction; }
-    bool isInPin() const { return _direction == PinDirection::In; }
+    PinDirection getDirection() const { return _data.pinDirection; }
+    bool isInPin() const { return _data.pinDirection == PinDirection::In; }
     QPoint getCenter() const { return mapToParent(_center); }
     QPixmap getPixmap() const;
     PinData getData() const;
@@ -86,12 +85,11 @@ private:
     void showContextMenu(const QMouseEvent *event);
 
     BaseNode *_parentNode;
-    int _ID;
+    PinData _data;
     QColor _color;
     float _normalD;
     bool _bIsConnected;
     QString _text;
-    PinDirection _direction;
     QPoint _center;
     // int here is pinID of connected pin
     QMap<int, PinData> _connectedPins;

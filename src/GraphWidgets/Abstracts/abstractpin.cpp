@@ -19,7 +19,7 @@ AbstractPin::AbstractPin(BaseNode *parent) : AbstractPin(-1, parent)
 AbstractPin::AbstractPin(int ID, BaseNode *parent)
     : QWidget{ parent }
     , _parentNode{ parent }
-    , _ID{ ID }
+    , _data{ PinData(PinDirection::In, parent->ID(), ID) }
     , _color{ QColor(Qt::GlobalColor::black) }
     , _normalD{ c_normalPinD }
     , _bIsConnected{ false }
@@ -48,7 +48,7 @@ void AbstractPin::setConnected(bool isConnected)
 
 void AbstractPin::addConnectedPin(PinData pin)
 {
-    if (pin.pinDirection == _direction)
+    if (pin.pinDirection == _data.pinDirection)
         throw std::invalid_argument("AbstractPin::addConnectedPin - pin with the same direction passed as the argument.");
     _connectedPins.insert(pin.pinID, pin);
     _bIsConnected = true;
@@ -84,7 +84,7 @@ QPixmap AbstractPin::getPixmap() const
 
 PinData AbstractPin::getData() const
 {
-    return PinData(_direction, _parentNode->ID(), _ID);
+    return _data;
 }
 
 int AbstractPin::getDesiredWidth(float zoom) const
@@ -103,7 +103,7 @@ void AbstractPin::startDrag()
     QDrag *drag = new QDrag(this);
     QMimeData *mimeData = new QMimeData;
 
-    mimeData->setData(c_mimeFormatForPinConnection, this->getData().toByteArray());
+    mimeData->setData(c_mimeFormatForPinConnection, _data.toByteArray());
     drag->setMimeData(mimeData);
 
     QPixmap pixmap = getPixmap();
@@ -164,7 +164,7 @@ void AbstractPin::dropEvent(QDropEvent *event)
         QByteArray byteArray = event->mimeData()->data(c_mimeFormatForPinConnection);
         PinData sourceData = PinData::fromByteArray(byteArray);
 
-        if (_direction == PinDirection::Out)
+        if (_data.pinDirection == PinDirection::Out)
             onConnect(getData(), sourceData);
         else
             onConnect(sourceData, getData());
@@ -178,7 +178,7 @@ void AbstractPin::dragEnterEvent(QDragEnterEvent *event)
         PinData data = PinData::fromByteArray(event->mimeData()->data(c_mimeFormatForPinConnection));
         PinDirection sourceDirection = data.pinDirection;
         int sourceNodeID = data.nodeID;
-        if (sourceDirection != _direction && sourceNodeID != _parentNode->ID())
+        if (sourceDirection != _data.pinDirection && sourceNodeID != _parentNode->ID())
         {
             event->setDropAction(Qt::LinkAction);
             event->acceptProposedAction();
@@ -244,7 +244,7 @@ void AbstractPin::paint(QPainter *painter, QPaintEvent *)
 
 
 
-    if (_direction == PinDirection::Out && !(canvasZoom <= c_changeRenderZoomMultiplier))
+    if (_data.pinDirection == PinDirection::Out && !(canvasZoom <= c_changeRenderZoomMultiplier))
     {
         rectangle.setX(this->width() - desiredD);
         rectangle.setWidth(desiredD);
@@ -276,7 +276,7 @@ void AbstractPin::paint(QPainter *painter, QPaintEvent *)
         pen.setColor(_color);
         painter->setPen(pen);
 
-        if (_direction == PinDirection::Out)
+        if (_data.pinDirection == PinDirection::Out)
             textOrigin.setX(this->width() - desiredD * 2 - textBounding.width());
 
         painter->drawText(QRect(textOrigin.x(), textOrigin.y(), textBounding.width(), rectangle.height())
