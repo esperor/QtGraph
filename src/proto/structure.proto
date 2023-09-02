@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package protocol;
+
+message Structure {
+    map<int32, int32> edges = 1;
+}

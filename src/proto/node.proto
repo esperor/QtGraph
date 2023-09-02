@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package protocol;
+
+import "pin.proto";
+import "type/point.proto";
+
+message Node {
+    uint32 id = 1;
+    type.PointF canvas_position = 2;
+    bool is_selected = 3;
+    string name = 4;
+    repeated Pin pins = 5;
+    optional int32 type = 6;
+}

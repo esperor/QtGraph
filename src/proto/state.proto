@@ -1,7 +1,17 @@
 syntax = "proto3";
 
+package protocol;
 
+import "typemanager.proto";
+import "type/point.proto";
+import "node.proto";
 
 message State {
-
+    TypeManager node_type_manager = 1;
+    TypeManager pin_type_manager = 2;
+    type.PointF offset = 3;
+    int32 zoom = 4;
+    int32 snapping_interval = 5;
+    bool is_snapping_enabled = 6;
+    repeated Node nodes = 7;
 }
