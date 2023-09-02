@@ -82,6 +82,32 @@ QPainterPath standardPath(const QPoint &origin, const QPoint &target, float zoom
     return path;
 }
 
+protocol::type::Color convertTo_protocolColor(const QColor &color)
+{
+    protocol::type::Color clr;
+    clr.set_red(color.red());
+    clr.set_green(color.green());
+    clr.set_blue(color.blue());
+    clr.set_alpha(color.alpha());
+    return clr;
+}
+
+protocol::type::Point convertTo_protocolPoint(const QPoint &point)
+{
+    protocol::type::Point ret;
+    ret.set_x(point.x());
+    ret.set_y(point.y());
+    return ret;
+}
+
+protocol::type::PointF convertTo_protocolPointF(const QPointF &point)
+{
+    protocol::type::PointF ret;
+    ret.set_x(point.x());
+    ret.set_y(point.y());
+    return ret;
+}
+
 namespace NodeFactoryModule {
 
 QColor parseToColor(const QString &str)

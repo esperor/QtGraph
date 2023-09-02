@@ -12,18 +12,11 @@ TypeManager::TypeManager(const TypeManager &other)
     *this = other;
 }
 
-QCborValue TypeManager::serialize()
+protocol::TypeManager TypeManager::toProtocolTypeManager()
 {
-    QCborMap map;
-
-
-
-    return map.toCborValue();
-}
-
-void TypeManager::deserialize(const QCborValue &val)
-{
-
+    protocol::TypeManager tm;
+    *(tm.mutable_filename()) = _filename.toStdString();
+    return tm;
 }
 
 bool TypeManager::operator!=(const TypeManager &other)

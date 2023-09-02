@@ -16,7 +16,6 @@ class TypedNode : public BaseNode
 
 public:
     TypedNode(int typeID, Canvas *canvas);
-    TypedNode(int ID, int typeID, Canvas *canvas);
 
     int getTypeID() const { return _typeID; }
 

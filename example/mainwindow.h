@@ -30,5 +30,8 @@ private:
     GraphLib::Canvas *_canvas;
     QTimer *_timer;
 
+    QAction *openTypes;
+    QMenu *menu;
+    QMenuBar *bar;
 };
 

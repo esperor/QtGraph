@@ -15,7 +15,7 @@
 #include <variant>
 
 #include "QtGraph/NodeFactoryModule/nodefactory.h"
-#include "QtGraph/NodeFactoryModule/nodefactorywidget.h"
+#include "QtGraph/NodeFactoryModule/typebrowser.h"
 #include "QtGraph/TypeManagers/nodetypemanager.h"
 #include "QtGraph/TypeManagers/pintypemanager.h"
 #include "QtGraph/GraphWidgets/Abstracts/basenode.h"
@@ -43,10 +43,12 @@ public:
     Canvas(QWidget *parent = nullptr);
     ~Canvas();
 
-    QCborValue serialize();
+    // std:: istream and ostream serialization
+    bool serialize(std::fstream *output);
+    bool deserialize(std::fstream *input);
 
-    void deserialize(const QCborValue &value);
 
+    static unsigned int newID() { return IDgenerator++; }
 
     float getZoomMultiplier() const     { return _zoomMultipliers[_zoom]; }
     bool getSnappingEnabled() const     { return _bIsSnappingEnabled; }
@@ -110,7 +112,6 @@ private:
     void zoom(int times, QPointF where);
     void deleteNode(QSharedPointer<BaseNode> &ptr);
     void processSelectionArea(const QMouseEvent *event);
-    static unsigned int newID() { return IDgenerator++; }
     static unsigned int IDgenerator;
 
     QSharedPointer<NodeFactoryModule::NodeFactory> _factory;
@@ -141,7 +142,7 @@ private:
     // Key for _connectedPins is an out-pin and the value is an in-pin
     QMultiMap<PinData, PinData> _connectedPins;
     QTimer *_timer;
-    NodeFactoryModule::NodeFactoryWidget *_nfWidget;
+    NodeFactoryModule::TypeBrowser *_typeBrowser;
     QMap<int, QSharedPointer<BaseNode>> _selectedNodes;
 
     const static QMap<short, float> _zoomMultipliers;

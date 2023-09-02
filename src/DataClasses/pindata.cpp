@@ -13,7 +13,7 @@ PinData::PinData(const AbstractPin *pin)
 PinData::PinData(const PinData &other)
 { *this = other; }
 
-PinData::PinData(PinDirection _direction, int _nodeID, int _pinID, int _typeID)
+PinData::PinData(PinDirection _direction, unsigned int _nodeID, unsigned int _pinID, unsigned int _typeID)
     : pinDirection{ _direction }, nodeID{ _nodeID }, pinID{ _pinID }, typeID{ _typeID }
 {}
 

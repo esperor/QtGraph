@@ -17,6 +17,9 @@
 #include "TypeManagers/nodetypemanager.h"
 #include "TypeManagers/pintypemanager.h"
 
+// protobuf
+#include "data.pb.h"
+
 #include "GraphWidgets/moc_canvas.cpp"
 
 namespace GraphLib {
@@ -42,7 +45,7 @@ Canvas::Canvas(QWidget *parent)
     , _selectionAreaPreviousNodes{ QSet<int>() }
     , _nodes{ QMap<int, QSharedPointer<BaseNode>>() }
     , _connectedPins{ QMultiMap<PinData, PinData>() }
-    , _nfWidget{ new NodeFactoryWidget(this) }
+    , _typeBrowser{ new TypeBrowser(this) }
     , _selectedNodes{ QMap<int, QSharedPointer<BaseNode>>() }
 {
     setMouseTracking(true);
@@ -53,9 +56,9 @@ Canvas::Canvas(QWidget *parent)
     this->setPalette(palette);
     setAcceptDrops(true);
 
-    _nfWidget->show();
+    _typeBrowser->show();
 
-    connect(_nfWidget, &NodeFactoryWidget::onMove, this, &Canvas::onNFWidgetMove);
+    connect(_typeBrowser, &TypeBrowser::onMove, this, &Canvas::onNFWidgetMove);
 
     connect(this, &Canvas::onNodesRemoved, this, [&](){
         if (_nodes.isEmpty()) IDgenerator = 0;
@@ -70,7 +73,7 @@ Canvas::~Canvas()
 {
     delete _painter;
     delete _timer;
-    delete _nfWidget;
+    delete _typeBrowser;
     delete _lastResizedSize;
 }
 
@@ -79,11 +82,11 @@ unsigned int Canvas::IDgenerator = 0;
 const QMap<short, float> Canvas::_zoomMultipliers =
 {
     {   0, 2.0f  },
-    {  -1, 1.75f  },
+    {  -1, 1.75f },
     {  -2, 1.5f  },
-    {  -3, 1.25f  },
-    {  -4, 1.0f },
-    {  -5, 0.9f },
+    {  -3, 1.25f },
+    {  -4, 1.0f  },
+    {  -5, 0.9f  },
     {  -6, 0.8f  },
     {  -7, 0.7f  },
     {  -8, 0.6f  },
@@ -97,16 +100,26 @@ const QMap<short, float> Canvas::_zoomMultipliers =
 // ------------------------ SERIALIZATION --------------------------
 
 
-QCborValue Canvas::serialize()
+bool Canvas::serialize(std::fstream *output)
 {
-    QCborMap map;
+    protocol::Data data;
+    protocol::State *state = data.mutable_state();
+    *(state->mutable_node_type_manager()) = _nodeTypeManager.toProtocolTypeManager();
+    *(state->mutable_pin_type_manager()) = _pinTypeManager.toProtocolTypeManager();
+    *(state->mutable_offset()) = convertTo_protocolPointF(_offset);
+    state->set_zoom(_zoom);
+    state->set_snapping_interval(_snappingInterval);
+    state->set_is_snapping_enabled(_bIsSnappingEnabled);
 
-    return map.toCborValue();
+    std::ranges::for_each(_nodes, [state](QSharedPointer<BaseNode> node) {
+        node->protocolize(state->add_nodes());
+    });
+    return true;
 }
 
-void Canvas::deserialize(const QCborValue &value)
+bool Canvas::deserialize(std::fstream *input)
 {
-
+    return true;
 }
 
 
@@ -211,15 +224,15 @@ void Canvas::setNodeTypeManager(NodeTypeManager *manager)
 {
     _nodeTypeManager = *manager;
     _factory->setNodeTypeManager(manager);
-    _nfWidget->_nodeTypeManager = &_nodeTypeManager;
-    _nfWidget->initTypes();
+    _typeBrowser->_nodeTypeManager = &_nodeTypeManager;
+    _typeBrowser->initTypes();
 }
 
 void Canvas::setPinTypeManager(PinTypeManager *manager)
 {
     _pinTypeManager = *manager;
     _factory->setPinTypeManager(manager);
-    _nfWidget->_pinTypeManager = &_pinTypeManager;
+    _typeBrowser->_pinTypeManager = &_pinTypeManager;
 }
 
 
@@ -229,19 +242,19 @@ void Canvas::setPinTypeManager(PinTypeManager *manager)
 
 void Canvas::onNFWidgetMove(QVector2D)
 {
-    QSize desiredWidgetSize = _nfWidget->getDesiredSize();
+    QSize desiredWidgetSize = _typeBrowser->getDesiredSize();
 
-    if (_nfWidget->getPosition().x() + desiredWidgetSize.width() > this->width())
-        _nfWidget->setX(this->width() - desiredWidgetSize.width());
+    if (_typeBrowser->getPosition().x() + desiredWidgetSize.width() > this->width())
+        _typeBrowser->setX(this->width() - desiredWidgetSize.width());
 
-    if (_nfWidget->getPosition().y() + desiredWidgetSize.height() > this->height())
-        _nfWidget->setY(this->height() - desiredWidgetSize.height());
+    if (_typeBrowser->getPosition().y() + desiredWidgetSize.height() > this->height())
+        _typeBrowser->setY(this->height() - desiredWidgetSize.height());
 
-    if (_nfWidget->getPosition().x() < 0)
-        _nfWidget->setX(0);
+    if (_typeBrowser->getPosition().x() < 0)
+        _typeBrowser->setX(0);
 
-    if (_nfWidget->getPosition().y() < 0)
-        _nfWidget->setY(0);
+    if (_typeBrowser->getPosition().y() < 0)
+        _typeBrowser->setY(0);
 }
 
 void Canvas::tick()
@@ -333,8 +346,7 @@ QWeakPointer<BaseNode> Canvas::addBaseNode(QPoint canvasPosition, QString name)
 
 QWeakPointer<BaseNode> Canvas::addNode(BaseNode *node)
 {
-    int id = newID();
-    node->setID(id);
+    int id = node->ID();
 
     _nodes.insert(id, QSharedPointer<BaseNode>(node));
     _nodes[id]->show();
@@ -457,16 +469,16 @@ void Canvas::resizeEvent(QResizeEvent *event)
         return abs(x - y) < approximation;
     };
 
-    bool widgetBoundToRight = approxEqual(_nfWidget->getPosition().x() + _nfWidget->getDesiredSize().width(), oldSize.width());
-    bool widgetBoundToBottom = approxEqual(_nfWidget->getPosition().y() + _nfWidget->getDesiredSize().height(), oldSize.height());
-    bool widgetBoundToLeft = approxEqual(_nfWidget->getPosition().x(), 0);
-    bool widgetBoundToTop = approxEqual(_nfWidget->getPosition().y(), 0);
+    bool widgetBoundToRight = approxEqual(_typeBrowser->getPosition().x() + _typeBrowser->getDesiredSize().width(), oldSize.width());
+    bool widgetBoundToBottom = approxEqual(_typeBrowser->getPosition().y() + _typeBrowser->getDesiredSize().height(), oldSize.height());
+    bool widgetBoundToLeft = approxEqual(_typeBrowser->getPosition().x(), 0);
+    bool widgetBoundToTop = approxEqual(_typeBrowser->getPosition().y(), 0);
 
     // manage NFWidget position
     if (widgetBoundToRight)
-        _nfWidget->setX(event->size().width() - _nfWidget->getDesiredSize().width());
+        _typeBrowser->setX(event->size().width() - _typeBrowser->getDesiredSize().width());
     if (widgetBoundToLeft)
-        _nfWidget->setX(0);
+        _typeBrowser->setX(0);
 
     if (!widgetBoundToLeft && !widgetBoundToRight)
     {
@@ -474,16 +486,16 @@ void Canvas::resizeEvent(QResizeEvent *event)
         if (widthDiff)
         {
             float widthDiffCoeff = widthDiff / oldSize.width();
-            float xCenter = _nfWidget->getPosition().x() + _nfWidget->getDesiredSize().width() / 2.0f;
-            _nfWidget->adjustPosition(xCenter * widthDiffCoeff, 0);
+            float xCenter = _typeBrowser->getPosition().x() + _typeBrowser->getDesiredSize().width() / 2.0f;
+            _typeBrowser->adjustPosition(xCenter * widthDiffCoeff, 0);
         }
     }
 
 
     if (widgetBoundToBottom)
-        _nfWidget->setY(event->size().height() - _nfWidget->getDesiredSize().height());
+        _typeBrowser->setY(event->size().height() - _typeBrowser->getDesiredSize().height());
     if (widgetBoundToTop)
-        _nfWidget->setY(0);
+        _typeBrowser->setY(0);
 
     if (!widgetBoundToTop && !widgetBoundToBottom)
     {
@@ -491,8 +503,8 @@ void Canvas::resizeEvent(QResizeEvent *event)
         if (heightDiff)
         {
             float heightDiffCoeff = heightDiff / oldSize.height();
-            float yCenter = _nfWidget->getPosition().y() + _nfWidget->getDesiredSize().height() / 2.0f;
-            _nfWidget->adjustPosition(0, yCenter * heightDiffCoeff);
+            float yCenter = _typeBrowser->getPosition().y() + _typeBrowser->getDesiredSize().height() / 2.0f;
+            _typeBrowser->adjustPosition(0, yCenter * heightDiffCoeff);
         }
     }
 
@@ -572,6 +584,8 @@ void Canvas::paintEvent(QPaintEvent *event)
 
 void Canvas::paint(QPainter *painter, QPaintEvent *event)
 {
+    setUpdatesEnabled(false);
+
     auto getColorOfPinByPinData = [&](const PinData &data){
         const AbstractPin *pin = _nodes[data.nodeID]->getPinByID(data.pinID);
         return pin->getColor();
@@ -581,7 +595,7 @@ void Canvas::paint(QPainter *painter, QPaintEvent *event)
     pen.setColor(c_dotsColor);
     painter->setPen(pen);
 
-    QRect rectangle = event->rect();
+    QRect rectangle = this->rect();
 
     QPoint center = rectangle.center();
 
@@ -689,11 +703,11 @@ void Canvas::paint(QPainter *painter, QPaintEvent *event)
     }
 
 
-    // manage NODEFACTORYWIDGET
+    // manage TYPEBROWSER
     {
-        _nfWidget->setFixedSize(_nfWidget->getDesiredSize());
-        _nfWidget->move(_nfWidget->getPosition().toPoint());
-        _nfWidget->raise();
+        _typeBrowser->setFixedSize(_typeBrowser->getDesiredSize());
+        _typeBrowser->move(_typeBrowser->getPosition().toPoint());
+        _typeBrowser->raise();
 
     }
 
@@ -719,6 +733,8 @@ void Canvas::paint(QPainter *painter, QPaintEvent *event)
         painter->drawText(QPoint(20, 100), QString( "Zoom: " + QString::number(_zoom) ));
         painter->drawText(QPoint(20, 120), QString( "Drag pos: " + pointToString(_draggedPinTarget) ));
     }
+
+    setUpdatesEnabled(true);
 }
 
 }

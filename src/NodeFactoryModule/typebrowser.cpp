@@ -5,16 +5,16 @@
 
 #include "constants.h"
 #include "TypeManagers/nodetypemanager.h"
-#include "NodeFactoryModule/nodefactorywidget.h"
+#include "NodeFactoryModule/typebrowser.h"
 #include "utility.h"
 
-#include "NodeFactoryModule/moc_nodefactorywidget.cpp"
+#include "NodeFactoryModule/moc_typebrowser.cpp"
 
 namespace GraphLib {
 
 namespace NodeFactoryModule {
 
-NodeFactoryWidget::NodeFactoryWidget(QWidget *parent)
+TypeBrowser::TypeBrowser(QWidget *parent)
     : QWidget{ parent }
     , _painter{ new QPainter() }
     , _gap{ 20 }
@@ -30,29 +30,29 @@ NodeFactoryWidget::NodeFactoryWidget(QWidget *parent)
     setMouseTracking(true);
     _layoutHolder.setLayout(&_layout);
 
-    _btnMinimize.text = c_nfWidgetArrowUp;
+    _btnMinimize.text = c_typeBrowserArrowUp;
     _btnMinimize.color = c_highlightColor;
 
-    connect(&_btnMinimize, &NFButtonMinimize::onClick, this, &NodeFactoryWidget::onButtonMinimizeClick);
+    connect(&_btnMinimize, &NFButtonMinimize::onClick, this, &TypeBrowser::onButtonMinimizeClick);
 }
 
-NodeFactoryWidget::~NodeFactoryWidget()
+TypeBrowser::~TypeBrowser()
 { delete _painter; }
 
-void NodeFactoryWidget::onButtonMinimizeClick()
+void TypeBrowser::onButtonMinimizeClick()
 {
     _bIsMinimized = !_bIsMinimized;
-    _btnMinimize.text = _bIsMinimized ? c_nfWidgetArrowDown : c_nfWidgetArrowUp;
+    _btnMinimize.text = _bIsMinimized ? c_typeBrowserArrowDown : c_typeBrowserArrowUp;
     if (_bIsMinimized)
         _layoutHolder.hide();
     else
         _layoutHolder.show();
 }
 
-QSize NodeFactoryWidget::getDesiredSize() const
+QSize TypeBrowser::getDesiredSize() const
 {
     if (_bIsMinimized)
-        return QSize(c_nfWidgetMinimalWidth, c_nfWidgetSpacing * 1.5f);
+        return QSize(c_typeBrowserMinimalWidth, c_typeBrowserSpacing * 1.5f);
 
     QSize out;
     int maxMetric = 0;
@@ -67,21 +67,21 @@ QSize NodeFactoryWidget::getDesiredSize() const
     if (_layout.direction() == QBoxLayout::LeftToRight ||
         _layout.direction() == QBoxLayout::RightToLeft)
     {
-        maxMetric += c_nfWidgetSpacing;
+        maxMetric += c_typeBrowserSpacing;
         maxMetric += _nodeImages.size() * (maxImgWidth + _gap);
-        out = QSize(maxMetric, c_nfWidgetSpacing + maxImgHeight);
+        out = QSize(maxMetric, c_typeBrowserSpacing + maxImgHeight);
     }
     else
     {
         maxMetric += _nodeImages.size() * (maxImgHeight + _gap);
         out = QSize( maxImgWidth, maxMetric);
     }
-    out.setWidth(std::max(c_nfWidgetMinimalWidth, out.width()));
+    out.setWidth(std::max(c_typeBrowserMinimalWidth, out.width()));
 
     return out;
 }
 
-void NodeFactoryWidget::clear()
+void TypeBrowser::clear()
 {
     QLayoutItem* child;
     while(_layout.count() != 0)
@@ -90,10 +90,10 @@ void NodeFactoryWidget::clear()
         delete child;
     }
 
-    _layout.addSpacing(c_nfWidgetSpacing);
+    _layout.addSpacing(c_typeBrowserSpacing);
 }
 
-bool NodeFactoryWidget::initTypes()
+bool TypeBrowser::initTypes()
 {
     if (_nodeTypeManager->Types().isEmpty())
         return false;
@@ -108,7 +108,7 @@ bool NodeFactoryWidget::initTypes()
             image->initType();
             _layout.addWidget(image);
         });
-        _layout.addSpacing(c_nfWidgetSpacing / 2);
+        _layout.addSpacing(c_typeBrowserSpacing / 2);
     } catch (...) { return false; }
 
     return true;
@@ -118,7 +118,7 @@ bool NodeFactoryWidget::initTypes()
 // ------------------ EVENTS --------------------
 
 
-void NodeFactoryWidget::mousePressEvent(QMouseEvent *event)
+void TypeBrowser::mousePressEvent(QMouseEvent *event)
 {
     if (event->buttons() & Qt::MouseButton::LeftButton)
     {
@@ -127,12 +127,12 @@ void NodeFactoryWidget::mousePressEvent(QMouseEvent *event)
     }
 }
 
-void NodeFactoryWidget::mouseReleaseEvent(QMouseEvent *)
+void TypeBrowser::mouseReleaseEvent(QMouseEvent *)
 {
     this->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
 }
 
-void NodeFactoryWidget::mouseMoveEvent(QMouseEvent *event)
+void TypeBrowser::mouseMoveEvent(QMouseEvent *event)
 {
     if (!(event->buttons() & Qt::MouseButton::LeftButton))
         return;
@@ -154,7 +154,7 @@ void NodeFactoryWidget::mouseMoveEvent(QMouseEvent *event)
 // ------------------- PAINT ----------------------
 
 
-void NodeFactoryWidget::paintEvent(QPaintEvent *event)
+void TypeBrowser::paintEvent(QPaintEvent *event)
 {
     _painter->begin(this);
     _painter->setRenderHint(QPainter::Antialiasing, true);
@@ -162,14 +162,14 @@ void NodeFactoryWidget::paintEvent(QPaintEvent *event)
     _painter->end();
 }
 
-void NodeFactoryWidget::paint(QPainter *painter, QPaintEvent *)
+void TypeBrowser::paint(QPainter *painter, QPaintEvent *)
 {
     // this line avoids flickering between this widget and nodes
     setUpdatesEnabled(false);
 
     QPen pen(Qt::SolidLine);
-    pen.setColor(c_nfWidgetBackgroundColor);
-    painter->setBrush(c_nfWidgetBackgroundColor);
+    pen.setColor(c_typeBrowserBackgroundColor);
+    painter->setBrush(c_typeBrowserBackgroundColor);
     painter->setPen(pen);
 
     QRect rect = QRect(mapFromParent(_position).toPoint(), getDesiredSize());
@@ -179,7 +179,7 @@ void NodeFactoryWidget::paint(QPainter *painter, QPaintEvent *)
     pen.setColor(c_highlightColor);
     painter->setPen(pen);
     painter->setFont(standardFont(13));
-    painter->drawText(QRect(rect.x(), rect.y() + c_nfWidgetSpacing / 3, rect.width(), rect.height()),
+    painter->drawText(QRect(rect.x(), rect.y() + c_typeBrowserSpacing / 3, rect.width(), rect.height()),
                       (Qt::AlignTop | Qt::AlignHCenter), "drag & place");
 
 

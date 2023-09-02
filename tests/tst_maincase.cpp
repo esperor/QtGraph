@@ -16,6 +16,8 @@
 #include "QtGraph/DataClasses/nodespawndata.h"
 #include "QtGraph/utility.h"
 
+#include "pin.pb.h"
+
 using namespace testing;
 using namespace GraphLib;
 
@@ -30,9 +32,9 @@ protected:
         _PinTypeManager =  PinTypeManager();
 
         QString path = "test_files/";
-        QString pins = "pins.json", nodes = "nodes.json";
-        ASSERT_TRUE(_NodeTypeManager.loadTypes(path + nodes));
-        ASSERT_TRUE(_PinTypeManager.loadTypes(path + pins));
+        QString filename = "types.json";
+        ASSERT_TRUE(_NodeTypeManager.readTypes(path + filename));
+        ASSERT_TRUE(_PinTypeManager.readTypes(path + filename));
     }
 
     NodeTypeManager _NodeTypeManager;
@@ -41,9 +43,14 @@ protected:
 
 TEST(TestPinData, ByteArrayConversions)
 {
-    PinData first(PinDirection::In, 0, 0);
+    PinData first(PinDirection::In, 5, 6);
     QByteArray arr = first.toByteArray();
     PinData second = PinData::fromByteArray(arr);
+    EXPECT_EQ(first, second);
+
+    first.nodeID = 0;
+    arr = first.toByteArray();
+    second = PinData::fromByteArray(arr);
     EXPECT_EQ(first, second);
 }
 
@@ -89,8 +96,11 @@ TEST(TestUtilityFunctions, TestSnapping)
 
 TEST_F(TestTypeManagers, JsonParsing)
 {
-    EXPECT_EQ(4, _NodeTypeManager.Types().size()) << "Expected " << 4 << " and got " << _NodeTypeManager.Types().size() << " node types.";
-    EXPECT_EQ(3, _PinTypeManager.Types().size()) << "Expected " << 3 << " and got " << _PinTypeManager.Types().size() << " pin types.";
+    int node_types = 6;
+    int pin_types = 5;
+
+    EXPECT_EQ(node_types, _NodeTypeManager.Types().size()) << "Expected " << node_types << " and got " << _NodeTypeManager.Types().size() << " node types.";
+    EXPECT_EQ(pin_types, _PinTypeManager.Types().size()) << "Expected " << pin_types << " and got " << _PinTypeManager.Types().size() << " pin types.";
 }
 
 TEST_F(TestTypeManagers, Properties)
@@ -98,8 +108,8 @@ TEST_F(TestTypeManagers, Properties)
     EXPECT_EQ("power", _PinTypeManager.Types().at(0).value("name").toString());
     EXPECT_EQ(0, _PinTypeManager.TypeNames()["power"]);
 
-    EXPECT_EQ("Monitor", _NodeTypeManager.Types().at(0).value("name").toString());
-    EXPECT_EQ(0, _NodeTypeManager.TypeNames()["Monitor"]);
+    EXPECT_EQ("Socket", _NodeTypeManager.Types().at(0).value("name").toString());
+    EXPECT_EQ(0, _NodeTypeManager.TypeNames()["Socket"]);
 }
 
 TEST(TestNodeFactory, ParseToColor)
@@ -120,5 +130,13 @@ TEST(TestNodeFactory, ParseToColor)
     check(str2, 0x2F, 0x03, 0xDD);
     QString str3("FFFFFF");
     check(str3, 0xFF, 0xFF, 0xFF);
+}
+
+TEST(test_protocolization, test_PinDirection_compatibility)
+{
+    PinDirection dir = PinDirection::In;
+    protocol::PinDirection p_dir = (protocol::PinDirection)dir;
+
+    EXPECT_EQ(p_dir, protocol::PinDirection::IN);
 }
 

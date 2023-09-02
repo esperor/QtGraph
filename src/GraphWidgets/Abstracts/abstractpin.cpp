@@ -13,18 +13,15 @@
 
 namespace GraphLib {
 
-AbstractPin::AbstractPin(BaseNode *parent) : AbstractPin(-1, parent)
-{}
-
-AbstractPin::AbstractPin(int ID, BaseNode *parent)
+AbstractPin::AbstractPin(BaseNode *parent)
     : QWidget{ parent }
     , _parentNode{ parent }
-    , _data{ PinData(PinDirection::In, parent->ID(), ID) }
+    , _data{ PinData(PinDirection::In, parent->ID(), parent->newID()) }
     , _color{ QColor(Qt::GlobalColor::black) }
     , _normalD{ c_normalPinD }
     , _bIsConnected{ false }
     , _text{ QString("") }
-    , _connectedPins{ QMap<int, PinData>() }
+    , _connectedPins{ QMap<unsigned int, PinData>() }
     , _breakConnectionActions{ QMap<int, QAction*>() }
     , _contextMenu{ QMenu(this) }
     , _painter{ new QPainter() }
@@ -33,6 +30,17 @@ AbstractPin::AbstractPin(int ID, BaseNode *parent)
 }
 
 AbstractPin::~AbstractPin() { delete _painter; }
+
+
+// --------------- SERIALIZATION -------------------
+
+
+void AbstractPin::protocolize(protocol::Pin *pPin)
+{
+    *(pPin->mutable_color()) = convertTo_protocolColor(_color);
+    pPin->set_text(_text.toStdString());
+    pPin->set_direction((protocol::PinDirection)_data.pinDirection);
+}
 
 
 // ------------------- GENERAL ---------------------
@@ -54,7 +62,7 @@ void AbstractPin::addConnectedPin(PinData pin)
     _bIsConnected = true;
 }
 
-void AbstractPin::removeConnectedPinByID(int ID)
+void AbstractPin::removeConnectedPinByID(unsigned int ID)
 {
     if (_connectedPins.contains(ID))
     {
@@ -63,7 +71,7 @@ void AbstractPin::removeConnectedPinByID(int ID)
     }
 }
 
-int AbstractPin::getNodeID() const
+unsigned int AbstractPin::getNodeID() const
 {
     return _parentNode->ID();
 }

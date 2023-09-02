@@ -13,6 +13,8 @@
 #include "QtGraph/GraphWidgets/Abstracts/abstractpin.h"
 #include "QtGraph/GraphLib.h"
 
+#include "node.pb.h"
+
 namespace GraphLib {
 
 class Canvas;
@@ -23,8 +25,12 @@ class GRAPHLIB_EXPORT BaseNode : public QWidget
 
 public:
     BaseNode(Canvas *canvas);
-    BaseNode(int ID, Canvas *canvas);
     ~BaseNode();
+
+    virtual void protocolize(protocol::Node *pNode);
+
+
+    static unsigned int newID() { return IDgenerator++; }
 
     const QPointF &canvasPosition() const { return _canvasPosition; }
     int ID() const { return _ID; }
@@ -83,11 +89,10 @@ private:
 // -----------------------------------------------------------
 
 protected:
-    static unsigned int newID() { return IDgenerator++; }
     static unsigned int IDgenerator;
 
     const Canvas *_parentCanvas;
-    int _ID;
+    unsigned int _ID;
     float _zoom;
     QSize _normalSize;
     QPainter *_painter;

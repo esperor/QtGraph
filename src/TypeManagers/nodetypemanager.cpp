@@ -9,7 +9,7 @@
 
 namespace GraphLib {
 
-bool NodeTypeManager::loadTypes(const char *file)
+bool NodeTypeManager::readTypes(const char *file)
 {
     _filename = file;
 
@@ -17,7 +17,7 @@ bool NodeTypeManager::loadTypes(const char *file)
     if (!opt)
         return false;
 
-    QJsonArray array = opt.value().value("types").toArray();
+    QJsonArray array = opt.value().value("nodes").toArray();
 
     unsigned int i = 0;
     _types.reserve(array.size());
