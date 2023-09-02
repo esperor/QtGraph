@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package protocol.type;
+
+message Color {
+    int32 red = 1;
+    int32 green = 2;
+    int32 blue = 3;
+    int32 alpha = 4;
+}
