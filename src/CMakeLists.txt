@@ -1,5 +1,7 @@
 project(QtGraph)
 
+add_subdirectory(proto)
+
 set(SOURCES 
     DataClasses/nodespawndata.cpp
     GraphWidgets/Abstracts/abstractpin.cpp
@@ -56,39 +58,47 @@ set(MOC_HEADERS
 #     D:\\Github\\abseil-cpp\\Source\\abseil-cpp
 # )
 
-# qt_add_protobuf(QtGraphProtobuf
+# qt_add_protobuf(protos
+#     GENERATE_PACKAGE_SUBFOLDERS
+#     EXTRA_NAMESPACE Protocol
 #     PROTO_FILES
-# #        ${PROTO_WELL_KNOWN}/google/type/color.proto
-# #        proto/state.proto
+#         proto/state.proto
 #         proto/pin.proto
-        
+#         proto/type/color.proto
+#         proto/type/point.proto
+#         proto/node.proto
 #     PROTO_INCLUDES
-#         ${PROTO_WELL_KNOWN}
+#         ${CMAKE_SOURCE_DIR}/src/proto
 #     OUTPUT_DIRECTORY
 #         ${CMAKE_SOURCE_DIR}/protos_generated
 #     OUTPUT_TARGETS PROTO_SRCS
 # )
 
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS proto/pin.proto)
-protobuf_generate_python(PROTO_PY proto/pin.proto)
+# protobuf_generate(PROTO_SRCS PROTO_HDRS 
+#     proto/pin.proto
+#     PROTOC_OUT_DIR 
+#         ${CMAKE_SOURCE_DIR}/protos_generated
+# )
+# protobuf_generate_python(PROTO_PY proto/pin.proto)
 
 qt_add_library(QtGraph
     STATIC
     ${SOURCES}
-    ${PROTO_SRCS} ${PROTO_HDRS}
-#    ../protos_generated/pin.pb.cc
+    $<TARGET_OBJECTS:protos>
 )
 
-#set_property(TARGET QtGraph PROPERTY
-#    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+set_property(TARGET QtGraph PROPERTY
+    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 target_link_libraries(QtGraph
     PUBLIC
     Qt6::Core
     Qt6::Gui
     Qt6::Widgets
-    ${Protobuf_LIBRARIES}
+    protos
     protobuf::libprotobuf
+    protobuf::libprotoc
+    #${Protobuf_LIBRARIES}
 )
 
 target_include_directories(QtGraph PRIVATE

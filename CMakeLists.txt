@@ -9,20 +9,21 @@ endif()
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-include(FindProtobuf)
+## commented due to use of protobuf 21.12
+# include(FindProtobuf)
 
 set(Vulkan_INCLUDE_DIR "C:\\VulkanSDK\\1.3.250.1\\Include")
-#set(Protobuf_DIR "d:\\Github\\protobuf\\build")
-#set(PROTO_WELL_KNOWN "D:/github/google/googleapis")
-#set(Protobuf_DIR "c:/Program Files (x86)/protobuf/cmake")
-#set(Protobuf_INCLUDE_DIRS "d:\\protoc-23.3-win64\\include")
 
-set(Protobuf_PREFIX_PATH
-    "c:\\Program Files (x86)\\protobuf/include"            
-    "c:\\Program Files (x86)\\protobuf/lib"             
-    "c:\\Program Files (x86)\\protobuf/bin"
-    "c:\\Program Files (x86)\\protobuf/cmake" )
-list(APPEND CMAKE_PREFIX_PATH ${Protobuf_PREFIX_PATH})
+# set(Protobuf_PREFIX_PATH
+#     "c:\\Program Files (x86)\\protobuf/include"            
+#     "c:\\Program Files (x86)\\protobuf/lib"             
+#     "c:\\Program Files (x86)\\protobuf/bin"
+#     "c:\\Program Files (x86)\\protobuf/cmake" 
+# )
+# list(APPEND CMAKE_PREFIX_PATH 
+#     ${Protobuf_PREFIX_PATH}
+# )
+
 
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -32,9 +33,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Protobuf)
-find_package(Protobuf REQUIRED CONFIG)
+find_package(protobuf REQUIRED CONFIG)
 
-include_directories(${Protobuf_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 qt_standard_project_setup()
