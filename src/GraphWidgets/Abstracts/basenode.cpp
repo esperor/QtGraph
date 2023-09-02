@@ -14,13 +14,10 @@
 
 namespace GraphLib {
 
-BaseNode::BaseNode(Canvas *canvas) : BaseNode(-1, canvas)
-{}
-
-BaseNode::BaseNode(int ID, Canvas *canvas)
+BaseNode::BaseNode(Canvas *canvas)
     : QWidget{ canvas }
     , _parentCanvas{ canvas }
-    , _ID{ ID }
+    , _ID{ canvas->newID() }
     , _zoom{ _parentCanvas->getZoomMultiplier() }
     , _painter{ new QPainter() }
     , _canvasPosition{ QPointF(0, 0) }
@@ -49,6 +46,21 @@ BaseNode::~BaseNode()
 }
 
 unsigned int BaseNode::IDgenerator = 0;
+
+
+// ---------------- SERIALIZATION -----------------
+
+
+void BaseNode::protocolize(protocol::Node *pNode)
+{
+    *(pNode->mutable_canvas_position()) = convertTo_protocolPointF(_canvasPosition);
+    pNode->set_id(_ID);
+    pNode->set_is_selected(_bIsSelected);
+    pNode->set_name(_name.toStdString());
+    std::ranges::for_each(_pins, [pNode](AbstractPin *pin) {
+        pin->protocolize(pNode->add_pins());
+    });
+}
 
 
 // ------------------- GENERAL --------------------
@@ -105,7 +117,6 @@ void BaseNode::removePinConnection(int pinID, int connectedPinID)
 
 void BaseNode::addPin(AbstractPin *pin)
 {
-    pin->setID(newID());
     _pins.insert(pin->ID(), pin);
     connect(pin, &AbstractPin::onDrag, this, &BaseNode::slot_onPinDrag);
     connect(pin, &AbstractPin::onConnect, this, &BaseNode::slot_onPinConnect);
@@ -115,8 +126,9 @@ void BaseNode::addPin(AbstractPin *pin)
 
 void BaseNode::addPin(QString text, PinDirection direction, QColor color)
 {
-    int id = BaseNode::newID();
-    Pin *newPin = new Pin(id, this);
+    Pin *newPin = new Pin(this);
+    int id = newPin->ID();
+    
     _pinsOutlineCoords.insert(id, QPoint(0, 0));
     newPin->setColor(color);
     newPin->setText(text);

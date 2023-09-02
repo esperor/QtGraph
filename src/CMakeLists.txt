@@ -8,7 +8,7 @@ set(SOURCES
     GraphWidgets/Abstracts/basenode.cpp
     NodeFactoryModule/nfbuttonminimize.cpp
     NodeFactoryModule/nodefactory.cpp
-    NodeFactoryModule/nodefactorywidget.cpp
+    NodeFactoryModule/typebrowser.cpp
     GraphWidgets/canvas.cpp
     NodeFactoryModule/typednodeimage.cpp
     TypeManagers/nodetypemanager.cpp
@@ -26,7 +26,7 @@ set(MOC_HEADERS
     ../include/QtGraph/GraphWidgets/Abstracts/abstractpin.h
     ../include/QtGraph/GraphWidgets/Abstracts/basenode.h
     ../include/QtGraph/NodeFactoryModule/nfbuttonminimize.h
-    ../include/QtGraph/NodeFactoryModule/nodefactorywidget.h
+    ../include/QtGraph/NodeFactoryModule/typebrowser.h
     ../include/QtGraph/GraphWidgets/canvas.h
     ../include/QtGraph/NodeFactoryModule/typednodeimage.h
     ../include/QtGraph/GraphWidgets/pin.h

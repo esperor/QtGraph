@@ -8,11 +8,8 @@
 
 namespace GraphLib {
 
-TypedNode::TypedNode(int typeID, Canvas *canvas) : TypedNode(-1, typeID, canvas)
-{}
-
-TypedNode::TypedNode(int ID, int typeID, Canvas *canvas)
-    : BaseNode(ID, canvas)
+TypedNode::TypedNode(int typeID, Canvas *canvas)
+    : BaseNode(canvas)
     , _typeID{ typeID }
 {}
 

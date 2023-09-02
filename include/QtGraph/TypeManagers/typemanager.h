@@ -5,6 +5,8 @@
 #include <QJsonObject>
 #include <QMap>
 
+#include "typemanager.pb.h"
+
 namespace GraphLib {
 
 class TypeManager : public QObject
@@ -20,13 +22,12 @@ public:
 
     inline QString typeNameByID(int id) const { return Types()[id].value("name").toString(); }
 
-    virtual bool loadTypes(const char *file) = 0;
+    virtual bool readTypes(const char *file) = 0;
 
     void setFileName(QString name) { _filename = name; }
     const QString &getFileName() const { return _filename; }
 
-    QCborValue serialize();
-    void deserialize(const QCborValue &val);
+    protocol::TypeManager toProtocolTypeManager();
 
     bool operator!=(const TypeManager &other);
     void operator=(const TypeManager &other);

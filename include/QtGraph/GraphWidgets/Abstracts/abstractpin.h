@@ -18,14 +18,16 @@
 #include "QtGraph/DataClasses/pindata.h"
 #include "QtGraph/DataClasses/pindragsignal.h"
 
+#include "pin.pb.h"
+
 namespace GraphLib {
 
 class BaseNode;
 
 enum class PinDirection
 {
-    In,
-    Out,
+    In = 1,
+    Out = 2,
 };
 
 class GRAPHLIB_EXPORT AbstractPin : public QWidget
@@ -34,20 +36,21 @@ class GRAPHLIB_EXPORT AbstractPin : public QWidget
 
 public:
     AbstractPin(BaseNode *parent);
-    AbstractPin(int ID, BaseNode *parent);
     ~AbstractPin();
 
-    void setID(int newID) { _data.pinID = newID; }
+    void protocolize(protocol::Pin *pPin);
+
+    void setID(unsigned int newID) { _data.pinID = newID; }
     void setConnected(bool isConnected);
     void setColor(QColor color) { _color = color; }
     void setNormalD(float newD) { _normalD = newD; }
     void setText(QString text) { _text = text; }
     void setDirection(PinDirection dir) { _data.pinDirection = dir; }
     void addConnectedPin(PinData pin);
-    void removeConnectedPinByID(int ID);
+    void removeConnectedPinByID(unsigned int ID);
 
-    int ID() const { return _data.pinID; }
-    int getNodeID() const;
+    unsigned int ID() const { return _data.pinID; }
+    unsigned int getNodeID() const;
     bool isConnected() const { return _bIsConnected; }
     const QColor &getColor() const { return _color; }
     const float &getNormalD() const { return _normalD; }
@@ -92,7 +95,7 @@ private:
     QString _text;
     QPoint _center;
     // int here is pinID of connected pin
-    QMap<int, PinData> _connectedPins;
+    QMap<unsigned int, PinData> _connectedPins;
     QMap<int, QAction*> _breakConnectionActions;
 
     QMenu _contextMenu;

@@ -1,0 +1,97 @@
+{
+    "nodes" : [
+        {
+            "name": "Socket",
+            "out-pins": [
+                {
+                    "type": "power"
+                }
+            ]
+        },
+        {
+            "name": "Monitor",
+            "in-pins": [
+                {
+                    "type": "HDMI"
+                },
+                {
+                    "type": "power"
+                }
+            ]
+        },
+        {
+            "name": "Computer",
+            "in-pins": [
+                {
+                    "type": "power"
+                },
+                {
+                    "type": "USB"
+                },
+                {
+                    "type": "USB"
+                },
+                {
+                    "type": "USB"
+                },
+                {
+                    "type": "USB"
+                }
+            ],
+            "out-pins": [
+                {
+                    "type": "HDMI"
+                },
+                {
+                    "type": "jack-3.5"
+                }
+            ]
+        },
+        {
+            "name": "Keyboard",
+            "out-pins": [
+                {
+                    "type": "USB"
+                }
+            ]
+        },
+        {
+            "name": "Mouse",
+            "out-pins": [
+                {
+                    "type": "USB"
+                }
+            ]
+        },
+        {
+            "name": "Headset",
+            "in-pins": [
+                {
+                    "type": "jack-3.5"
+                }
+            ]
+        }
+    ],
+    "pins" : [
+        {
+            "name": "power",
+            "color": "FFFFFF"
+        },
+        {
+            "name": "VGA",
+            "color": "213555"
+        },
+        {
+            "name": "USB",
+            "color": "0079FF"   
+        },
+        {
+            "name": "jack-3.5",
+            "color": "CA3060"
+        },
+        {
+            "name": "HDMI",
+            "color": "AAAAAA"
+        }
+    ]
+}

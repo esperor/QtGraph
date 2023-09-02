@@ -17,6 +17,9 @@
 #include "TypeManagers/nodetypemanager.h"
 #include "TypeManagers/pintypemanager.h"
 
+// protobuf
+#include "data.pb.h"
+
 #include "GraphWidgets/moc_canvas.cpp"
 
 namespace GraphLib {
@@ -42,7 +45,7 @@ Canvas::Canvas(QWidget *parent)
     , _selectionAreaPreviousNodes{ QSet<int>() }
     , _nodes{ QMap<int, QSharedPointer<BaseNode>>() }
     , _connectedPins{ QMultiMap<PinData, PinData>() }
-    , _nfWidget{ new NodeFactoryWidget(this) }
+    , _nfWidget{ new TypeBrowser(this) }
     , _selectedNodes{ QMap<int, QSharedPointer<BaseNode>>() }
 {
     setMouseTracking(true);
@@ -55,7 +58,7 @@ Canvas::Canvas(QWidget *parent)
 
     _nfWidget->show();
 
-    connect(_nfWidget, &NodeFactoryWidget::onMove, this, &Canvas::onNFWidgetMove);
+    connect(_nfWidget, &TypeBrowser::onMove, this, &Canvas::onNFWidgetMove);
 
     connect(this, &Canvas::onNodesRemoved, this, [&](){
         if (_nodes.isEmpty()) IDgenerator = 0;
@@ -79,11 +82,11 @@ unsigned int Canvas::IDgenerator = 0;
 const QMap<short, float> Canvas::_zoomMultipliers =
 {
     {   0, 2.0f  },
-    {  -1, 1.75f  },
+    {  -1, 1.75f },
     {  -2, 1.5f  },
-    {  -3, 1.25f  },
-    {  -4, 1.0f },
-    {  -5, 0.9f },
+    {  -3, 1.25f },
+    {  -4, 1.0f  },
+    {  -5, 0.9f  },
     {  -6, 0.8f  },
     {  -7, 0.7f  },
     {  -8, 0.6f  },
@@ -97,16 +100,26 @@ const QMap<short, float> Canvas::_zoomMultipliers =
 // ------------------------ SERIALIZATION --------------------------
 
 
-QCborValue Canvas::serialize()
+bool Canvas::serialize(std::fstream *output)
 {
-    QCborMap map;
+    protocol::Data data;
+    protocol::State *state = data.mutable_state();
+    *(state->mutable_node_type_manager()) = _nodeTypeManager.toProtocolTypeManager();
+    *(state->mutable_pin_type_manager()) = _pinTypeManager.toProtocolTypeManager();
+    *(state->mutable_offset()) = convertTo_protocolPointF(_offset);
+    state->set_zoom(_zoom);
+    state->set_snapping_interval(_snappingInterval);
+    state->set_is_snapping_enabled(_bIsSnappingEnabled);
 
-    return map.toCborValue();
+    std::ranges::for_each(_nodes, [state](QSharedPointer<BaseNode> node) {
+        node->protocolize(state->add_nodes());
+    });
+    return true;
 }
 
-void Canvas::deserialize(const QCborValue &value)
+bool Canvas::deserialize(std::fstream *input)
 {
-
+    return true;
 }
 
 
@@ -333,8 +346,7 @@ QWeakPointer<BaseNode> Canvas::addBaseNode(QPoint canvasPosition, QString name)
 
 QWeakPointer<BaseNode> Canvas::addNode(BaseNode *node)
 {
-    int id = newID();
-    node->setID(id);
+    int id = node->ID();
 
     _nodes.insert(id, QSharedPointer<BaseNode>(node));
     _nodes[id]->show();
@@ -689,7 +701,7 @@ void Canvas::paint(QPainter *painter, QPaintEvent *event)
     }
 
 
-    // manage NODEFACTORYWIDGET
+    // manage TYPR
     {
         _nfWidget->setFixedSize(_nfWidget->getDesiredSize());
         _nfWidget->move(_nfWidget->getPosition().toPoint());

@@ -18,13 +18,13 @@ namespace GraphLib {
 
 namespace NodeFactoryModule {
 
-class GRAPHLIB_EXPORT NodeFactoryWidget : public QWidget
+class GRAPHLIB_EXPORT TypeBrowser : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit NodeFactoryWidget(QWidget *parent = nullptr);
-    ~NodeFactoryWidget();
+    explicit TypeBrowser(QWidget *parent = nullptr);
+    ~TypeBrowser();
 
     QSize getDesiredSize() const;
     const QPointF &getPosition() const { return _position; }

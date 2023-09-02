@@ -10,7 +10,6 @@ class GRAPHLIB_EXPORT Pin : public AbstractPin
 
 public:
     Pin(BaseNode *parent);
-    Pin(int ID, BaseNode *parent);
 };
 
 }

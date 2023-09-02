@@ -17,7 +17,7 @@ struct GRAPHLIB_EXPORT PinData
 public:
     PinData() {}
     PinData(const PinData &other);
-    PinData(PinDirection _direction, int _nodeID, int _pinID, int _typeID = -1);
+    PinData(PinDirection _direction, unsigned int _nodeID, unsigned int _pinID, unsigned int _typeID = -1);
     PinData(const AbstractPin *pin);
     virtual ~PinData();
 
@@ -26,9 +26,9 @@ public:
     void operator=(const PinData &other);
 
     PinDirection pinDirection;
-    int nodeID;
-    int pinID;
-    int typeID;
+    unsigned int nodeID;
+    unsigned int pinID;
+    unsigned int typeID;
 };
 
 QDebug GRAPHLIB_EXPORT &operator<<(QDebug &debug, const PinData &obj);

@@ -9,7 +9,7 @@
 
 namespace GraphLib {
 
-bool PinTypeManager::loadTypes(const char *file)
+bool PinTypeManager::readTypes(const char *file)
 {
     _filename = file;
 
@@ -17,7 +17,7 @@ bool PinTypeManager::loadTypes(const char *file)
     if (!opt)
         return false;
 
-    QJsonArray array = opt.value().value("types").toArray();
+    QJsonArray array = opt.value().value("pins").toArray();
 
     unsigned int i = 0;
     _types.reserve(array.size());
