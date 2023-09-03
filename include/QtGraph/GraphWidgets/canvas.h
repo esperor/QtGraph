@@ -142,7 +142,7 @@ private:
     // Key for _connectedPins is an out-pin and the value is an in-pin
     QMultiMap<PinData, PinData> _connectedPins;
     QTimer *_timer;
-    NodeFactoryModule::TypeBrowser *_nfWidget;
+    NodeFactoryModule::TypeBrowser *_typeBrowser;
     QMap<int, QSharedPointer<BaseNode>> _selectedNodes;
 
     const static QMap<short, float> _zoomMultipliers;

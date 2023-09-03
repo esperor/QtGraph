@@ -73,13 +73,13 @@ const float c_nodeMaxOutlineWidth = 3.0f;
 // ----- NODEFACTORY ---------
 // NODEFACTORY GENERAL CONSTANTS
 
-const int c_nfWidgetSpacing = 40;
+const int c_typeBrowserSpacing = 40;
 
 // NODEFACTORY RENDER CONSTANTS
 
-const QString c_nfWidgetArrowUp = "˄";
-const QString c_nfWidgetArrowDown = "˅";
-const int c_nfWidgetMinimalWidth = 120;
+const QString c_typeBrowserArrowUp = "˄";
+const QString c_typeBrowserArrowDown = "˅";
+const int c_typeBrowserMinimalWidth = 120;
 
 
 
@@ -87,7 +87,7 @@ const int c_nfWidgetMinimalWidth = 120;
 const QColor c_paletteDefaultColor{ QColor(0x28, 0x2A, 0x3A) };
 const QColor c_dotsColor{ QColor(0xE7, 0xF6, 0xF2) };
 const QColor c_nodesBackgroundColor{ QColor(0x39, 0x5B, 0x64, 200) };
-const QColor c_nfWidgetBackgroundColor{ QColor(0x39, 0x5B, 0x64, 200) };
+const QColor c_typeBrowserBackgroundColor{ QColor(0x39, 0x5B, 0x64, 200) };
 const QColor c_highlightColor{ QColor(0xA5, 0xC9, 0xCA, 200) };
 const QColor c_selectionColor{ QColor(0xE5, 0x58, 0x07) };
 const QColor c_selectionRectColor{ QColor(0xC2, 0xDE, 0xDC) };
