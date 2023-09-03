@@ -32,7 +32,7 @@ set(CMAKE_AUTOMOC ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Protobuf)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 find_package(protobuf REQUIRED CONFIG)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
