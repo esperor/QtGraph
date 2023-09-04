@@ -21,7 +21,7 @@ AbstractPin::AbstractPin(BaseNode *parent)
     , _normalD{ c_normalPinD }
     , _bIsConnected{ false }
     , _text{ QString("") }
-    , _connectedPins{ QMap<unsigned int, PinData>() }
+    , _connectedPins{ QMap<uint32_t, PinData>() }
     , _breakConnectionActions{ QMap<int, QAction*>() }
     , _contextMenu{ QMenu(this) }
     , _painter{ new QPainter() }
@@ -40,7 +40,7 @@ void AbstractPin::protocolize(protocol::Pin *pPin) const
     *(pPin->mutable_color()) = convertTo_protocolColor(_color);
     pPin->set_text(_text.toStdString());
     pPin->set_direction((protocol::PinDirection)_data.pinDirection);
-    pPin->set_id(_ID);
+    pPin->set_id(_data.pinID);
 }
 
 
@@ -63,7 +63,7 @@ void AbstractPin::addConnectedPin(PinData pin)
     _bIsConnected = true;
 }
 
-void AbstractPin::removeConnectedPinByID(unsigned int ID)
+void AbstractPin::removeConnectedPinByID(uint32_t ID)
 {
     if (_connectedPins.contains(ID))
     {
@@ -72,7 +72,7 @@ void AbstractPin::removeConnectedPinByID(unsigned int ID)
     }
 }
 
-unsigned int AbstractPin::getNodeID() const
+uint32_t AbstractPin::getNodeID() const
 {
     return _parentNode->ID();
 }

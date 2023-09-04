@@ -40,17 +40,17 @@ public:
 
     void protocolize(protocol::Pin *pPin) const;
 
-    void setID(unsigned int newID) { _data.pinID = newID; }
+    void setID(uint32_t newID) { _data.pinID = newID; }
     void setConnected(bool isConnected);
     void setColor(QColor color) { _color = color; }
     void setNormalD(float newD) { _normalD = newD; }
     void setText(QString text) { _text = text; }
     void setDirection(PinDirection dir) { _data.pinDirection = dir; }
     void addConnectedPin(PinData pin);
-    void removeConnectedPinByID(unsigned int ID);
+    void removeConnectedPinByID(uint32_t ID);
 
-    unsigned int ID() const { return _data.pinID; }
-    unsigned int getNodeID() const;
+    uint32_t ID() const { return _data.pinID; }
+    uint32_t getNodeID() const;
     bool isConnected() const { return _bIsConnected; }
     const QColor &getColor() const { return _color; }
     const float &getNormalD() const { return _normalD; }
@@ -95,7 +95,7 @@ private:
     QString _text;
     QPoint _center;
     // int here is pinID of connected pin
-    QMap<unsigned int, PinData> _connectedPins;
+    QMap<uint32_t, PinData> _connectedPins;
     QMap<int, QAction*> _breakConnectionActions;
 
     QMenu _contextMenu;

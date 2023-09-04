@@ -19,7 +19,7 @@ bool PinTypeManager::readTypes(const char *file)
 
     QJsonArray array = opt.value().value("pins").toArray();
 
-    unsigned int i = 0;
+    uint32_t i = 0;
     _types.reserve(array.size());
     for (auto elem : array)
     {

@@ -19,6 +19,7 @@ set(SOURCES
     GraphWidgets/typednode.cpp
     TypeManagers/typemanager.cpp
     utility.cpp
+    idgenerator.cpp
 )
 
 set(MOC_HEADERS
