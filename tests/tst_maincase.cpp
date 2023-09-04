@@ -7,6 +7,7 @@
 #include <QPointF>
 #include <algorithm>
 #include <string>
+#include <QSet>
 
 #include "QtGraph/NodeFactoryModule/nodefactory.h"
 #include "QtGraph/TypeManagers/nodetypemanager.h"
@@ -15,6 +16,7 @@
 #include "QtGraph/GraphWidgets/Abstracts/abstractpin.h"
 #include "QtGraph/DataClasses/nodespawndata.h"
 #include "QtGraph/utility.h"
+#include "QtGraph/idgenerator.h"
 
 #include "pin.pb.h"
 
@@ -68,7 +70,7 @@ TEST(TestNodeSpawnData, ByteArrayConversions)
     EXPECT_EQ(third, fourth);
 }
 
-TEST(TestUtilityFunctions, TestSnapping)
+TEST(TestUtility, Snapping)
 {
     auto pointToString = [](QPoint point) {
         return std::to_string(point.x()) + ", " + std::to_string(point.y());
@@ -92,6 +94,23 @@ TEST(TestUtilityFunctions, TestSnapping)
     std::ranges::for_each(assertions, [&](const std::pair<QPoint, QPoint> &pair){
         lambda(pair.first, pair.second);
     });
+}
+
+TEST(TestUtility, IDGeneration)
+{
+    IDGenerator gen;
+    EXPECT_EQ(0, gen.generate());
+    EXPECT_EQ(1, gen.generate());
+    EXPECT_EQ(2, gen.generate());
+    gen.removeTaken(1);
+    EXPECT_EQ(1, gen.generate());
+    EXPECT_EQ(3, gen.generate());
+    gen = IDGenerator(std::set({ 0U, 1U, 2U, 3U, 4U, 5U, 6U }));
+    EXPECT_EQ(7, gen.generate());
+    gen.removeTaken(4);
+    EXPECT_EQ(4, gen.generate());
+    gen.removeTaken(0);
+    EXPECT_EQ(0, gen.generate());
 }
 
 TEST_F(TestTypeManagers, JsonParsing)
@@ -132,7 +151,7 @@ TEST(TestNodeFactory, ParseToColor)
     check(str3, 0xFF, 0xFF, 0xFF);
 }
 
-TEST(test_protocolization, test_PinDirection_compatibility)
+TEST(TestProtocolization, PinDirectionCompatibility)
 {
     PinDirection dir = PinDirection::In;
     protocol::PinDirection p_dir = (protocol::PinDirection)dir;

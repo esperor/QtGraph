@@ -45,7 +45,7 @@ BaseNode::~BaseNode()
     std::ranges::for_each(_pins, [](AbstractPin *pin) { delete pin; });
 }
 
-unsigned int BaseNode::IDgenerator = 0;
+IDGenerator BaseNode::_IDgenerator = IDGenerator();
 
 
 // ---------------- SERIALIZATION -----------------
@@ -115,12 +115,20 @@ void BaseNode::removePinConnection(int pinID, int connectedPinID)
 // -------------------- SLOTS ---------------------
 
 
+void BaseNode::onPinDestroyed(QObject *obj)
+{
+    if (obj == nullptr) qDebug() << "Pointer to destroyed pin is nullptr";
+
+    _IDgenerator.removeTaken( ((AbstractPin*)obj)->ID() );
+}
+
 void BaseNode::addPin(AbstractPin *pin)
 {
     _pins.insert(pin->ID(), pin);
     connect(pin, &AbstractPin::onDrag, this, &BaseNode::slot_onPinDrag);
     connect(pin, &AbstractPin::onConnect, this, &BaseNode::slot_onPinConnect);
     connect(pin, &AbstractPin::onConnectionBreak, this, &BaseNode::slot_onPinConnectionBreak);
+    connect(pin, &AbstractPin::destroyed, this, &BaseNode::onPinDestroyed);
     pin->show();
 }
 

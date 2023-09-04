@@ -21,6 +21,9 @@
 #include "QtGraph/GraphWidgets/Abstracts/basenode.h"
 #include "QtGraph/GraphLib.h"
 #include "QtGraph/constants.h"
+#include "QtGraph/idgenerator.h"
+
+#include "structure.pb.h"
 
 
 namespace GraphLib {
@@ -28,16 +31,6 @@ namespace GraphLib {
 class GRAPHLIB_EXPORT Canvas : public QWidget
 {
     Q_OBJECT
-
-    Q_PROPERTY(NodeTypeManager _nodeTypeManager MEMBER _nodeTypeManager)
-    Q_PROPERTY(PinTypeManager _pinTypeManager MEMBER _pinTypeManager)
-    Q_PROPERTY(QPointF _offset MEMBER _offset)
-    Q_PROPERTY(short _zoom MEMBER _zoom)
-    Q_PROPERTY(int _snappingInterval MEMBER _snappingInterval)
-    Q_PROPERTY(bool _bIsSnappingEnabled MEMBER _bIsSnappingEnabled)
-    Q_PROPERTY(QMap<int, QSharedPointer<BaseNode>> _nodes MEMBER _nodes)
-    Q_PROPERTY(QMultiMap<PinData, PinData> _connectedPins MEMBER _connectedPins)
-    Q_PROPERTY(QMap<int, QSharedPointer<BaseNode>> _selectedNodes MEMBER _selectedNodes)
 
 public:
     Canvas(QWidget *parent = nullptr);
@@ -50,7 +43,7 @@ public:
     bool readStructure(const protocol::Structure *structure);
 
 
-    static unsigned int newID() { return IDgenerator++; }
+    static uint32_t newID() { return _IDgenerator.generate(); }
 
     float getZoomMultiplier() const     { return _zoomMultipliers[_zoom]; }
     bool getSnappingEnabled() const     { return _bIsSnappingEnabled; }
@@ -101,6 +94,7 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
+    void onNodeDestroyed(QObject *obj);
     void onNodeSelect(bool bIsMultiSelectionModifierDown, int nodeID);
     void onPinDrag(PinDragSignal signal);
     void onPinConnect(PinData outPin, PinData inPin);
@@ -114,7 +108,8 @@ private:
     void zoom(int times, QPointF where);
     void deleteNode(QSharedPointer<BaseNode> &ptr);
     void processSelectionArea(const QMouseEvent *event);
-    static unsigned int IDgenerator;
+
+    static IDGenerator _IDgenerator;
 
     QSharedPointer<NodeFactoryModule::NodeFactory> _factory;
     NodeTypeManager _nodeTypeManager;

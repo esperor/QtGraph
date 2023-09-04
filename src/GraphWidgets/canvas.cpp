@@ -61,10 +61,6 @@ Canvas::Canvas(QWidget *parent)
 
     connect(_typeBrowser, &TypeBrowser::onMove, this, &Canvas::onNFWidgetMove);
 
-    connect(this, &Canvas::onNodesRemoved, this, [&](){
-        if (_nodes.isEmpty()) IDgenerator = 0;
-    });
-
     _timer = new QTimer(this);
     connect(_timer, &QTimer::timeout, this, &Canvas::tick);
     _timer->start(30);
@@ -78,7 +74,7 @@ Canvas::~Canvas()
     delete _lastResizedSize;
 }
 
-unsigned int Canvas::IDgenerator = 0;
+IDGenerator Canvas::_IDgenerator = IDGenerator(); 
 
 const QMap<short, float> Canvas::_zoomMultipliers =
 {
@@ -128,13 +124,14 @@ bool Canvas::deserialize(std::fstream *input)
 
 bool Canvas::writeStructure(protocol::Structure *structure) const
 {
-    google::protobuf::Map<int32_t, int32_t> *edges = structure->mutable_edges();
+    auto *edges = structure->mutable_edges();
     std::ranges::for_each(_connectedPins.keys(), [this, edges](PinData key){
         QList<PinData> values = this->_connectedPins.values(key);
         std::ranges::for_each(values, [edges, &key](PinData &value){
-            edges->insert(key.pinID, value.pinID);
+            (*edges)[key.pinID] = value.pinID;
         });
     });
+    return true;
 }
 
 bool Canvas::readStructure(const protocol::Structure *structure)
@@ -260,6 +257,14 @@ void Canvas::setPinTypeManager(PinTypeManager *manager)
 // ---------------------------- SLOTS --------------------------------
 
 
+
+void Canvas::onNodeDestroyed(QObject *obj)
+{
+    if (obj == nullptr) qDebug() << "Pointer to destroyed node is nullptr";
+
+    _IDgenerator.removeTaken( ((BaseNode*)obj)->ID() );
+}
+
 void Canvas::onNFWidgetMove(QVector2D)
 {
     QSize desiredWidgetSize = _typeBrowser->getDesiredSize();
@@ -375,6 +380,7 @@ QWeakPointer<BaseNode> Canvas::addNode(BaseNode *node)
     connect(_nodes[id].get(), &BaseNode::onPinConnect, this, &Canvas::onPinConnect);
     connect(_nodes[id].get(), &BaseNode::onSelect, this, &Canvas::onNodeSelect);
     connect(_nodes[id].get(), &BaseNode::onPinConnectionBreak, this, &Canvas::onPinConnectionBreak);
+    connect(_nodes[id].get(), &BaseNode::destroyed, this, &Canvas::onNodeDestroyed);
 
     return QWeakPointer<BaseNode>(_nodes[id]);
 }
@@ -406,6 +412,7 @@ void Canvas::deleteNode(QSharedPointer<BaseNode> &ptr)
         });
     }
     _nodes.remove(id);
+//    _IDgenerator.removeTaken(id);
 }
 
 
@@ -745,6 +752,16 @@ void Canvas::paint(QPainter *painter, QPaintEvent *event)
             return QString::number(point.x()) + ", " + QString::number(point.y());
         };
 
+        auto parseSet = [](std::set<uint32_t> set) {
+            QString str = "[";
+            std::ranges::for_each(set, [&str](uint32_t num) {
+                str += " ";
+                str += QString::number(num);
+                str += ",";
+            });
+            return str.removeLast().append(" ]");
+        };
+
         QPoint mouseCanvasPosition = mapToCanvas(_mousePosition.toPoint());
         painter->drawText(QPoint(20, 20), QString( "Mouse on canvas: " + pointToString(mouseCanvasPosition) ));
         painter->drawText(QPoint(20, 40), QString( "Mouse in viewport: " + pointfToString(_mousePosition) ));
@@ -752,6 +769,8 @@ void Canvas::paint(QPainter *painter, QPaintEvent *event)
         painter->drawText(QPoint(20, 80), QString( "Center: " + pointfToString(_offset) ));
         painter->drawText(QPoint(20, 100), QString( "Zoom: " + QString::number(_zoom) ));
         painter->drawText(QPoint(20, 120), QString( "Drag pos: " + pointToString(_draggedPinTarget) ));
+        painter->drawText(QPoint(20, 140), QString( "Node IDs: " + parseSet(_IDgenerator.getTakenIDs()) ));
+        painter->drawText(QPoint(20, 160), QString( "Pin IDs: " + parseSet(BaseNode::getTakenPinIDs()) ));
     }
 
     setUpdatesEnabled(true);

@@ -12,6 +12,7 @@
 
 #include "QtGraph/GraphWidgets/Abstracts/abstractpin.h"
 #include "QtGraph/GraphLib.h"
+#include "QtGraph/idgenerator.h"
 
 #include "node.pb.h"
 
@@ -30,7 +31,8 @@ public:
     virtual void protocolize(protocol::Node *pNode) const;
 
 
-    static unsigned int newID() { return IDgenerator++; }
+    static uint32_t newID() { return _IDgenerator.generate(); }
+    static const std::set<uint32_t> &getTakenPinIDs() { return _IDgenerator.getTakenIDs(); }
 
     const QPointF &canvasPosition() const { return _canvasPosition; }
     int ID() const { return _ID; }
@@ -67,6 +69,7 @@ public slots:
     void addPin(QString text, PinDirection direction, QColor color = QColor(Qt::GlobalColor::black));
 
 private slots:
+    void onPinDestroyed(QObject *obj);
     void slot_onPinDrag(PinDragSignal signal);
     void slot_onPinConnect(PinData outPin, PinData inPin);
     void slot_onPinConnectionBreak(PinData outPin, PinData inPin);
@@ -89,10 +92,10 @@ private:
 // -----------------------------------------------------------
 
 protected:
-    static unsigned int IDgenerator;
+    static IDGenerator _IDgenerator;
 
     const Canvas *_parentCanvas;
-    unsigned int _ID;
+    uint32_t _ID;
     float _zoom;
     QSize _normalSize;
     QPainter *_painter;
