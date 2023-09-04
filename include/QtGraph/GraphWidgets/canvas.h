@@ -44,8 +44,10 @@ public:
     ~Canvas();
 
     // std:: istream and ostream serialization
-    bool serialize(std::fstream *output);
+    bool serialize(std::fstream *output) const;
     bool deserialize(std::fstream *input);
+    bool writeStructure(protocol::Structure *structure) const;
+    bool readStructure(const protocol::Structure *structure);
 
 
     static unsigned int newID() { return IDgenerator++; }

@@ -8,6 +8,7 @@
 #include <QCborValue>
 #include <QCborMap>
 #include <cmath>
+#include <fstream>
 
 #include "GraphWidgets/canvas.h"
 #include "utility.h"
@@ -100,7 +101,7 @@ const QMap<short, float> Canvas::_zoomMultipliers =
 // ------------------------ SERIALIZATION --------------------------
 
 
-bool Canvas::serialize(std::fstream *output)
+bool Canvas::serialize(std::fstream *output) const
 {
     protocol::Data data;
     protocol::State *state = data.mutable_state();
@@ -114,10 +115,29 @@ bool Canvas::serialize(std::fstream *output)
     std::ranges::for_each(_nodes, [state](QSharedPointer<BaseNode> node) {
         node->protocolize(state->add_nodes());
     });
+
+    writeStructure(data.mutable_structure());
+    data.SerializeToOstream(output);
     return true;
 }
 
 bool Canvas::deserialize(std::fstream *input)
+{
+    return true;
+}
+
+bool Canvas::writeStructure(protocol::Structure *structure) const
+{
+    google::protobuf::Map<int32_t, int32_t> *edges = structure->mutable_edges();
+    std::ranges::for_each(_connectedPins.keys(), [this, edges](PinData key){
+        QList<PinData> values = this->_connectedPins.values(key);
+        std::ranges::for_each(values, [edges, &key](PinData &value){
+            edges->insert(key.pinID, value.pinID);
+        });
+    });
+}
+
+bool Canvas::readStructure(const protocol::Structure *structure)
 {
     return true;
 }

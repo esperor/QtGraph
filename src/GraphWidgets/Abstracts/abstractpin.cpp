@@ -35,11 +35,12 @@ AbstractPin::~AbstractPin() { delete _painter; }
 // --------------- SERIALIZATION -------------------
 
 
-void AbstractPin::protocolize(protocol::Pin *pPin)
+void AbstractPin::protocolize(protocol::Pin *pPin) const
 {
     *(pPin->mutable_color()) = convertTo_protocolColor(_color);
     pPin->set_text(_text.toStdString());
     pPin->set_direction((protocol::PinDirection)_data.pinDirection);
+    pPin->set_id(_ID);
 }
 
 

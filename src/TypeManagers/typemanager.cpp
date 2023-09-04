@@ -12,7 +12,7 @@ TypeManager::TypeManager(const TypeManager &other)
     *this = other;
 }
 
-protocol::TypeManager TypeManager::toProtocolTypeManager()
+protocol::TypeManager TypeManager::toProtocolTypeManager() const
 {
     protocol::TypeManager tm;
     *(tm.mutable_filename()) = _filename.toStdString();
