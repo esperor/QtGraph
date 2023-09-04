@@ -17,8 +17,9 @@ class TypedNode : public BaseNode
 public:
     TypedNode(int typeID, Canvas *canvas);
 
-    int getTypeID() const { return _typeID; }
+    void protocolize(protocol::Node *pNode) const override;
 
+    int getTypeID() const { return _typeID; }
     void setTypeID(int newTypeID) { _typeID = newTypeID; }
 
     const NodeTypeManager *getNodeTypeManager() const { return _nodeTypeManager; }

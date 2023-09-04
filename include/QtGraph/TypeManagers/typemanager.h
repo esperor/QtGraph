@@ -27,7 +27,7 @@ public:
     void setFileName(QString name) { _filename = name; }
     const QString &getFileName() const { return _filename; }
 
-    protocol::TypeManager toProtocolTypeManager();
+    protocol::TypeManager toProtocolTypeManager() const;
 
     bool operator!=(const TypeManager &other);
     void operator=(const TypeManager &other);

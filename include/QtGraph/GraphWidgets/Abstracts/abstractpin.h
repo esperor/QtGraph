@@ -38,7 +38,7 @@ public:
     AbstractPin(BaseNode *parent);
     ~AbstractPin();
 
-    void protocolize(protocol::Pin *pPin);
+    void protocolize(protocol::Pin *pPin) const;
 
     void setID(unsigned int newID) { _data.pinID = newID; }
     void setConnected(bool isConnected);

@@ -13,6 +13,12 @@ TypedNode::TypedNode(int typeID, Canvas *canvas)
     , _typeID{ typeID }
 {}
 
+void TypedNode::protocolize(protocol::Node *pNode) const
+{
+    BaseNode::protocolize(pNode);
+    pNode->set_type(_typeID);
+}
+
 int TypedNode::calculateRowsOffset(QPainter *painter) const
 {
     QFont font = standardFont(c_nodeNameSize * _zoom);

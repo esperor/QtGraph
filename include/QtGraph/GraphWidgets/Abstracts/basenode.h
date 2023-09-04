@@ -27,7 +27,7 @@ public:
     BaseNode(Canvas *canvas);
     ~BaseNode();
 
-    virtual void protocolize(protocol::Node *pNode);
+    virtual void protocolize(protocol::Node *pNode) const;
 
 
     static unsigned int newID() { return IDgenerator++; }

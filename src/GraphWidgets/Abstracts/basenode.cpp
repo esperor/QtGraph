@@ -51,7 +51,7 @@ unsigned int BaseNode::IDgenerator = 0;
 // ---------------- SERIALIZATION -----------------
 
 
-void BaseNode::protocolize(protocol::Node *pNode)
+void BaseNode::protocolize(protocol::Node *pNode) const
 {
     *(pNode->mutable_canvas_position()) = convertTo_protocolPointF(_canvasPosition);
     pNode->set_id(_ID);
