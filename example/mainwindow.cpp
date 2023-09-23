@@ -53,6 +53,8 @@ MainWindow::MainWindow(QWidget *parent)
     _menuOptions->addAction(_snapping);
     connect(_snapping, &QAction::triggered, _canvas, &Canvas::toggleSnapping);
 
+    _menuBar->addMenu(_menuOptions);
+
     this->setMenuBar(_menuBar);
 
     QPalette palette(c_paletteDefaultColor);
