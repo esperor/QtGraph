@@ -24,22 +24,34 @@ MainWindow::MainWindow(QWidget *parent)
     _canvas = new Canvas(this);
     setCentralWidget(_canvas);
 
-    _menu = new QMenu("Menu", this);
-
-    _openTypes = new QAction("Load types json", this);
-    _menu->addAction(_openTypes);
-    connect(_openTypes, &QAction::triggered, this, &MainWindow::openTypes);
+    _menuFile = new QMenu("Menu", this);
 
     _save = new QAction("Save", this);
-    _menu->addAction(_save);
+    _menuFile->addAction(_save);
     connect(_save, &QAction::triggered, this, &MainWindow::save);
 
+    _saveAs = new QAction("Save as", this);
+    _menuFile->addAction(_saveAs);
+    connect(_saveAs, &QAction::triggered, this, &MainWindow::save_as);
+
     _open = new QAction("Open saved", this);
-    _menu->addAction(_open);
+    _menuFile->addAction(_open);
     connect(_open, &QAction::triggered, this, &MainWindow::open);
 
+    _menuFile->addSeparator();
+
+    _openTypes = new QAction("Load types json", this);
+    _menuFile->addAction(_openTypes);
+    connect(_openTypes, &QAction::triggered, this, &MainWindow::openTypes);
+
     _menuBar = new QMenuBar(this);
-    _menuBar->addMenu(_menu);
+    _menuBar->addMenu(_menuFile);
+
+    _menuOptions = new QMenu("Options", this);
+
+    _snapping = new QAction("Toggle snapping", this);
+    _menuOptions->addAction(_snapping);
+    connect(_snapping, &QAction::triggered, _canvas, &Canvas::toggleSnapping);
 
     this->setMenuBar(_menuBar);
 
@@ -89,19 +101,41 @@ void MainWindow::openTypes()
     _canvas->setPinTypeManager(pinManager);
 }
 
-void MainWindow::save()
-{  
+std::string MainWindow::getFileName(QFileDialog::FileMode mode)
+{
     QFileDialog dialog(this);
-    dialog.setFileMode(QFileDialog::AnyFile);
+    dialog.setFileMode(mode);
     dialog.setDirectory(QCoreApplication::applicationDirPath());
 
     std::string file;
     if (dialog.exec() && !dialog.selectedFiles().empty())
         file = dialog.selectedFiles()[0].toStdString();
-    else return;
+    else
+        return "";
 
+    return file;
+}
 
-    qDebug() << file;
+void MainWindow::save()
+{
+    std::string file = _associatedFileName.empty() ? getFileName(QFileDialog::AnyFile) : _associatedFileName;
+    internal_save(file);
+    _associatedFileName = file;  
+}
+
+void MainWindow::save_as()
+{
+    std::string file = getFileName(QFileDialog::AnyFile);
+    internal_save(file);
+    if (_associatedFileName.empty())
+        _associatedFileName = file;
+}
+
+void MainWindow::internal_save(std::string file)
+{
+    if (file.empty())
+        return;
+
     std::fstream out(file, std::ios::out | std::ios::trunc | std::ios::binary);
     if (!out.is_open())
     {
@@ -115,11 +149,28 @@ void MainWindow::save()
             qDebug() << "[Example] error serializing";
     }
 
-    _associatedFileName = QString::fromStdString(file);
     out.close();
 }
 
 void MainWindow::open()
 {
-    // TODO
+    std::string file = getFileName(QFileDialog::ExistingFile);
+    if (file.empty())
+        return;
+
+    std::fstream in(file, std::ios::in | std::ios::binary);
+    if (!in.is_open())
+    {
+        // TODO: ui friendly error
+        qDebug() << "[Example] error opening the file";
+    }
+    else
+    {
+        if (!_canvas->deserialize(&in))
+            // TODO: ui friendly error
+            qDebug() << "[Example] error deserializing";
+    }
+
+    _associatedFileName = file;
+    in.close();
 }

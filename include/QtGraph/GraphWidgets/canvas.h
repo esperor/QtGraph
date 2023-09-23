@@ -52,6 +52,8 @@ public:
     QString getPinText(int nodeID, int pinID) const;
     QString getNodeName(int nodeID) const;
 
+    void setSnappingEnabled(bool enabled) { _bIsSnappingEnabled = enabled; }
+    void toggleSnapping() { _bIsSnappingEnabled = !_bIsSnappingEnabled; }
     void setSnappingInterval(int num) { _snappingInterval = num; }
     void setNodeTypeManager(NodeTypeManager *manager);
     void setPinTypeManager(PinTypeManager *manager);
