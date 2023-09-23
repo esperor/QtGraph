@@ -43,11 +43,11 @@ Canvas::Canvas(QWidget *parent)
     , _snappingInterval{ 20 }
     , _bIsSnappingEnabled{ true }
     , _selectionRect{ std::nullopt }
-    , _selectionAreaPreviousNodes{ QSet<int>() }
-    , _nodes{ QMap<int, QSharedPointer<BaseNode>>() }
+    , _selectionAreaPreviousNodes{ QSet<uint32_t>() }
+    , _nodes{ QMap<uint32_t, QSharedPointer<BaseNode>>() }
     , _connectedPins{ QMultiMap<PinData, PinData>() }
     , _typeBrowser{ new TypeBrowser(this) }
-    , _selectedNodes{ QMap<int, QSharedPointer<BaseNode>>() }
+    , _selectedNodes{ QMap<uint32_t, QSharedPointer<BaseNode>>() }
 {
     setMouseTracking(true);
     setAutoFillBackground(true);
@@ -73,8 +73,6 @@ Canvas::~Canvas()
     delete _typeBrowser;
     delete _lastResizedSize;
 }
-
-IDGenerator Canvas::_IDgenerator = IDGenerator(); 
 
 const QMap<short, float> Canvas::_zoomMultipliers =
 {
@@ -119,6 +117,46 @@ bool Canvas::serialize(std::fstream *output) const
 
 bool Canvas::deserialize(std::fstream *input)
 {
+    setUpdatesEnabled(false);
+    protocol::Data data;
+    data.ParseFromIstream(input);
+
+    // canvas
+    protocol::State state = data.state();
+    _nodeTypeManager = NodeTypeManager::fromProtocolTypeManager(state.node_type_manager());
+    _pinTypeManager = PinTypeManager::fromProtocolTypeManager(state.pin_type_manager());
+    _factory->setNodeTypeManager(&_nodeTypeManager);
+    _factory->setPinTypeManager(&_pinTypeManager);
+    _offset = convertFrom_protocolPointF(state.offset());
+    _zoom = state.zoom();
+    _snappingInterval = state.snapping_interval();
+    _bIsSnappingEnabled = state.is_snapping_enabled();
+
+    // nodes
+    std::ranges::for_each(state.nodes(), [this](const protocol::Node &nd){
+        BaseNode *node;
+        if (nd.has_type()) 
+            node = _factory->makeNodeOfType(nd.type(), this);
+        else
+            node = new BaseNode(this);
+
+        if (nd.is_selected())
+            _selectedNodes.insert(nd.id(), QSharedPointer<BaseNode>(node));
+
+        // node automatically gets new id as it's created
+        // that's what we don't need in case of deserialization
+        _IDgenerator.removeTaken(node->ID());
+        node->setID(nd.id());
+        _IDgenerator.addTaken(node->ID());
+
+        node->deprotocolize(nd);
+        addNode(node);
+    });
+
+    // structure
+    readStructure(data.structure());
+
+    setUpdatesEnabled(true);
     return true;
 }
 
@@ -134,8 +172,29 @@ bool Canvas::writeStructure(protocol::Structure *structure) const
     return true;
 }
 
-bool Canvas::readStructure(const protocol::Structure *structure)
+// this function can perhaps be optimized 
+// (but probably not without pain in the ass)
+bool Canvas::readStructure(const protocol::Structure &structure)
 {
+    std::map<uint32_t, uint32_t> pin_node_map = {};
+    int l = _nodes.size();
+    std::ranges::for_each(_nodes, [this, &pin_node_map](const QSharedPointer<BaseNode> node){
+        std::ranges::for_each(node->getPinIDs(), [&node, &pin_node_map](uint32_t id) {
+            BaseNode* n = node.get();
+            pin_node_map.insert({id, n->ID()});
+        });
+    });
+    std::ranges::for_each(structure.edges(), [this, &pin_node_map](std::pair<uint32_t, uint32_t> pair){
+        uint32_t firstNodeID = pin_node_map[pair.first];
+        uint32_t secondNodeID = pin_node_map[pair.second];
+        PinData first = _nodes[firstNodeID]->getPinByID(pair.first)->getData();
+        PinData second = _nodes[secondNodeID]->getPinByID(pair.second)->getData();
+
+        _nodes[firstNodeID]->setPinConnection(pair.first, second);
+        _nodes[secondNodeID]->setPinConnected(pair.second, true);
+        _connectedPins.insert(first, second);
+        
+    });
     return true;
 }
 
@@ -143,11 +202,11 @@ bool Canvas::readStructure(const protocol::Structure *structure)
 // ---------------------- GENERAL FUNCTIONS ---------------------------
 
 
-QString Canvas::getPinText(int nodeID, int pinID) const
+QString Canvas::getPinText(uint32_t nodeID, uint32_t pinID) const
 {
     return _nodes[nodeID]->getPinByID(pinID)->getText();
 }
-QString Canvas::getNodeName(int nodeID) const
+QString Canvas::getNodeName(uint32_t nodeID) const
 {
     return _nodes[nodeID]->getName();
 }
@@ -344,7 +403,7 @@ void Canvas::onPinDrag(PinDragSignal signal)
     }
 }
 
-void Canvas::onNodeSelect(bool bIsMultiSelectionModifierDown, int nodeID)
+void Canvas::onNodeSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID)
 {
     _selectedNodes.insert(nodeID, _nodes[nodeID]);
 
@@ -356,7 +415,7 @@ void Canvas::onNodeSelect(bool bIsMultiSelectionModifierDown, int nodeID)
         ptr->setSelected(false);
     });
 
-    _selectedNodes.removeIf([&](QMap<int, QSharedPointer<BaseNode>>::iterator &it){
+    _selectedNodes.removeIf([&](QMap<uint32_t, QSharedPointer<BaseNode>>::iterator &it){
         return it.value()->ID() != nodeID;
     });
 }
@@ -371,8 +430,9 @@ QWeakPointer<BaseNode> Canvas::addBaseNode(QPoint canvasPosition, QString name)
 
 QWeakPointer<BaseNode> Canvas::addNode(BaseNode *node)
 {
-    int id = node->ID();
+    uint32_t id = node->ID();
 
+    node->setFactory(_factory.get());
     _nodes.insert(id, QSharedPointer<BaseNode>(node));
     _nodes[id]->show();
 
@@ -387,19 +447,19 @@ QWeakPointer<BaseNode> Canvas::addNode(BaseNode *node)
 
 QWeakPointer<BaseNode> Canvas::addTypedNode(QPoint canvasPosition, int typeID)
 {
-    TypedNode *node = _factory->getNodeOfType(typeID, this);
+    TypedNode *node = _factory->makeNodeAndPinsOfType(typeID, this);
     node->setCanvasPosition(canvasPosition);
     return addNode(node);
 }
 
 void Canvas::deleteNode(QSharedPointer<BaseNode> &ptr)
 {
-    int id = ptr->ID();
+    uint32_t id = ptr->ID();
     if (ptr->hasPinConnections())
     {
-        QSharedPointer< QMap<int, QVector<PinData> > > connections = ptr->getPinConnections();
-        std::ranges::for_each(connections->asKeyValueRange(), [&](std::pair<const int&, QVector<PinData>&> pair){
-            int id = pair.first;
+        QSharedPointer< QMap<uint32_t, QVector<PinData> > > connections = ptr->getPinConnections();
+        std::ranges::for_each(connections->asKeyValueRange(), [&](std::pair<const uint32_t&, QVector<PinData>&> pair){
+            uint32_t id = pair.first;
             std::ranges::for_each(pair.second, [&](PinData connectedPin){
                 _nodes[connectedPin.nodeID]->removePinConnection(connectedPin.pinID, id);
 

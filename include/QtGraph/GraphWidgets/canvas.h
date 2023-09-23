@@ -40,17 +40,17 @@ public:
     bool serialize(std::fstream *output) const;
     bool deserialize(std::fstream *input);
     bool writeStructure(protocol::Structure *structure) const;
-    bool readStructure(const protocol::Structure *structure);
+    bool readStructure(const protocol::Structure &structure);
 
 
-    static uint32_t newID() { return _IDgenerator.generate(); }
+    uint32_t newID() { return _IDgenerator.generate(); }
 
     float getZoomMultiplier() const     { return _zoomMultipliers[_zoom]; }
     bool getSnappingEnabled() const     { return _bIsSnappingEnabled; }
     int getSnappingInterval() const     { return _snappingInterval; }
     const QPointF &getOffset() const    { return _offset; }
-    QString getPinText(int nodeID, int pinID) const;
-    QString getNodeName(int nodeID) const;
+    QString getPinText(uint32_t nodeID, uint32_t pinID) const;
+    QString getNodeName(uint32_t nodeID) const;
 
     void setSnappingEnabled(bool enabled) { _bIsSnappingEnabled = enabled; }
     void toggleSnapping() { _bIsSnappingEnabled = !_bIsSnappingEnabled; }
@@ -97,7 +97,7 @@ protected:
 
 private slots:
     void onNodeDestroyed(QObject *obj);
-    void onNodeSelect(bool bIsMultiSelectionModifierDown, int nodeID);
+    void onNodeSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID);
     void onPinDrag(PinDragSignal signal);
     void onPinConnect(PinData outPin, PinData inPin);
     void onPinConnectionBreak(PinData outPin, PinData inPin);
@@ -111,7 +111,7 @@ private:
     void deleteNode(QSharedPointer<BaseNode> &ptr);
     void processSelectionArea(const QMouseEvent *event);
 
-    static IDGenerator _IDgenerator;
+    IDGenerator _IDgenerator = IDGenerator();
 
     QSharedPointer<NodeFactoryModule::NodeFactory> _factory;
     NodeTypeManager _nodeTypeManager;
@@ -134,15 +134,15 @@ private:
     int _snappingInterval;
     bool _bIsSnappingEnabled;
     std::optional<QRect> _selectionRect;
-    QSet<int> _selectionAreaPreviousNodes;
+    QSet<uint32_t> _selectionAreaPreviousNodes;
 
-    QMap<int, QSharedPointer<BaseNode>> _nodes;
+    QMap<uint32_t, QSharedPointer<BaseNode>> _nodes;
 
     // Key for _connectedPins is an out-pin and the value is an in-pin
     QMultiMap<PinData, PinData> _connectedPins;
     QTimer *_timer;
     NodeFactoryModule::TypeBrowser *_typeBrowser;
-    QMap<int, QSharedPointer<BaseNode>> _selectedNodes;
+    QMap<uint32_t, QSharedPointer<BaseNode>> _selectedNodes;
 
     const static QMap<short, float> _zoomMultipliers;
 
