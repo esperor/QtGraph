@@ -3,6 +3,7 @@
 #include <QMainWindow>
 #include <QObject>
 #include <QTimer>
+#include <QFileDialog>
 
 #include "QtGraph/GraphLib.h"
 #include "QtGraph/GraphWidgets/canvas.h"
@@ -28,16 +29,19 @@ protected:
 private:
     void openTypes();
     void save();
+    void save_as();
+    void internal_save(std::string file);
     void open();
+    std::string getFileName(QFileDialog::FileMode mode);
 
-    QString _associatedFileName = "";
+    std::string _associatedFileName = "";
 
     Ui::MainWindow *ui;
     GraphLib::Canvas *_canvas;
     QTimer *_timer;
 
-    QAction *_openTypes, *_save, *_open;
-    QMenu *_menu;
+    QAction *_openTypes, *_save, *_saveAs, *_open, *_snapping;
+    QMenu *_menuFile, *_menuOptions;
     QMenuBar *_menuBar;
 };
 
