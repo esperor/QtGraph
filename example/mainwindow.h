@@ -26,12 +26,18 @@ protected:
     void focusInEvent(QFocusEvent *) override;
 
 private:
+    void openTypes();
+    void save();
+    void open();
+
+    QString _associatedFileName = "";
+
     Ui::MainWindow *ui;
     GraphLib::Canvas *_canvas;
     QTimer *_timer;
 
-    QAction *openTypes;
-    QMenu *menu;
-    QMenuBar *bar;
+    QAction *_openTypes, *_save, *_open;
+    QMenu *_menu;
+    QMenuBar *_menuBar;
 };
 
