@@ -123,10 +123,8 @@ bool Canvas::deserialize(std::fstream *input)
 
     // canvas
     protocol::State state = data.state();
-    _nodeTypeManager = NodeTypeManager::fromProtocolTypeManager(state.node_type_manager());
-    _pinTypeManager = PinTypeManager::fromProtocolTypeManager(state.pin_type_manager());
-    _factory->setNodeTypeManager(&_nodeTypeManager);
-    _factory->setPinTypeManager(&_pinTypeManager);
+    setNodeTypeManager(NodeTypeManager::fromProtocolTypeManager(state.node_type_manager()));
+    setPinTypeManager(PinTypeManager::fromProtocolTypeManager(state.pin_type_manager()));
     _offset = convertFrom_protocolPointF(state.offset());
     _zoom = state.zoom();
     _snappingInterval = state.snapping_interval();
@@ -140,9 +138,6 @@ bool Canvas::deserialize(std::fstream *input)
         else
             node = new BaseNode(this);
 
-        if (nd.is_selected())
-            _selectedNodes.insert(nd.id(), QSharedPointer<BaseNode>(node));
-
         // node automatically gets new id as it's created
         // that's what we don't need in case of deserialization
         _IDgenerator.removeTaken(node->ID());
@@ -151,6 +146,9 @@ bool Canvas::deserialize(std::fstream *input)
 
         node->deprotocolize(nd);
         addNode(node);
+
+        if (nd.is_selected())
+            _selectedNodes.insert(nd.id(), _nodes[nd.id()]);
     });
 
     // structure
@@ -165,9 +163,11 @@ bool Canvas::writeStructure(protocol::Structure *structure) const
     auto *edges = structure->mutable_edges();
     std::ranges::for_each(_connectedPins.keys(), [this, edges](PinData key){
         QList<PinData> values = this->_connectedPins.values(key);
-        std::ranges::for_each(values, [edges, &key](PinData &value){
-            (*edges)[key.pinID] = value.pinID;
-        });
+
+        protocol::IntArray arr;
+        std::ranges::for_each(values, [&arr](PinData &value){ arr.add_elements(value.pinID); });
+
+        (*edges)[key.pinID] = arr;
     });
     return true;
 }
@@ -180,20 +180,21 @@ bool Canvas::readStructure(const protocol::Structure &structure)
     int l = _nodes.size();
     std::ranges::for_each(_nodes, [this, &pin_node_map](const QSharedPointer<BaseNode> node){
         std::ranges::for_each(node->getPinIDs(), [&node, &pin_node_map](uint32_t id) {
-            BaseNode* n = node.get();
-            pin_node_map.insert({id, n->ID()});
+            pin_node_map.insert({id, node->ID()});
         });
     });
-    std::ranges::for_each(structure.edges(), [this, &pin_node_map](std::pair<uint32_t, uint32_t> pair){
+    std::ranges::for_each(structure.edges(), [this, &pin_node_map](std::pair<uint32_t, protocol::IntArray> pair){
         uint32_t firstNodeID = pin_node_map[pair.first];
-        uint32_t secondNodeID = pin_node_map[pair.second];
         PinData first = _nodes[firstNodeID]->getPinByID(pair.first)->getData();
-        PinData second = _nodes[secondNodeID]->getPinByID(pair.second)->getData();
 
-        _nodes[firstNodeID]->setPinConnection(pair.first, second);
-        _nodes[secondNodeID]->setPinConnected(pair.second, true);
-        _connectedPins.insert(first, second);
-        
+        // this is awful
+        std::ranges::for_each(*pair.second.mutable_elements(), [this, &pair, &pin_node_map, &firstNodeID, &first](uint32_t &id){
+            uint32_t secondNodeID = pin_node_map[id];
+            _nodes[secondNodeID]->setPinConnected(id, true);
+            PinData second = _nodes[secondNodeID]->getPinByID(id)->getData();
+            _nodes[firstNodeID]->setPinConnection(pair.first, second);
+            _connectedPins.insert(first, second);
+        });
     });
     return true;
 }
@@ -309,6 +310,7 @@ void Canvas::setPinTypeManager(PinTypeManager *manager)
     _pinTypeManager = *manager;
     _factory->setPinTypeManager(manager);
     _typeBrowser->_pinTypeManager = &_pinTypeManager;
+
 }
 
 

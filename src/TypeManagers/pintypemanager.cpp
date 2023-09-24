@@ -38,11 +38,11 @@ bool PinTypeManager::operator!=(const PinTypeManager &other)
            && this->_filename == other.getFileName();
 }
 
-PinTypeManager PinTypeManager::fromProtocolTypeManager(const protocol::TypeManager &tm)
+PinTypeManager *PinTypeManager::fromProtocolTypeManager(const protocol::TypeManager &tm)
 {
-    PinTypeManager ptm;
+    PinTypeManager *ptm = new PinTypeManager;
 
-    ptm.readTypes(QString::fromStdString(tm.filename()));
+    ptm->readTypes(QString::fromStdString(tm.filename()));
 
     return ptm;
 }

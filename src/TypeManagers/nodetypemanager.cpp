@@ -38,11 +38,11 @@ bool NodeTypeManager::operator!=(const NodeTypeManager &other)
            && this->_filename == other.getFileName();
 }
 
-NodeTypeManager NodeTypeManager::fromProtocolTypeManager(const protocol::TypeManager &tm)
+NodeTypeManager *NodeTypeManager::fromProtocolTypeManager(const protocol::TypeManager &tm)
 {
-    NodeTypeManager ntm;
+    NodeTypeManager *ntm = new NodeTypeManager;
 
-    ntm.readTypes(QString::fromStdString(tm.filename()));
+    ntm->readTypes(QString::fromStdString(tm.filename()));
 
     return ntm;
 }
