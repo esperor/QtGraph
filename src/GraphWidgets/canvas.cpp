@@ -184,15 +184,13 @@ bool Canvas::readStructure(const protocol::Structure &structure)
         });
     });
     std::ranges::for_each(structure.edges(), [this, &pin_node_map](std::pair<uint32_t, protocol::IntArray> pair){
-        uint32_t firstNodeID = pin_node_map[pair.first];
-        PinData first = _nodes[firstNodeID]->getPinByID(pair.first)->getData();
+        PinData first = _nodes[pin_node_map[pair.first]]->getPinByID(pair.first)->getData();
 
-        // this is awful
-        std::ranges::for_each(*pair.second.mutable_elements(), [this, &pair, &pin_node_map, &firstNodeID, &first](uint32_t &id){
-            uint32_t secondNodeID = pin_node_map[id];
-            _nodes[secondNodeID]->setPinConnected(id, true);
-            PinData second = _nodes[secondNodeID]->getPinByID(id)->getData();
-            _nodes[firstNodeID]->setPinConnection(pair.first, second);
+        std::ranges::for_each(*pair.second.mutable_elements(), 
+        [this, &pin_node_map, &first](uint32_t &id){
+            PinData second = _nodes[pin_node_map[id]]->getPinByID(id)->getData();
+            _nodes[second.nodeID]->setPinConnection(second.pinID, first);  
+            _nodes[first.nodeID]->setPinConnection(first.pinID, second);
             _connectedPins.insert(first, second);
         });
     });
