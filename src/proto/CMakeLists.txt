@@ -11,6 +11,8 @@ add_library(protos OBJECT
     structure.proto
 )
 
+file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/protos_generated)
+
 set_property(TARGET protos PROPERTY
     MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
@@ -25,4 +27,5 @@ protobuf_generate(
     LANGUAGE cpp
     IMPORT_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
     PROTOC_OUT_DIR ${PROTO_BINARY_DIR}
+    DEPENDS protos_generated
 )

@@ -11,8 +11,10 @@
 #include <QVector>
 #include <QTimer>
 #include <QWheelEvent>
+
 #include <optional>
 #include <variant>
+#include <cstdint>
 
 #include "QtGraph/NodeFactoryModule/nodefactory.h"
 #include "QtGraph/NodeFactoryModule/typebrowser.h"
