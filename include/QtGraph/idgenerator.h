@@ -1,6 +1,7 @@
 #pragma once
 
 #include <set>
+#include <cstdint>
 
 namespace GraphLib {
 
