@@ -10,6 +10,8 @@
 #include <QFontMetrics>
 #include <QMap>
 
+#include <cstdint>
+
 #include "QtGraph/GraphWidgets/Abstracts/abstractpin.h"
 #include "QtGraph/GraphLib.h"
 #include "QtGraph/idgenerator.h"

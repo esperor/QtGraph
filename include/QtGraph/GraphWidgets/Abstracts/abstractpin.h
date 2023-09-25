@@ -14,6 +14,8 @@
 #include <QDropEvent>
 #include <QMenu>
 
+#include <cstdint>
+
 #include "QtGraph/GraphLib.h"
 #include "QtGraph/DataClasses/pindata.h"
 #include "QtGraph/DataClasses/pindragsignal.h"
