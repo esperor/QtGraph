@@ -26,8 +26,8 @@ BaseNode::BaseNode(Canvas *canvas)
     , _lastMouseDownPosition{ QPointF(0, 0) }
     , _mousePressPosition{ QPointF(0, 0) }
     , _name{ QString("") }
-    , _pinsOutlineCoords{ QMap<int, QPoint>() }
-    , _pins{ QMap<int, AbstractPin*>() }
+    , _pinsOutlineCoords{ QMap<uint32_t, QPoint>() }
+    , _pins{ QMap<uint32_t, AbstractPin*>() }
 {
     _normalSize.setWidth(200);
     _normalSize.setHeight(150);
@@ -62,17 +62,42 @@ void BaseNode::protocolize(protocol::Node *pNode) const
     });
 }
 
+void BaseNode::deprotocolize(const protocol::Node &pNode)
+{
+    setSelected(pNode.is_selected());
+    setCanvasPosition(convertFrom_protocolPointF(pNode.canvas_position()));
+    setName(QString::fromStdString(pNode.name()));
+
+    std::ranges::for_each(pNode.pins(), [this](const protocol::Pin &pn){
+        AbstractPin *pin;
+
+        // if (pn.has_type())
+        //     pin = new Pin(this);
+        // else
+        pin = new Pin(this);
+
+        // pin automatically gets new id as it's created
+        // that's what we don't need in case of deserialization
+        _IDgenerator.removeTaken(pin->ID());
+        pin->setID(pn.id());
+        _IDgenerator.addTaken(pin->ID());
+
+        pin->deprotocolize(pn);
+        addPin(pin);
+    });
+}
+
 
 // ------------------- GENERAL --------------------
 
 
-void BaseNode::setPinConnection(int pinID, PinData connectedPin)
+void BaseNode::setPinConnection(uint32_t pinID, PinData connectedPin)
 {
     _pins[pinID]->setConnected(true);
     _pins[pinID]->addConnectedPin(connectedPin);
 }
 
-void BaseNode::setPinConnected(int pinID, bool isConnected)
+void BaseNode::setPinConnected(uint32_t pinID, bool isConnected)
 {
     _pins[pinID]->setConnected(isConnected);
 }
@@ -97,16 +122,16 @@ bool BaseNode::hasPinConnections() const
     });
 }
 
-QSharedPointer< QMap<int, QVector<PinData> > > BaseNode::getPinConnections() const
+QSharedPointer< QMap<uint32_t, QVector<PinData> > > BaseNode::getPinConnections() const
 {
-    auto out = QSharedPointer<QMap<int, QVector<PinData> >>(new QMap<int, QVector<PinData> >());
+    auto out = QSharedPointer<QMap<uint32_t, QVector<PinData> >>(new QMap<uint32_t, QVector<PinData> >());
     std::ranges::for_each(_pins, [&](AbstractPin *pin){
         out->insert(pin->ID(), pin->getConnectedPins());
     });
     return out;
 }
 
-void BaseNode::removePinConnection(int pinID, int connectedPinID)
+void BaseNode::removePinConnection(uint32_t pinID, uint32_t connectedPinID)
 {
     _pins[pinID]->removeConnectedPinByID(connectedPinID);
 }
@@ -135,7 +160,7 @@ void BaseNode::addPin(AbstractPin *pin)
 void BaseNode::addPin(QString text, PinDirection direction, QColor color)
 {
     Pin *newPin = new Pin(this);
-    int id = newPin->ID();
+    uint32_t id = newPin->ID();
     
     _pinsOutlineCoords.insert(id, QPoint(0, 0));
     newPin->setColor(color);
