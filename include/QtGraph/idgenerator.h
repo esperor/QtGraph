@@ -1,6 +1,7 @@
 #pragma once
 
 #include <set>
+#include <cstdint>
 
 namespace GraphLib {
 
@@ -12,7 +13,12 @@ public:
     const std::set<uint32_t> &getTakenIDs();
 
     uint32_t generate();
+
+    // returns false if nothing was removed
     bool removeTaken(uint32_t id);
+
+    // returns false if given id is already taken
+    bool addTaken(uint32_t id);
 
 private:
     std::set<uint32_t> _takenIDs = {};

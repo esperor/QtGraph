@@ -30,4 +30,10 @@ bool IDGenerator::removeTaken(uint32_t id)
     return _takenIDs.erase(id);
 }
 
+bool IDGenerator::addTaken(uint32_t id)
+{
+    if (_takenIDs.contains(id)) return false;
+    _takenIDs.insert(id);
+    return true;
+}
 }

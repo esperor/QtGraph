@@ -1,5 +1,7 @@
 project(QtGraph)
 
+file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/protos_generated)
+
 add_library(protos OBJECT 
     state.proto
     node.proto
@@ -11,12 +13,12 @@ add_library(protos OBJECT
     structure.proto
 )
 
+set(PROTO_BINARY_DIR ${CMAKE_SOURCE_DIR}/protos_generated)
+
 set_property(TARGET protos PROPERTY
     MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 target_link_libraries(protos PUBLIC protobuf::libprotobuf)
-
-set(PROTO_BINARY_DIR ${CMAKE_SOURCE_DIR}/protos_generated)
 
 target_include_directories(protos PUBLIC $<BUILD_INTERFACE:${PROTO_BINARY_DIR}>)
 

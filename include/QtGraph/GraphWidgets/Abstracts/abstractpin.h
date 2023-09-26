@@ -14,6 +14,8 @@
 #include <QDropEvent>
 #include <QMenu>
 
+#include <cstdint>
+
 #include "QtGraph/GraphLib.h"
 #include "QtGraph/DataClasses/pindata.h"
 #include "QtGraph/DataClasses/pindragsignal.h"
@@ -38,7 +40,8 @@ public:
     AbstractPin(BaseNode *parent);
     ~AbstractPin();
 
-    void protocolize(protocol::Pin *pPin) const;
+    virtual void protocolize(protocol::Pin *pPin) const;
+    virtual void deprotocolize(const protocol::Pin &pPin);
 
     void setID(uint32_t newID) { _data.pinID = newID; }
     void setConnected(bool isConnected);
@@ -62,7 +65,6 @@ public:
     QPixmap getPixmap() const;
     PinData getData() const;
 
-    // int here is pinID of connected pin
     QVector<PinData> getConnectedPins() const { return _connectedPins.values(); }
 
     static bool static_isInPin(const AbstractPin *pin) { return pin->getDirection() == PinDirection::In; }
@@ -87,6 +89,7 @@ private:
     void startDrag();
     void showContextMenu(const QMouseEvent *event);
 
+protected:
     BaseNode *_parentNode;
     PinData _data;
     QColor _color;
@@ -94,7 +97,7 @@ private:
     bool _bIsConnected;
     QString _text;
     QPoint _center;
-    // int here is pinID of connected pin
+    // uint32_t here is pinID of connected pin
     QMap<uint32_t, PinData> _connectedPins;
     QMap<int, QAction*> _breakConnectionActions;
 

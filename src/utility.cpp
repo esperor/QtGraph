@@ -92,6 +92,11 @@ protocol::type::Color convertTo_protocolColor(const QColor &color)
     return clr;
 }
 
+QColor convertFrom_protocolColor(const protocol::type::Color &color)
+{
+    return QColor(color.red(), color.green(), color.blue(), color.alpha());
+}
+
 protocol::type::Point convertTo_protocolPoint(const QPoint &point)
 {
     protocol::type::Point ret;
@@ -100,12 +105,22 @@ protocol::type::Point convertTo_protocolPoint(const QPoint &point)
     return ret;
 }
 
+QPoint convertFrom_protocolPoint(const protocol::type::Point &point)
+{
+    return QPoint(point.x(), point.y());
+}
+
 protocol::type::PointF convertTo_protocolPointF(const QPointF &point)
 {
     protocol::type::PointF ret;
     ret.set_x(point.x());
     ret.set_y(point.y());
     return ret;
+}
+
+QPointF convertFrom_protocolPointF(const protocol::type::PointF &point)
+{
+    return QPointF(point.x(), point.y());
 }
 
 namespace NodeFactoryModule {

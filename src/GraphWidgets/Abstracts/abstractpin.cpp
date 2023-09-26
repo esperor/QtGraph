@@ -43,6 +43,13 @@ void AbstractPin::protocolize(protocol::Pin *pPin) const
     pPin->set_id(_data.pinID);
 }
 
+void AbstractPin::deprotocolize(const protocol::Pin &pPin)
+{
+    setColor(convertFrom_protocolColor(pPin.color()));
+    setText(QString::fromStdString(pPin.text()));
+    setDirection((PinDirection)pPin.direction());
+}
+
 
 // ------------------- GENERAL ---------------------
 
@@ -132,7 +139,7 @@ void AbstractPin::showContextMenu(const QMouseEvent *event)
     if (!_connectedPins.isEmpty())
     {
         QMenu *breakMenu = _contextMenu.addMenu("Break connnection");
-        std::ranges::for_each(_connectedPins.asKeyValueRange(), [&](const std::pair<int, PinData> &pair){
+        std::ranges::for_each(_connectedPins.asKeyValueRange(), [&](const std::pair<uint32_t, PinData> &pair){
             QString nodeName = _parentNode->getParentCanvas()->getNodeName(pair.second.nodeID);
             breakMenu->addAction(new QAction("to " + nodeName, breakMenu));
             QAction *action = breakMenu->actions().last();
@@ -186,7 +193,7 @@ void AbstractPin::dragEnterEvent(QDragEnterEvent *event)
     {
         PinData data = PinData::fromByteArray(event->mimeData()->data(c_mimeFormatForPinConnection));
         PinDirection sourceDirection = data.pinDirection;
-        int sourceNodeID = data.nodeID;
+        uint32_t sourceNodeID = data.nodeID;
         if (sourceDirection != _data.pinDirection && sourceNodeID != _parentNode->ID())
         {
             event->setDropAction(Qt::LinkAction);

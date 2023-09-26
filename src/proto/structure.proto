@@ -2,6 +2,10 @@ syntax = "proto3";
 
 package protocol;
 
+message IntArray {
+    repeated uint32 elements = 1;
+}
+
 message Structure {
-    map<uint32, uint32> edges = 1;
+    map<uint32, IntArray> edges = 1;
 }
