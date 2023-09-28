@@ -12,21 +12,18 @@
 #include "QtGraph/NodeFactoryModule/nodefactory.h"
 #include "QtGraph/TypeManagers/nodetypemanager.h"
 #include "QtGraph/TypeManagers/pintypemanager.h"
-#include "QtGraph/GraphLib.h"
-#include "QtGraph/GraphWidgets/Abstracts/abstractpin.h"
 #include "QtGraph/DataClasses/nodespawndata.h"
 #include "QtGraph/utility.h"
 #include "QtGraph/idgenerator.h"
-
-#include "pin.pb.h"
+#include "QtGraph/GraphLib.h"
 
 using namespace testing;
 using namespace GraphLib;
 
-class TestTypeManagers : public ::testing::Test
+class TypeManagers : public ::testing::Test
 {
 protected:
-    TestTypeManagers() {}
+    TypeManagers() {}
 
     void SetUp() override
     {
@@ -43,7 +40,9 @@ protected:
     PinTypeManager _PinTypeManager;
 };
 
-TEST(TestPinData, ByteArrayConversions)
+
+
+TEST(PinData, ByteArrayConversions)
 {
     PinData first(PinDirection::In, 5, 6);
     QByteArray arr = first.toByteArray();
@@ -56,7 +55,7 @@ TEST(TestPinData, ByteArrayConversions)
     EXPECT_EQ(first, second);
 }
 
-TEST(TestNodeSpawnData, ByteArrayConversions)
+TEST(NodeSpawnData, ByteArrayConversions)
 {
     QString str("Text");
     NodeSpawnData first(str);
@@ -70,7 +69,7 @@ TEST(TestNodeSpawnData, ByteArrayConversions)
     EXPECT_EQ(third, fourth);
 }
 
-TEST(TestUtility, Snapping)
+TEST(Utility, Snapping)
 {
     auto pointToString = [](QPoint point) {
         return std::to_string(point.x()) + ", " + std::to_string(point.y());
@@ -96,7 +95,7 @@ TEST(TestUtility, Snapping)
     });
 }
 
-TEST(TestUtility, IDGeneration)
+TEST(Utility, IDGeneration)
 {
     IDGenerator gen;
     EXPECT_EQ(0, gen.generate());
@@ -113,7 +112,7 @@ TEST(TestUtility, IDGeneration)
     EXPECT_EQ(0, gen.generate());
 }
 
-TEST_F(TestTypeManagers, JsonParsing)
+TEST_F(TypeManagers, JsonParsing)
 {
     int node_types = 6;
     int pin_types = 5;
@@ -122,7 +121,7 @@ TEST_F(TestTypeManagers, JsonParsing)
     EXPECT_EQ(pin_types, _PinTypeManager.Types().size()) << "Expected " << pin_types << " and got " << _PinTypeManager.Types().size() << " pin types.";
 }
 
-TEST_F(TestTypeManagers, Properties)
+TEST_F(TypeManagers, Properties)
 {
     EXPECT_EQ("power", _PinTypeManager.Types().at(0).value("name").toString());
     EXPECT_EQ(0, _PinTypeManager.TypeNames()["power"]);
@@ -131,7 +130,7 @@ TEST_F(TestTypeManagers, Properties)
     EXPECT_EQ(0, _NodeTypeManager.TypeNames()["Socket"]);
 }
 
-TEST(TestNodeFactory, ParseToColor)
+TEST(NodeFactory, ParseToColor)
 {
     auto check = [](QString str, int r, int g, int b) {
         QColor clr = NodeFactoryModule::parseToColor(str);
@@ -149,13 +148,5 @@ TEST(TestNodeFactory, ParseToColor)
     check(str2, 0x2F, 0x03, 0xDD);
     QString str3("FFFFFF");
     check(str3, 0xFF, 0xFF, 0xFF);
-}
-
-TEST(TestProtocolization, PinDirectionCompatibility)
-{
-    PinDirection dir = PinDirection::In;
-    protocol::PinDirection p_dir = (protocol::PinDirection)dir;
-
-    EXPECT_EQ(p_dir, protocol::PinDirection::IN);
 }
 

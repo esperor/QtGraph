@@ -22,7 +22,8 @@ enable_testing()
 
 qt_add_executable(tests 
     main.cpp
-    tst_maincase.cpp    
+    tst_main.cpp
+    tst_protobuf.cpp    
 )
 
 set_property(TARGET tests PROPERTY
