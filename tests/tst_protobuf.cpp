@@ -73,7 +73,7 @@ TEST_F(Protocolization, NodesData)
     EXPECT_EQ(canvas->getNodeName(node2_id), "Node");
 }
 
-TEST_F(Protocolization PinsData)
+TEST_F(Protocolization, PinsData)
 {
     EXPECT_EQ(canvas[node1_id][pin1_id]->getText() == "pin1");
 }
