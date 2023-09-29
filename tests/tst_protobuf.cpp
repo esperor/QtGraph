@@ -27,7 +27,7 @@ protected:
         pin1_id = node1->addPin("pin1", PinDirection::Out);
         pin2_id = node2->addPin("pin2", PinDirection::In);
         canvas->addConnection(node1[pin1_id]->getData(), node2[pin2_id]->getData());
-        structure = canvas->getStucture();
+        structure = canvas->getStructure();
         file = "test_protocolization.graph";
     }
 
@@ -73,7 +73,7 @@ TEST_F(Protocolization, NodesData)
     EXPECT_EQ(canvas->getNodeName(node2_id), "Node");
 }
 
-TEST_F(Protocolization PinsData)
+TEST_F(Protocolization, PinsData)
 {
     EXPECT_EQ(canvas[node1_id][pin1_id]->getText() == "pin1");
 }
