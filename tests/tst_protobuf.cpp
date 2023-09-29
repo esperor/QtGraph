@@ -8,6 +8,7 @@
 #include <fstream>
 
 #include "pin.pb.h"
+#include "structure.pb.h"
 
 using namespace testing;
 using namespace GraphLib;
@@ -19,10 +20,14 @@ protected:
     void SetUp() override 
     {
         canvas = new Canvas();
-        auto node1 = canvas->addBaseNode(QPoint(0, 10), "Node");
-        auto node2 = canvas->addBaseNode(QPoint(100, 100), "Node");
-        node1_id = node1.toStrongRef()->ID();
-        node2_id = node2.toStrongRef()->ID();
+        auto node1 = canvas->addBaseNode(QPoint(0, 10), "Node").toStrongRef();
+        auto node2 = canvas->addBaseNode(QPoint(100, 100), "Node").toStrongRef();
+        node1_id = node1->ID();
+        node2_id = node2->ID();
+        pin1_id = node1->addPin("pin1", PinDirection::Out);
+        pin2_id = node2->addPin("pin2", PinDirection::In);
+        canvas->addConnection(node1[pin1_id]->getData(), node2[pin2_id]->getData());
+        structure = canvas->getStucture();
         file = "test_protocolization.graph";
     }
 
@@ -33,7 +38,8 @@ protected:
 
     Canvas *canvas;
     std::string file;
-    uint32_t node1_id, node2_id;
+    uint32_t node1_id, node2_id, pin1_id, pin2_id;
+    protocol::Structure structure;
 };
 
 TEST_F(Protocolization, PinDirectionCompatibility)
@@ -65,4 +71,14 @@ TEST_F(Protocolization, NodesData)
 {
     EXPECT_EQ(canvas->getNodeName(node1_id), "Node");
     EXPECT_EQ(canvas->getNodeName(node2_id), "Node");
+}
+
+TEST_F(Protocolization PinsData)
+{
+    EXPECT_EQ(canvas[node1_id][pin1_id]->getText() == "pin1");
+}
+
+TEST_F(Protocolization, StructureData)
+{
+    EXPECT_EQ(canvas->getStructure(), structure);
 }
