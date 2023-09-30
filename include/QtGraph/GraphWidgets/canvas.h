@@ -47,13 +47,22 @@ public:
 
     uint32_t newID() { return _IDgenerator.generate(); }
 
+    std::optional<QWeakPointer<BaseNode>> operator[](uint32_t id);
+
+    // Alias for [id]
+    inline std::optional<QWeakPointer<BaseNode>> node(uint32_t id) { return this->operator[](id); }
     float getZoomMultiplier() const     { return _zoomMultipliers[_zoom]; }
     bool getSnappingEnabled() const     { return _bIsSnappingEnabled; }
     int getSnappingInterval() const     { return _snappingInterval; }
     const QPointF &getOffset() const    { return _offset; }
+    bool doesPinExist(PinData) const;
+    bool doesNodeExist(uint32_t nodeID) const { return _nodes.contains(nodeID); }
     QString getPinText(uint32_t nodeID, uint32_t pinID) const;
+    inline QString getPinText(PinData data) const { return getPinText(data.nodeID, data.pinID); }
     QString getNodeName(uint32_t nodeID) const;
+    protocol::Structure getStructure() const;
 
+    bool addConnection(PinData from, PinData to);
     void setSnappingEnabled(bool enabled) { _bIsSnappingEnabled = enabled; }
     void toggleSnapping() { _bIsSnappingEnabled = !_bIsSnappingEnabled; }
     void setSnappingInterval(int num) { _snappingInterval = num; }
