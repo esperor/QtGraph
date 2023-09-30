@@ -38,6 +38,10 @@ public:
     // Static function! Returns taken id's for ALL THE NODES
     static const std::set<uint32_t> &getTakenPinIDs() { return _IDgenerator.getTakenIDs(); }
 
+    std::optional<QWeakPointer<AbstractPin>> operator[](uint32_t id); 
+
+    // Alias for [id]
+    inline std::optional<QWeakPointer<AbstractPin>> pin(uint32_t id) { return this->operator[](id); }; 
     const QPointF &canvasPosition() const { return _canvasPosition; }
     uint32_t ID() const { return _ID; }
     const QSize &normalSize() const { return _normalSize; }
@@ -47,10 +51,12 @@ public:
     bool hasPinConnections() const;
     QSharedPointer< QMap<uint32_t, QVector<PinData> > > getPinConnections() const;
     QList<uint32_t> getPinIDs() const { return _pins.keys(); }
+    // Insecure getter, use [] for secure approach
     const AbstractPin *getPinByID(uint32_t pinID) const { return _pins[pinID]; }
     QRect getMappedRect() const;
     const Canvas *getParentCanvas() const { return _parentCanvas; }
     const QString &getName() const { return _name; }
+    bool doesPinExist(uint32_t id) const { return _pins.contains(id); };
 
     void setFactory(NodeFactoryModule::NodeFactory *factory) { _factory = factory; }
     void setCanvasPosition(QPointF newCanvasPosition) { _canvasPosition = newCanvasPosition; }
@@ -71,8 +77,10 @@ signals:
     void onPinConnectionBreak(PinData outPin, PinData inPin);
 
 public slots:
-    void addPin(AbstractPin *pin);
-    void addPin(QString text, PinDirection direction, QColor color = QColor(Qt::GlobalColor::black));
+    // Return pin id
+    uint32_t addPin(AbstractPin *pin);
+    // Returns pin id
+    uint32_t addPin(QString text, PinDirection direction, QColor color = QColor(Qt::GlobalColor::black));
 
 private slots:
     void onPinDestroyed(QObject *obj);

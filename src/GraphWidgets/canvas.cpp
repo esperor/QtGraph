@@ -160,15 +160,16 @@ bool Canvas::deserialize(std::fstream *input)
 
 bool Canvas::writeStructure(protocol::Structure *structure) const
 {
-    auto *edges = structure->mutable_edges();
-    std::ranges::for_each(_connectedPins.keys(), [this, edges](PinData key){
-        QList<PinData> values = this->_connectedPins.values(key);
-
-        protocol::IntArray arr;
-        std::ranges::for_each(values, [&arr](PinData &value){ arr.add_elements(value.pinID); });
-
-        (*edges)[key.pinID] = arr;
-    });
+    try 
+    {
+        *structure = getStructure(); 
+    } 
+    catch (std::exception *e)
+    {
+        qDebug() << e->what();
+        return false;
+    }
+    
     return true;
 }
 
@@ -201,6 +202,12 @@ bool Canvas::readStructure(const protocol::Structure &structure)
 // ---------------------- GENERAL FUNCTIONS ---------------------------
 
 
+bool Canvas::doesPinExist(PinData data) const
+{
+    if (!doesNodeExist(data.nodeID)) return false;
+    return _nodes[data.nodeID]->doesPinExist(data.pinID);
+}
+
 QString Canvas::getPinText(uint32_t nodeID, uint32_t pinID) const
 {
     return _nodes[nodeID]->getPinByID(pinID)->getText();
@@ -208,6 +215,28 @@ QString Canvas::getPinText(uint32_t nodeID, uint32_t pinID) const
 QString Canvas::getNodeName(uint32_t nodeID) const
 {
     return _nodes[nodeID]->getName();
+}
+
+std::optional<QWeakPointer<BaseNode>> Canvas::operator[](uint32_t id)
+{
+    if (!doesNodeExist(id)) return std::nullopt;
+    return _nodes[id].toWeakRef();
+}
+
+protocol::Structure Canvas::getStructure() const
+{
+    protocol::Structure st;
+    auto edges = st.mutable_edges();
+    std::ranges::for_each(_connectedPins.keys(), [this, edges](PinData key){
+        QList<PinData> values = this->_connectedPins.values(key);
+
+        protocol::IntArray arr;
+        std::ranges::for_each(values, [&arr](PinData &value){ arr.add_elements(value.pinID); });
+
+        (*edges)[key.pinID] = arr;
+    });
+
+    return st;
 }
 
 void Canvas::moveCanvasOnPinDragNearEdge(QPointF mousePosition)
@@ -293,6 +322,23 @@ void Canvas::processSelectionArea(const QMouseEvent *event)
             _selectionAreaPreviousNodes.insert(node->ID());
         }
     });
+}
+
+bool Canvas::addConnection(PinData from, PinData to)
+{
+    if (from.pinDirection == to.pinDirection) return false;
+    if (!doesPinExist(from) || !doesPinExist(to)) return false;
+    
+    // assert from is out-pin
+    if (from.pinDirection == PinDirection::In) std::swap(from, to);
+    if (_connectedPins.contains(from, to)) return false;
+
+    _connectedPins.insert(from, to);
+
+    _nodes[from.nodeID]->setPinConnection(from.pinID, to);
+    _nodes[to.nodeID]->setPinConnection(to.pinID, from);
+
+    return true;
 }
 
 void Canvas::setNodeTypeManager(NodeTypeManager *manager)

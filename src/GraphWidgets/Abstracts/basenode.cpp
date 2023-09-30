@@ -102,6 +102,12 @@ void BaseNode::setPinConnected(uint32_t pinID, bool isConnected)
     _pins[pinID]->setConnected(isConnected);
 }
 
+std::optional<QWeakPointer<AbstractPin>> BaseNode::operator[](uint32_t id)
+{
+    if (!doesPinExist(id)) return std::nullopt;
+    return QSharedPointer<AbstractPin>(_pins[id]).toWeakRef();
+}
+
 float BaseNode::getParentCanvasZoomMultiplier() const
 {
     return _parentCanvas->getZoomMultiplier();
@@ -147,7 +153,7 @@ void BaseNode::onPinDestroyed(QObject *obj)
     _IDgenerator.removeTaken( ((AbstractPin*)obj)->ID() );
 }
 
-void BaseNode::addPin(AbstractPin *pin)
+uint32_t BaseNode::addPin(AbstractPin *pin)
 {
     _pins.insert(pin->ID(), pin);
     connect(pin, &AbstractPin::onDrag, this, &BaseNode::slot_onPinDrag);
@@ -155,9 +161,10 @@ void BaseNode::addPin(AbstractPin *pin)
     connect(pin, &AbstractPin::onConnectionBreak, this, &BaseNode::slot_onPinConnectionBreak);
     connect(pin, &AbstractPin::destroyed, this, &BaseNode::onPinDestroyed);
     pin->show();
+    return pin->ID();
 }
 
-void BaseNode::addPin(QString text, PinDirection direction, QColor color)
+uint32_t BaseNode::addPin(QString text, PinDirection direction, QColor color)
 {
     Pin *newPin = new Pin(this);
     uint32_t id = newPin->ID();
@@ -166,7 +173,7 @@ void BaseNode::addPin(QString text, PinDirection direction, QColor color)
     newPin->setColor(color);
     newPin->setText(text);
     newPin->setDirection(direction);
-    addPin(newPin);
+    return addPin(newPin);
 }
 
 void BaseNode::slot_onPinDrag(PinDragSignal signal)
