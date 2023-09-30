@@ -2,42 +2,33 @@ project(QtGraph)
 
 add_subdirectory(proto)
 
-set(SOURCES 
-    DataClasses/nodespawndata.cpp
-    GraphWidgets/Abstracts/abstractpin.cpp
-    GraphWidgets/Abstracts/basenode.cpp
-    NodeFactoryModule/nfbuttonminimize.cpp
-    NodeFactoryModule/nodefactory.cpp
-    NodeFactoryModule/typebrowser.cpp
-    GraphWidgets/canvas.cpp
-    NodeFactoryModule/typednodeimage.cpp
-    TypeManagers/nodetypemanager.cpp
-    GraphWidgets/pin.cpp
-    DataClasses/pindata.cpp
-    DataClasses/pindragsignal.cpp
-    TypeManagers/pintypemanager.cpp
-    GraphWidgets/typednode.cpp
-    TypeManagers/typemanager.cpp
-    utility.cpp
-    idgenerator.cpp
-)
+set(SOURCES
+    helpers/nodefactory.cpp
+    helpers/nodetypemanager.cpp
+    helpers/typemanager.cpp
+    helpers/pintypemanager.cpp
 
-set(MOC_HEADERS
-    ../include/QtGraph/NodeFactoryModule/nodefactory.h
-    ../include/QtGraph/GraphWidgets/Abstracts/abstractpin.h
-    ../include/QtGraph/GraphWidgets/Abstracts/basenode.h
-    ../include/QtGraph/NodeFactoryModule/nfbuttonminimize.h
-    ../include/QtGraph/NodeFactoryModule/typebrowser.h
-    ../include/QtGraph/GraphWidgets/canvas.h
-    ../include/QtGraph/NodeFactoryModule/typednodeimage.h
-    ../include/QtGraph/GraphWidgets/pin.h
-    ../include/QtGraph/GraphWidgets/typednode.h
-    ../include/QtGraph/TypeManagers/typemanager.h
+    models/nodespawndata.cpp
+    models/pindata.cpp
+    models/pindragsignal.cpp
+
+    widgets/abstractpin.cpp
+    widgets/basenode.cpp
+    widgets/nfbuttonminimize.cpp
+    widgets/typebrowser.cpp
+    widgets/canvas.cpp
+    widgets/typednodeimage.cpp
+    widgets/pin.cpp
+    widgets/typednode.cpp
+    
+    utilities/utility.cpp
+    utilities/idgenerator.cpp
 )
 
 qt_add_library(QtGraph
     STATIC
     ${SOURCES}
+    ${QTGRAPH_HEADERS}
     $<TARGET_OBJECTS:protos>
 )
 
