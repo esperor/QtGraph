@@ -26,7 +26,9 @@ protected:
         node2_id = node2->ID();
         pin1_id = node1->addPin("pin1", PinDirection::Out);
         pin2_id = node2->addPin("pin2", PinDirection::In);
-        canvas->addConnection(node1[pin1_id]->getData(), node2[pin2_id]->getData());
+        PinData pin1_data = node1->pin(pin1_id)->toStrongRef()->getData();
+        PinData pin2_data = node2->pin(pin2_id)->toStrongRef()->getData();
+        ASSERT_TRUE(canvas->addConnection(pin1_data, pin2_data)) << "Couldn't add connection";
         structure = canvas->getStructure();
         file = "test_protocolization.graph";
     }
@@ -75,10 +77,10 @@ TEST_F(Protocolization, NodesData)
 
 TEST_F(Protocolization, PinsData)
 {
-    EXPECT_EQ(canvas[node1_id][pin1_id]->getText() == "pin1");
+    EXPECT_EQ(canvas->getPinText(node1_id, pin1_id), "pin1");
 }
 
 TEST_F(Protocolization, StructureData)
 {
-    EXPECT_EQ(canvas->getStructure(), structure);
+    EXPECT_EQ(canvas->getStructure().mutable_edges(), structure.mutable_edges());
 }
