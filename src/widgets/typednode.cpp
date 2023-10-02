@@ -1,25 +1,25 @@
-#include "TypeManagers/nodetypemanager.h"
-#include "GraphWidgets/typednode.h"
-#include "constants.h"
-#include "GraphWidgets/canvas.h"
-#include "utility.h"
+#include "logics/nodetypemanager.h"
+#include "widgets/typednode.h"
+#include "utilities/constants.h"
+#include "widgets/canvas.h"
+#include "utilities/utility.h"
 
-#include "GraphWidgets/moc_typednode.cpp"
+#include "widgets/moc_typednode.cpp"
 
-namespace GraphLib {
+namespace qtgraph {
 
-TypedNode::TypedNode(int typeID, Canvas *canvas)
-    : BaseNode(canvas)
+WTypedNode::WTypedNode(int typeID, WCanvas *canvas)
+    : WANode(canvas)
     , _typeID{ typeID }
 {}
 
-void TypedNode::protocolize(protocol::Node *pNode) const
+void WTypedNode::protocolize(protocol::Node *pNode) const
 {
-    BaseNode::protocolize(pNode);
+    WANode::protocolize(pNode);
     pNode->set_type(_typeID);
 }
 
-int TypedNode::calculateRowsOffset(QPainter *painter) const
+int WTypedNode::calculateRowsOffset(QPainter *painter) const
 {
     QFont font = standardFont(c_nodeNameSize * _zoom);
     painter->setFont(font);
@@ -27,7 +27,7 @@ int TypedNode::calculateRowsOffset(QPainter *painter) const
     return nameBounding.height() * 2.25f + c_normalPinD * _zoom;
 }
 
-void TypedNode::paintName(QPainter *painter, int desiredWidth, QPoint textOrigin)
+void WTypedNode::paintName(QPainter *painter, int desiredWidth, QPoint textOrigin)
 {
     QSize nameBounding = painter->fontMetrics().size(Qt::TextSingleLine, _name);
 

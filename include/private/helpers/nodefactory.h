@@ -5,18 +5,16 @@
 
 #include "QtGraph/TypeManagers/nodetypemanager.h"
 #include "QtGraph/TypeManagers/pintypemanager.h"
-#include "QtGraph/GraphLib.h"
+#include "qtgraph.h"
 #include "QtGraph/GraphWidgets/pin.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
 class TypedNode;
 class Canvas;
-enum class PinDirection;
+enum class EPinDirection;
 
-namespace NodeFactoryModule {
-
-class GRAPHLIB_EXPORT NodeFactory : public QObject
+class NodeFactory : public QObject
 {
     Q_OBJECT
 
@@ -27,7 +25,7 @@ public:
     TypedNode *makeNodeOfType(int typeID, Canvas *canvas) const;
     TypedNode *makeNodeAndPinsOfType(int typeID, Canvas *canvas) const;
 
-    Pin *makePinOfType(int typeID, BaseNode *node) const;
+    WPin *makePinOfType(int typeID, WANode *node) const;
 
     const NodeTypeManager *getNodeTypeManager() const { return _nodeTypeManager; }
     const PinTypeManager *getPinTypeManager() const { return _pinTypeManager; }
@@ -36,12 +34,10 @@ public:
     void setPinTypeManager(const PinTypeManager *manager) { _pinTypeManager = manager; }
 
 private:
-    void addPinsToNodeByJsonValue(const QJsonValue &val, TypedNode *node, PinDirection direction) const;
+    void addPinsToNodeByJsonValue(const QJsonValue &val, TypedNode *node, EPinDirection direction) const;
 
     const NodeTypeManager *_nodeTypeManager;
     const PinTypeManager *_pinTypeManager;
 };
-
-}
 
 }

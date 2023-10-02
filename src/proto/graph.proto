@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package protocol;
+
+import "structure.proto";
+import "state.proto";
+import "type/point.proto";
+
+message Graph {
+    Structure structure = 1;
+    State state = 2;
+    optional type.PointF offset = 3;
+    optional int32 zoom = 4;
+}

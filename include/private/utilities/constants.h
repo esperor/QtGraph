@@ -3,9 +3,9 @@
 #include <QColor>
 #include <QSize>
 
-#include "QtGraph/GraphLib.h"
+#include "qtgraph.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
 
 
@@ -54,7 +54,7 @@ const float c_pinConnectLineWidth = 2.5f;
 // PINS GENERAL CONSTANTS
 
 const char c_dataSeparator = '/';
-const QString c_mimeFormatForPinConnection = "PinData";
+const QString c_mimeFormatForPinConnection = "IPinData";
 const QString c_mimeFormatForNodeFactory = "NewNode";
 
 

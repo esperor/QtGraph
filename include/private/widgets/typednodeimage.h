@@ -6,9 +6,7 @@
 #include "QtGraph/DataClasses/nodespawndata.h"
 #include "QtGraph/TypeManagers/nodetypemanager.h"
 
-namespace GraphLib {
-
-namespace NodeFactoryModule {
+namespace qtgraph {
 
 class TypedNodeImage : public QWidget
 {
@@ -41,7 +39,5 @@ private:
     QPainter *_painter;
 
 };
-
-}
 
 }

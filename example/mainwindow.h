@@ -37,7 +37,7 @@ private:
     std::string _associatedFileName = "";
 
     Ui::MainWindow *ui;
-    GraphLib::Canvas *_canvas;
+    GraphLib::WCanvas *_canvas;
     QTimer *_timer;
 
     QAction *_openTypes, *_save, *_saveAs, *_open, *_snapping;

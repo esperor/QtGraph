@@ -9,7 +9,7 @@ add_library(protos OBJECT
     type/color.proto
     type/point.proto
     typemanager.proto
-    data.proto
+    graph.proto
     structure.proto
 )
 

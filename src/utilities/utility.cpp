@@ -7,7 +7,7 @@
 #include "utility.h"
 #include "constants.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
 std::optional<QJsonObject> loadFile(const char* name)
 {

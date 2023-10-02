@@ -11,9 +11,7 @@
 
 #include "NodeFactoryModule/moc_typednodeimage.cpp"
 
-namespace GraphLib {
-
-namespace NodeFactoryModule {
+namespace qtgraph {
 
 TypedNodeImage::TypedNodeImage(QWidget *parent)
     : QWidget{ parent }
@@ -88,9 +86,6 @@ void TypedNodeImage::paint(QPainter *painter, QPaintEvent *event)
                       (Qt::AlignTop | Qt::AlignHCenter), typeName);
 
     setUpdatesEnabled(true);
-}
-
-
 }
 
 }

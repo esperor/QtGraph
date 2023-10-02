@@ -3,7 +3,7 @@
 #include <set>
 #include <cstdint>
 
-namespace GraphLib {
+namespace qtgraph {
 
 class IDGenerator {
 public:

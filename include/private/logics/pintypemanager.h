@@ -1,12 +1,12 @@
 #pragma once
 
 
-#include "QtGraph/TypeManagers/typemanager.h"
-#include "QtGraph/GraphLib.h"
+#include "logics/typemanager.h"
+#include "qtgraph.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
-class GRAPHLIB_EXPORT PinTypeManager final : public TypeManager
+class PinTypeManager final : public TypeManager
 {
 public:
     PinTypeManager() {}

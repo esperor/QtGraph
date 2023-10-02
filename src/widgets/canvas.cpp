@@ -10,26 +10,18 @@
 #include <cmath>
 #include <fstream>
 
-#include "GraphWidgets/canvas.h"
-#include "utility.h"
-#include "constants.h"
-#include "NodeFactoryModule/nodefactory.h"
-#include "GraphWidgets/typednode.h"
-#include "TypeManagers/nodetypemanager.h"
-#include "TypeManagers/pintypemanager.h"
+#include "widgets/canvas.h"
+
 
 // protobuf
 #include "data.pb.h"
 
-#include "GraphWidgets/moc_canvas.cpp"
+#include "widgets/moc_canvas.cpp"
 
-namespace GraphLib {
+namespace qtgraph {
 
-using namespace NodeFactoryModule;
-
-Canvas::Canvas(QWidget *parent)
+WCanvas::WCanvas(QWidget *parent)
     : QWidget{ parent }
-    , _factory{ QSharedPointer<NodeFactory>(new NodeFactory()) }
     , _painter{ new QPainter() }
     , _dotPaintGap{ 40 }
     , _draggedPin{ std::nullopt }
@@ -44,10 +36,9 @@ Canvas::Canvas(QWidget *parent)
     , _bIsSnappingEnabled{ true }
     , _selectionRect{ std::nullopt }
     , _selectionAreaPreviousNodes{ QSet<uint32_t>() }
-    , _nodes{ QMap<uint32_t, QSharedPointer<BaseNode>>() }
-    , _connectedPins{ QMultiMap<PinData, PinData>() }
+    , _connectedPins{ QMultiMap<IPinData, IPinData>() }
     , _typeBrowser{ new TypeBrowser(this) }
-    , _selectedNodes{ QMap<uint32_t, QSharedPointer<BaseNode>>() }
+    , _selectedNodes{ QMap<uint32_t, QSharedPointer<WANode>>() }
 {
     setMouseTracking(true);
     setAutoFillBackground(true);
@@ -59,14 +50,14 @@ Canvas::Canvas(QWidget *parent)
 
     _typeBrowser->show();
 
-    connect(_typeBrowser, &TypeBrowser::onMove, this, &Canvas::onNFWidgetMove);
+    connect(_typeBrowser, &TypeBrowser::onMove, this, &WCanvas::onTypeBrowserMove);
 
     _timer = new QTimer(this);
-    connect(_timer, &QTimer::timeout, this, &Canvas::tick);
+    connect(_timer, &QTimer::timeout, this, &WCanvas::tick);
     _timer->start(30);
 }
 
-Canvas::~Canvas()
+WCanvas::~WCanvas()
 {
     delete _painter;
     delete _timer;
@@ -74,7 +65,7 @@ Canvas::~Canvas()
     delete _lastResizedSize;
 }
 
-const QMap<short, float> Canvas::_zoomMultipliers =
+const QMap<short, float> WCanvas::_zoomMultipliers =
 {
     {   0, 2.0f  },
     {  -1, 1.75f },
@@ -95,27 +86,12 @@ const QMap<short, float> Canvas::_zoomMultipliers =
 // ------------------------ SERIALIZATION --------------------------
 
 
-bool Canvas::serialize(std::fstream *output) const
+bool WCanvas::serialize(std::fstream *output) const
 {
-    protocol::Data data;
-    protocol::State *state = data.mutable_state();
-    *(state->mutable_node_type_manager()) = _nodeTypeManager.toProtocolTypeManager();
-    *(state->mutable_pin_type_manager()) = _pinTypeManager.toProtocolTypeManager();
-    *(state->mutable_offset()) = convertTo_protocolPointF(_offset);
-    state->set_zoom(_zoom);
-    state->set_snapping_interval(_snappingInterval);
-    state->set_is_snapping_enabled(_bIsSnappingEnabled);
-
-    std::ranges::for_each(_nodes, [state](QSharedPointer<BaseNode> node) {
-        node->protocolize(state->add_nodes());
-    });
-
-    writeStructure(data.mutable_structure());
-    data.SerializeToOstream(output);
-    return true;
+    return graph->serialize(output);
 }
 
-bool Canvas::deserialize(std::fstream *input)
+bool WCanvas::deserialize(std::fstream *input)
 {
     setUpdatesEnabled(false);
     protocol::Data data;
@@ -132,11 +108,11 @@ bool Canvas::deserialize(std::fstream *input)
 
     // nodes
     std::ranges::for_each(state.nodes(), [this](const protocol::Node &nd){
-        BaseNode *node;
+        WANode *node;
         if (nd.has_type()) 
             node = _factory->makeNodeOfType(nd.type(), this);
         else
-            node = new BaseNode(this);
+            node = new WANode(this);
 
         // node automatically gets new id as it's created
         // that's what we don't need in case of deserialization
@@ -158,14 +134,14 @@ bool Canvas::deserialize(std::fstream *input)
     return true;
 }
 
-bool Canvas::writeStructure(protocol::Structure *structure) const
+bool WCanvas::writeStructure(protocol::Structure *structure) const
 {
     auto *edges = structure->mutable_edges();
-    std::ranges::for_each(_connectedPins.keys(), [this, edges](PinData key){
-        QList<PinData> values = this->_connectedPins.values(key);
+    std::ranges::for_each(_connectedPins.keys(), [this, edges](IPinData key){
+        QList<IPinData> values = this->_connectedPins.values(key);
 
         protocol::IntArray arr;
-        std::ranges::for_each(values, [&arr](PinData &value){ arr.add_elements(value.pinID); });
+        std::ranges::for_each(values, [&arr](IPinData &value){ arr.add_elements(value.pinID); });
 
         (*edges)[key.pinID] = arr;
     });
@@ -174,21 +150,21 @@ bool Canvas::writeStructure(protocol::Structure *structure) const
 
 // this function can perhaps be optimized 
 // (but probably not without pain in the ass)
-bool Canvas::readStructure(const protocol::Structure &structure)
+bool WCanvas::readStructure(const protocol::Structure &structure)
 {
     std::map<uint32_t, uint32_t> pin_node_map = {};
     int l = _nodes.size();
-    std::ranges::for_each(_nodes, [this, &pin_node_map](const QSharedPointer<BaseNode> node){
+    std::ranges::for_each(_nodes, [this, &pin_node_map](const QSharedPointer<WANode> node){
         std::ranges::for_each(node->getPinIDs(), [&node, &pin_node_map](uint32_t id) {
             pin_node_map.insert({id, node->ID()});
         });
     });
     std::ranges::for_each(structure.edges(), [this, &pin_node_map](std::pair<uint32_t, protocol::IntArray> pair){
-        PinData first = _nodes[pin_node_map[pair.first]]->getPinByID(pair.first)->getData();
+        IPinData first = _nodes[pin_node_map[pair.first]]->getPinByID(pair.first)->getData();
 
         std::ranges::for_each(*pair.second.mutable_elements(), 
         [this, &pin_node_map, &first](uint32_t &id){
-            PinData second = _nodes[pin_node_map[id]]->getPinByID(id)->getData();
+            IPinData second = _nodes[pin_node_map[id]]->getPinByID(id)->getData();
             _nodes[second.nodeID]->setPinConnection(second.pinID, first);  
             _nodes[first.nodeID]->setPinConnection(first.pinID, second);
             _connectedPins.insert(first, second);
@@ -201,16 +177,16 @@ bool Canvas::readStructure(const protocol::Structure &structure)
 // ---------------------- GENERAL FUNCTIONS ---------------------------
 
 
-QString Canvas::getPinText(uint32_t nodeID, uint32_t pinID) const
+QString WCanvas::getPinText(uint32_t nodeID, uint32_t pinID) const
 {
     return _nodes[nodeID]->getPinByID(pinID)->getText();
 }
-QString Canvas::getNodeName(uint32_t nodeID) const
+QString WCanvas::getNodeName(uint32_t nodeID) const
 {
     return _nodes[nodeID]->getName();
 }
 
-void Canvas::moveCanvasOnPinDragNearEdge(QPointF mousePosition)
+void WCanvas::moveCanvasOnPinDragNearEdge(QPointF mousePosition)
 {
     auto lerp = [&](float actual, float max) {
         return std::lerp(0, c_standardPinDragEdgeCanvasMoveValue, actual / max);
@@ -241,19 +217,19 @@ void Canvas::moveCanvasOnPinDragNearEdge(QPointF mousePosition)
         moveViewRight(lerp(mousePosition.x() - right.left(), right.width()));
 }
 
-void Canvas::moveCanvas(QPointF offset) { _offset -= offset / _zoomMultipliers[_zoom]; }
+void WCanvas::moveCanvas(QPointF offset) { _offset -= offset / _zoomMultipliers[_zoom]; }
 
-QPointF Canvas::mapToCanvas(QPointF point) const
+QPointF WCanvas::mapToCanvas(QPointF point) const
 {
     return (point - this->rect().center()) / _zoomMultipliers[_zoom] + _offset;
 }
 
-QPoint Canvas::mapToCanvas(QPoint point) const
+QPoint WCanvas::mapToCanvas(QPoint point) const
 {
     return ((point - this->rect().center()) / _zoomMultipliers[_zoom] + _offset.toPoint());
 }
 
-void Canvas::zoom(int times, QPointF where)
+void WCanvas::zoom(int times, QPointF where)
 {
     if (times == 0) return;
     if (where.x() < 0 || where.y() < 0) where = _mousePosition;
@@ -271,14 +247,14 @@ void Canvas::zoom(int times, QPointF where)
     _offset -= whereOffset;
 }
 
-void Canvas::zoomIn(int times, QPointF where) { zoom(times, where); }
+void WCanvas::zoomIn(int times, QPointF where) { zoom(times, where); }
 
-void Canvas::zoomOut(int times, QPointF where) { zoom(-times, where); }
+void WCanvas::zoomOut(int times, QPointF where) { zoom(-times, where); }
 
-void Canvas::processSelectionArea(const QMouseEvent *event)
+void WCanvas::processSelectionArea(const QMouseEvent *event)
 {
     _selectionRect = QRect(_lastMouseDownPosition.toPoint(), event->position().toPoint());
-    std::ranges::for_each(_nodes, [&](QSharedPointer<BaseNode> &node){
+    std::ranges::for_each(_nodes, [&](QSharedPointer<WANode> &node){
         if (_selectionAreaPreviousNodes.contains(node->ID()))
         {
             if (!node->getMappedRect().intersects(*_selectionRect))
@@ -295,7 +271,7 @@ void Canvas::processSelectionArea(const QMouseEvent *event)
     });
 }
 
-void Canvas::setNodeTypeManager(NodeTypeManager *manager)
+void WCanvas::setNodeTypeManager(NodeTypeManager *manager)
 {
     _nodeTypeManager = *manager;
     _factory->setNodeTypeManager(manager);
@@ -303,7 +279,7 @@ void Canvas::setNodeTypeManager(NodeTypeManager *manager)
     _typeBrowser->initTypes();
 }
 
-void Canvas::setPinTypeManager(PinTypeManager *manager)
+void WCanvas::setPinTypeManager(PinTypeManager *manager)
 {
     _pinTypeManager = *manager;
     _factory->setPinTypeManager(manager);
@@ -317,14 +293,14 @@ void Canvas::setPinTypeManager(PinTypeManager *manager)
 
 
 
-void Canvas::onNodeDestroyed(QObject *obj)
+void WCanvas::onNodeDestroyed(QObject *obj)
 {
     if (obj == nullptr) qDebug() << "Pointer to destroyed node is nullptr";
 
-    _IDgenerator.removeTaken( ((BaseNode*)obj)->ID() );
+    _IDgenerator.removeTaken( ((WANode*)obj)->ID() );
 }
 
-void Canvas::onNFWidgetMove(QVector2D)
+void WCanvas::onTypeBrowserMove(QVector2D)
 {
     QSize desiredWidgetSize = _typeBrowser->getDesiredSize();
 
@@ -341,13 +317,13 @@ void Canvas::onNFWidgetMove(QVector2D)
         _typeBrowser->setY(0);
 }
 
-void Canvas::tick()
+void WCanvas::tick()
 {
     if (_draggedPin)
         moveCanvasOnPinDragNearEdge(_mousePosition);
 }
 
-void Canvas::onPinConnect(PinData outPin, PinData inPin)
+void WCanvas::onPinConnect(IPinData outPin, IPinData inPin)
 {
     if (!_connectedPins.contains(outPin, inPin))
     {
@@ -357,7 +333,7 @@ void Canvas::onPinConnect(PinData outPin, PinData inPin)
     }
 }
 
-void Canvas::onPinConnectionBreak(PinData outPin, PinData inPin)
+void WCanvas::onPinConnectionBreak(IPinData outPin, IPinData inPin)
 {
     auto it = _connectedPins.find(outPin, inPin);
     if (it != _connectedPins.end())
@@ -369,7 +345,7 @@ void Canvas::onPinConnectionBreak(PinData outPin, PinData inPin)
     }
 }
 
-void Canvas::onPinDrag(PinDragSignal signal)
+void WCanvas::onPinDrag(PinDragSignal signal)
 {
     switch (signal.type())
     {
@@ -403,68 +379,68 @@ void Canvas::onPinDrag(PinDragSignal signal)
     }
 }
 
-void Canvas::onNodeSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID)
+void WCanvas::onNodeSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID)
 {
     _selectedNodes.insert(nodeID, _nodes[nodeID]);
 
     if (bIsMultiSelectionModifierDown) return;
 
-    std::ranges::for_each(_selectedNodes.values(), [&](QSharedPointer<BaseNode> &ptr){
+    std::ranges::for_each(_selectedNodes.values(), [&](QSharedPointer<WANode> &ptr){
         if (ptr->ID() == nodeID)
             return;
         ptr->setSelected(false);
     });
 
-    _selectedNodes.removeIf([&](QMap<uint32_t, QSharedPointer<BaseNode>>::iterator &it){
+    _selectedNodes.removeIf([&](QMap<uint32_t, QSharedPointer<WANode>>::iterator &it){
         return it.value()->ID() != nodeID;
     });
 }
 
-QWeakPointer<BaseNode> Canvas::addBaseNode(QPoint canvasPosition, QString name)
+QWeakPointer<WANode> WCanvas::addBaseNode(QPoint canvasPosition, QString name)
 {
-    BaseNode *node = new BaseNode(this);
+    WANode *node = new WANode(this);
     node->setCanvasPosition(canvasPosition);
     node->setName(name);
     return addNode(node);
 }
 
-QWeakPointer<BaseNode> Canvas::addNode(BaseNode *node)
+QWeakPointer<WANode> WCanvas::addNode(WANode *node)
 {
     uint32_t id = node->ID();
 
     node->setFactory(_factory.get());
-    _nodes.insert(id, QSharedPointer<BaseNode>(node));
+    _nodes.insert(id, QSharedPointer<WANode>(node));
     _nodes[id]->show();
 
-    connect(_nodes[id].get(), &BaseNode::onPinDrag, this, &Canvas::onPinDrag);
-    connect(_nodes[id].get(), &BaseNode::onPinConnect, this, &Canvas::onPinConnect);
-    connect(_nodes[id].get(), &BaseNode::onSelect, this, &Canvas::onNodeSelect);
-    connect(_nodes[id].get(), &BaseNode::onPinConnectionBreak, this, &Canvas::onPinConnectionBreak);
-    connect(_nodes[id].get(), &BaseNode::destroyed, this, &Canvas::onNodeDestroyed);
+    connect(_nodes[id].get(), &WANode::onPinDrag, this, &WCanvas::onPinDrag);
+    connect(_nodes[id].get(), &WANode::onPinConnect, this, &WCanvas::onPinConnect);
+    connect(_nodes[id].get(), &WANode::onSelect, this, &WCanvas::onNodeSelect);
+    connect(_nodes[id].get(), &WANode::onPinConnectionBreak, this, &WCanvas::onPinConnectionBreak);
+    connect(_nodes[id].get(), &WANode::destroyed, this, &WCanvas::onNodeDestroyed);
 
-    return QWeakPointer<BaseNode>(_nodes[id]);
+    return QWeakPointer<WANode>(_nodes[id]);
 }
 
-QWeakPointer<BaseNode> Canvas::addTypedNode(QPoint canvasPosition, int typeID)
+QWeakPointer<WANode> WCanvas::addTypedNode(QPoint canvasPosition, int typeID)
 {
     TypedNode *node = _factory->makeNodeAndPinsOfType(typeID, this);
     node->setCanvasPosition(canvasPosition);
     return addNode(node);
 }
 
-void Canvas::deleteNode(QSharedPointer<BaseNode> &ptr)
+void WCanvas::deleteNode(QSharedPointer<WANode> &ptr)
 {
     uint32_t id = ptr->ID();
     if (ptr->hasPinConnections())
     {
-        QSharedPointer< QMap<uint32_t, QVector<PinData> > > connections = ptr->getPinConnections();
-        std::ranges::for_each(connections->asKeyValueRange(), [&](std::pair<const uint32_t&, QVector<PinData>&> pair){
+        QSharedPointer< QMap<uint32_t, QVector<IPinData> > > connections = ptr->getPinConnections();
+        std::ranges::for_each(connections->asKeyValueRange(), [&](std::pair<const uint32_t&, QVector<IPinData>&> pair){
             uint32_t id = pair.first;
-            std::ranges::for_each(pair.second, [&](PinData connectedPin){
+            std::ranges::for_each(pair.second, [&](IPinData connectedPin){
                 _nodes[connectedPin.nodeID]->removePinConnection(connectedPin.pinID, id);
 
-                const AbstractPin *pin = ptr->getPinByID(id);
-                if (pin->getDirection() == PinDirection::Out)
+                const WPin *pin = ptr->getPinByID(id);
+                if (pin->getDirection() == EPinDirection::Out)
                     _connectedPins.remove(pin->getData());
                 else
                     _connectedPins.remove(connectedPin, pin->getData());
@@ -479,11 +455,11 @@ void Canvas::deleteNode(QSharedPointer<BaseNode> &ptr)
 // --------------------------- EVENTS ----------------------------------
 
 
-void Canvas::keyPressEvent(QKeyEvent *event)
+void WCanvas::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Delete && !_selectedNodes.isEmpty())
     {
-        std::ranges::for_each(_selectedNodes, [&](QSharedPointer<BaseNode> &ptr){ deleteNode(ptr); });
+        std::ranges::for_each(_selectedNodes, [&](QSharedPointer<WANode> &ptr){ deleteNode(ptr); });
         _selectedNodes.clear();
         onNodesRemoved();
     }
@@ -491,7 +467,7 @@ void Canvas::keyPressEvent(QKeyEvent *event)
     QWidget::keyPressEvent(event);
 }
 
-void Canvas::mousePressEvent(QMouseEvent *event)
+void WCanvas::mousePressEvent(QMouseEvent *event)
 {
     switch (event->button())
     {
@@ -504,7 +480,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         if (event->modifiers() & c_multiSelectionModifier)
             break;
 
-        std::ranges::for_each(_selectedNodes.values(), [&](QSharedPointer<BaseNode> &ptr){
+        std::ranges::for_each(_selectedNodes.values(), [&](QSharedPointer<WANode> &ptr){
             ptr->setSelected(false);
         });
 
@@ -514,7 +490,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
     }
 }
 
-void Canvas::mouseMoveEvent(QMouseEvent *event)
+void WCanvas::mouseMoveEvent(QMouseEvent *event)
 {
     QPointF offset;
     switch (event->buttons())
@@ -532,7 +508,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     _mousePosition = event->position();
 }
 
-void Canvas::mouseReleaseEvent(QMouseEvent *event)
+void WCanvas::mouseReleaseEvent(QMouseEvent *event)
 {
     switch (event->button())
     {
@@ -547,7 +523,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
     }
 }
 
-void Canvas::resizeEvent(QResizeEvent *event)
+void WCanvas::resizeEvent(QResizeEvent *event)
 {
     QSize oldSize = _lastResizedSize ? *_lastResizedSize : event->oldSize();
 
@@ -604,7 +580,7 @@ void Canvas::resizeEvent(QResizeEvent *event)
 
 // accumulative zoom delta is used for mice with finer-resolution wheels
 // https://doc.qt.io/qt-6/qwheelevent.html#angleDelta
-void Canvas::wheelEvent(QWheelEvent *event)
+void WCanvas::wheelEvent(QWheelEvent *event)
 {
     static int _accumulativeZoomDelta = 0;
     _accumulativeZoomDelta += event->angleDelta().y();
@@ -624,7 +600,7 @@ void Canvas::wheelEvent(QWheelEvent *event)
     }
 }
 
-void Canvas::dropEvent(QDropEvent *event)
+void WCanvas::dropEvent(QDropEvent *event)
 {
     if (event->mimeData()->hasFormat(c_mimeFormatForNodeFactory))
     {
@@ -637,7 +613,7 @@ void Canvas::dropEvent(QDropEvent *event)
     }
 }
 
-void Canvas::dragEnterEvent(QDragEnterEvent *event)
+void WCanvas::dragEnterEvent(QDragEnterEvent *event)
 {
     if (event->mimeData()->hasFormat(c_mimeFormatForPinConnection) ||
         event->mimeData()->hasFormat(c_mimeFormatForNodeFactory))
@@ -647,7 +623,7 @@ void Canvas::dragEnterEvent(QDragEnterEvent *event)
     }
 }
 
-void Canvas::dragMoveEvent(QDragMoveEvent *event)
+void WCanvas::dragMoveEvent(QDragMoveEvent *event)
 {
     if (_draggedPin && event->mimeData()->hasFormat(c_mimeFormatForPinConnection))
     {
@@ -661,7 +637,7 @@ void Canvas::dragMoveEvent(QDragMoveEvent *event)
 // -------------------------- PAINT -----------------------------------
 
 
-void Canvas::paintEvent(QPaintEvent *event)
+void WCanvas::paintEvent(QPaintEvent *event)
 {
     _painter->begin(this);
     _painter->setRenderHint(QPainter::Antialiasing, true);
@@ -669,12 +645,12 @@ void Canvas::paintEvent(QPaintEvent *event)
     _painter->end();
 }
 
-void Canvas::paint(QPainter *painter, QPaintEvent *event)
+void WCanvas::paint(QPainter *painter, QPaintEvent *event)
 {
     setUpdatesEnabled(false);
 
-    auto getColorOfPinByPinData = [&](const PinData &data){
-        const AbstractPin *pin = _nodes[data.nodeID]->getPinByID(data.pinID);
+    auto getColorOfPinByPinData = [&](const IPinData &data){
+        const WPin *pin = _nodes[data.nodeID]->getPinByID(data.pinID);
         return pin->getColor();
     };
 
@@ -711,7 +687,7 @@ void Canvas::paint(QPainter *painter, QPaintEvent *event)
     }
 
     // manage NODES
-    std::ranges::for_each(_nodes, [&](QSharedPointer<BaseNode> &node) {
+    std::ranges::for_each(_nodes, [&](QSharedPointer<WANode> &node) {
 
         // this->rect()->center() is used instead of center purposefully
         // in order to fix flicking and lagging of the nodes (dk why it fixes the problem)
@@ -750,7 +726,7 @@ void Canvas::paint(QPainter *painter, QPaintEvent *event)
                                 : _draggedPinTarget;
 
             // origin is always either an out-pin or the cursor
-            if (_draggedPin->pinDirection != PinDirection::Out)
+            if (_draggedPin->pinDirection != EPinDirection::Out)
                 std::swap(origin, target);
 
             QLinearGradient gradient(origin, target);
@@ -760,7 +736,7 @@ void Canvas::paint(QPainter *painter, QPaintEvent *event)
             QColor color0 = getColorOfPinByPinData(*_draggedPin);
             QColor color1 = bThereIsTargetPin ? getColorOfPinByPinData(*_draggedPinTargetInfo.value()) : color0;
 
-            if (_draggedPin->pinDirection == PinDirection::In)
+            if (_draggedPin->pinDirection == EPinDirection::In)
                 std::swap(color0, color1);
 
             gradient.setColorAt(0, color0);
@@ -772,9 +748,9 @@ void Canvas::paint(QPainter *painter, QPaintEvent *event)
         }
 
         // draw all existing pins connections
-        std::ranges::for_each(_connectedPins.asKeyValueRange(), [&](std::pair<PinData, PinData> pair) {
+        std::ranges::for_each(_connectedPins.asKeyValueRange(), [&](std::pair<IPinData, IPinData> pair) {
             // connections are being drawed from out- to in-pins only
-            if (pair.first.pinDirection == PinDirection::In) return;
+            if (pair.first.pinDirection == EPinDirection::In) return;
 
             QPoint origin = _nodes[pair.first.nodeID]->getOutlineCoordinateForPinID(pair.first.pinID);
             QPoint target = _nodes[pair.second.nodeID]->getOutlineCoordinateForPinID(pair.second.pinID);
@@ -830,7 +806,7 @@ void Canvas::paint(QPainter *painter, QPaintEvent *event)
         painter->drawText(QPoint(20, 100), QString( "Zoom: " + QString::number(_zoom) ));
         painter->drawText(QPoint(20, 120), QString( "Drag pos: " + pointToString(_draggedPinTarget) ));
         painter->drawText(QPoint(20, 140), QString( "Node IDs: " + parseSet(_IDgenerator.getTakenIDs()) ));
-        painter->drawText(QPoint(20, 160), QString( "Pin IDs: " + parseSet(BaseNode::getTakenPinIDs()) ));
+        painter->drawText(QPoint(20, 160), QString( "Pin IDs: " + parseSet(WANode::getTakenPinIDs()) ));
     }
 
     setUpdatesEnabled(true);

@@ -7,7 +7,7 @@
 
 #include "typemanager.pb.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
 class TypeManager : public QObject
 {

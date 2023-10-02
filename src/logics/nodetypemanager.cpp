@@ -7,7 +7,7 @@
 #include "TypeManagers/nodetypemanager.h"
 #include "utility.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
 bool NodeTypeManager::readTypes(const char *file)
 {

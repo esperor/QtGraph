@@ -13,23 +13,23 @@
 #include <cstdint>
 
 #include "QtGraph/GraphWidgets/Abstracts/abstractpin.h"
-#include "QtGraph/GraphLib.h"
+#include "qtgraph.h"
 #include "QtGraph/idgenerator.h"
 #include "QtGraph/NodeFactoryModule/nodefactory.h"
 
 #include "node.pb.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
-class Canvas;
+class WCanvas;
 
-class GRAPHLIB_EXPORT BaseNode : public QWidget
+class WANode : public QWidget
 {
     Q_OBJECT
 
 public:
-    BaseNode(Canvas *canvas);
-    ~BaseNode();
+    WANode(WCanvas *canvas);
+    ~WANode();
 
     virtual void protocolize(protocol::Node *pNode) const;
     virtual void deprotocolize(const protocol::Node &pNode);
@@ -45,20 +45,20 @@ public:
     const QString &name() const { return _name; }
     QPoint getOutlineCoordinateForPinID(uint32_t pinID) const { return mapToParent(_pinsOutlineCoords[pinID]); }
     bool hasPinConnections() const;
-    QSharedPointer< QMap<uint32_t, QVector<PinData> > > getPinConnections() const;
+    QSharedPointer< QMap<uint32_t, QVector<IPinData> > > getPinConnections() const;
     QList<uint32_t> getPinIDs() const { return _pins.keys(); }
-    const AbstractPin *getPinByID(uint32_t pinID) const { return _pins[pinID]; }
+    const WPin *getPinByID(uint32_t pinID) const { return _pins[pinID]; }
     QRect getMappedRect() const;
-    const Canvas *getParentCanvas() const { return _parentCanvas; }
+    const WCanvas *getParentCanvas() const { return _parentCanvas; }
     const QString &getName() const { return _name; }
 
-    void setFactory(NodeFactoryModule::NodeFactory *factory) { _factory = factory; }
+    void setFactory(NodeFactory *factory) { _factory = factory; }
     void setCanvasPosition(QPointF newCanvasPosition) { _canvasPosition = newCanvasPosition; }
     void setID(uint32_t ID) { _ID = ID; }
     void setNormalSize(QSize newSize) { _normalSize = newSize; }
     void setName(QString name) { _name = name; }
     void removePinConnection(uint32_t pinID, uint32_t connectedPinID);
-    void setPinConnection(uint32_t pinID, PinData connectedPin);
+    void setPinConnection(uint32_t pinID, IPinData connectedPin);
     void setPinConnected(uint32_t pinID, bool isConnected);
     void setSelected(bool b, bool bIsMultiSelectionModifierDown = false) { _bIsSelected = b; if (b) onSelect(bIsMultiSelectionModifierDown, _ID); }
 
@@ -67,18 +67,18 @@ public:
 signals:
     void onSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID);
     void onPinDrag(PinDragSignal signal);
-    void onPinConnect(PinData outPin, PinData inPin);
-    void onPinConnectionBreak(PinData outPin, PinData inPin);
+    void onPinConnect(IPinData outPin, IPinData inPin);
+    void onPinConnectionBreak(IPinData outPin, IPinData inPin);
 
 public slots:
-    void addPin(AbstractPin *pin);
-    void addPin(QString text, PinDirection direction, QColor color = QColor(Qt::GlobalColor::black));
+    void addPin(WPin *pin);
+    void addPin(QString text, EPinDirection direction, QColor color = QColor(Qt::GlobalColor::black));
 
 private slots:
     void onPinDestroyed(QObject *obj);
     void slot_onPinDrag(PinDragSignal signal);
-    void slot_onPinConnect(PinData outPin, PinData inPin);
-    void slot_onPinConnectionBreak(PinData outPin, PinData inPin);
+    void slot_onPinConnect(IPinData outPin, IPinData inPin);
+    void slot_onPinConnectionBreak(IPinData outPin, IPinData inPin);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -100,8 +100,8 @@ private:
 protected:
     static IDGenerator _IDgenerator;
 
-    NodeFactoryModule::NodeFactory *_factory;
-    const Canvas *_parentCanvas;
+    NodeFactory *_factory;
+    const WCanvas *_parentCanvas;
     uint32_t _ID;
     float _zoom;
     QSize _normalSize;
@@ -115,7 +115,7 @@ protected:
     QString _name;
     QMap<uint32_t, QPoint> _pinsOutlineCoords;
 
-    QMap<uint32_t, AbstractPin*> _pins;
+    QMap<uint32_t, WPin*> _pins;
 };
 
 }

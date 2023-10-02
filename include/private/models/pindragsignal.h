@@ -2,10 +2,10 @@
 
 #include <QPointF>
 
-#include "QtGraph/GraphLib.h"
+#include "qtgraph.h"
 #include "QtGraph/DataClasses/pindata.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
 enum class PinDragSignalType
 {
@@ -15,25 +15,25 @@ enum class PinDragSignalType
     End
 };
 
-struct GRAPHLIB_EXPORT PinDragSignal
+struct PinDragSignal
 {
 public:
     PinDragSignal();
-    PinDragSignal(PinData source, PinDragSignalType type);
+    PinDragSignal(IPinData source, PinDragSignalType type);
 
-    PinData &source() { return _source; }
+    IPinData &source() { return _source; }
     PinDragSignalType &type() { return _type; }
 
 private:
-    PinData _source;
+    IPinData _source;
     PinDragSignalType _type;
 };
 
-struct GRAPHLIB_EXPORT PinDragMoveSignal : public PinDragSignal
+struct PinDragMoveSignal : public PinDragSignal
 {
 public:
     PinDragMoveSignal();
-    PinDragMoveSignal(PinData source, PinDragSignalType type, QPointF mousePosition);
+    PinDragMoveSignal(IPinData source, PinDragSignalType type, QPointF mousePosition);
 
     QPointF &mousePosition() { return _mousePosition; }
 

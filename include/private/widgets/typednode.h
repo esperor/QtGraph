@@ -3,19 +3,19 @@
 #include <QObject>
 #include <QWidget>
 
-#include "QtGraph/GraphWidgets/Abstracts/basenode.h"
+#include "widgets/node.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
 class NodeTypeManager;
 class PinTypeManager;
 
-class TypedNode : public BaseNode
+class WTypedNode : public WANode
 {
     Q_OBJECT
 
 public:
-    TypedNode(int typeID, Canvas *canvas);
+    WTypedNode(int typeID, WCanvas *canvas);
 
     void protocolize(protocol::Node *pNode) const override;
 

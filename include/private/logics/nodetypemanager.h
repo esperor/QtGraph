@@ -1,12 +1,12 @@
 #pragma once
 
 
-#include "QtGraph/TypeManagers/typemanager.h"
-#include "QtGraph/GraphLib.h"
+#include "logics/typemanager.h"
+#include "qtgraph.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
-class GRAPHLIB_EXPORT NodeTypeManager final : public TypeManager
+class NodeTypeManager final : public TypeManager
 {
 public:
     NodeTypeManager() {}

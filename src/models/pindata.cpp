@@ -1,25 +1,25 @@
-#include "DataClasses/pindata.h"
-#include "constants.h"
-#include "GraphWidgets/Abstracts/abstractpin.h"
+#include "models/pindata.h"
+#include "utilities/constants.h"
+#include "logics/pin.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
-PinData::PinData(const AbstractPin *pin)
-    : pinDirection{ pin->getDirection() }
-    , nodeID{ pin->getNodeID() }
-    , pinID{ pin->ID() }
+IPinData::IPinData(const LPin *pin)
+    : pinDirection{ pin->getData().pinDirection }
+    , nodeID{ pin->getData().nodeID }
+    , pinID{ pin->getData().pinID }
 {}
 
-PinData::PinData(const PinData &other)
+IPinData::IPinData(const IPinData &other)
 { *this = other; }
 
-PinData::PinData(PinDirection _direction, uint32_t _nodeID, uint32_t _pinID, uint32_t _typeID)
+IPinData::IPinData(EPinDirection _direction, uint32_t _nodeID, uint32_t _pinID, uint32_t _typeID)
     : pinDirection{ _direction }, nodeID{ _nodeID }, pinID{ _pinID }, typeID{ _typeID }
 {}
 
-PinData::~PinData() {}
+IPinData::~IPinData() {}
 
-void PinData::operator=(const PinData &other)
+void IPinData::operator=(const IPinData &other)
 {
     pinDirection = other.pinDirection;
     nodeID = other.nodeID;
@@ -27,10 +27,10 @@ void PinData::operator=(const PinData &other)
     typeID = other.typeID;
 }
 
-QByteArray PinData::toByteArray() const
+QByteArray IPinData::toByteArray() const
 {
     QByteArray output;
-    output.append(QByteArray::number(static_cast<int>(pinDirection == PinDirection::In)));
+    output.append(QByteArray::number(static_cast<int>(pinDirection == EPinDirection::In)));
     output.append(c_dataSeparator);
 
     output.append(QByteArray::number(nodeID))           .append(c_dataSeparator);
@@ -39,14 +39,14 @@ QByteArray PinData::toByteArray() const
     return output;
 }
 
-PinData PinData::fromByteArray(const QByteArray &byteArray)
+IPinData IPinData::fromByteArray(const QByteArray &byteArray)
 {
     unsigned short i = 0;
 
-    PinData data;
+    IPinData data;
     QList<QByteArray> arrays = byteArray.split(c_dataSeparator);
     data.pinDirection = static_cast<bool>(arrays[i++].toInt()) ?
-                            PinDirection::In : PinDirection::Out;
+                            EPinDirection::In : EPinDirection::Out;
 
     data.nodeID = arrays[i++].toInt();
     data.pinID = arrays[i++].toInt();
@@ -55,37 +55,37 @@ PinData PinData::fromByteArray(const QByteArray &byteArray)
     return data;
 }
 
-QDebug &operator<<(QDebug &debug, const PinData &obj)
+QDebug &operator<<(QDebug &debug, const IPinData &obj)
 {
     bool temp = debug.autoInsertSpaces();
     debug.setAutoInsertSpaces(false);
 
-    debug << (obj.pinDirection == PinDirection::In ? "In-" : "Out-")
+    debug << (obj.pinDirection == EPinDirection::In ? "In-" : "Out-")
           << "Pin(NodeID: " << obj.nodeID <<  ", pinID: " << obj.pinID << ")";
 
     debug.setAutoInsertSpaces(temp);
     return debug;
 }
 
-QDataStream &operator<<(QDataStream &out, const PinData &obj)
+QDataStream &operator<<(QDataStream &out, const IPinData &obj)
 {
-    out << (obj.pinDirection == PinDirection::In ? "In-" : "Out-")
+    out << (obj.pinDirection == EPinDirection::In ? "In-" : "Out-")
         << "Pin(NodeID: " << obj.nodeID <<  ", pinID: " << obj.pinID << ")";
 
     return out;
 }
 
-bool operator<(const PinData &first, const PinData &second)
+bool operator<(const IPinData &first, const IPinData &second)
 {
     return first.pinID < second.pinID;
 }
 
-bool operator>(const PinData &first, const PinData &second)
+bool operator>(const IPinData &first, const IPinData &second)
 {
     return first.pinID > second.pinID;
 }
 
-bool operator==(const PinData &first, const PinData &second)
+bool operator==(const IPinData &first, const IPinData &second)
 {
     return first.nodeID == second.nodeID
            && first.pinID == second.pinID

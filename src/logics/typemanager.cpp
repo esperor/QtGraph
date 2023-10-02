@@ -5,7 +5,7 @@
 
 #include "TypeManagers/moc_typemanager.cpp"
 
-namespace GraphLib {
+namespace qtgraph {
 
 TypeManager::TypeManager(const TypeManager &other)
 {

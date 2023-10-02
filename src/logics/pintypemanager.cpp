@@ -7,7 +7,7 @@
 #include "utility.h"
 #include "TypeManagers/pintypemanager.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
 bool PinTypeManager::readTypes(const char *file)
 {

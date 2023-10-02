@@ -3,7 +3,7 @@
 #include "DataClasses/nodespawndata.h"
 #include "constants.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
 NodeSpawnData::NodeSpawnData(const NodeSpawnData &other) : name{ other.name }
 {}

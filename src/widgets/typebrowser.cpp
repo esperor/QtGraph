@@ -10,7 +10,7 @@
 
 #include "NodeFactoryModule/moc_typebrowser.cpp"
 
-namespace GraphLib {
+namespace qtgraph {
 
 namespace NodeFactoryModule {
 

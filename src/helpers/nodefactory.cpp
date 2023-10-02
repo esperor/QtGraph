@@ -10,15 +10,13 @@
 
 #include "NodeFactoryModule/moc_nodefactory.cpp"
 
-namespace GraphLib {
-
-namespace NodeFactoryModule {
-
+namespace qtgraph {
+    
 
 NodeFactory::NodeFactory()
 {}
 
-TypedNode *NodeFactory::makeNodeOfType(int typeID, Canvas *canvas) const
+TypedNode *NodeFactory::makeNodeOfType(int typeID, WCanvas *canvas) const
 {
     TypedNode *node = new TypedNode(typeID, canvas);
 
@@ -29,7 +27,7 @@ TypedNode *NodeFactory::makeNodeOfType(int typeID, Canvas *canvas) const
     return node;
 }
 
-TypedNode *NodeFactory::makeNodeAndPinsOfType(int typeID, Canvas *canvas) const
+TypedNode *NodeFactory::makeNodeAndPinsOfType(int typeID, WCanvas *canvas) const
 {
     TypedNode *node = makeNodeOfType(typeID, canvas);
 
@@ -38,15 +36,15 @@ TypedNode *NodeFactory::makeNodeAndPinsOfType(int typeID, Canvas *canvas) const
     QJsonValue outPins = type.value("out-pins");
 
     if (inPins != QJsonValue::Undefined)
-        addPinsToNodeByJsonValue(inPins, node, PinDirection::In);
+        addPinsToNodeByJsonValue(inPins, node, EPinDirection::In);
 
     if (outPins != QJsonValue::Undefined)
-        addPinsToNodeByJsonValue(outPins, node, PinDirection::Out);
+        addPinsToNodeByJsonValue(outPins, node, EPinDirection::Out);
 
     return node;
 }
 
-Pin *NodeFactory::makePinOfType(int typeID, BaseNode *node) const
+Pin *NodeFactory::makePinOfType(int typeID, WANode *node) const
 {
     auto type = _pinTypeManager->Types()[typeID];
     QColor color = parseToColor(type.value("color").toString());
@@ -60,7 +58,7 @@ Pin *NodeFactory::makePinOfType(int typeID, BaseNode *node) const
     return pin;
 }
 
-void NodeFactory::addPinsToNodeByJsonValue(const QJsonValue &val, TypedNode *node, PinDirection direction) const
+void NodeFactory::addPinsToNodeByJsonValue(const QJsonValue &val, TypedNode *node, EPinDirection direction) const
 {
     const QVector<QJsonObject> &pinTypes = _pinTypeManager->Types();
     QJsonArray pins = val.toArray();
@@ -77,9 +75,6 @@ void NodeFactory::addPinsToNodeByJsonValue(const QJsonValue &val, TypedNode *nod
 
         node->addPin(pin);
     }
-}
-
-
 }
 
 }

@@ -8,17 +8,15 @@
 #include <QPushButton>
 #include <QScrollArea>
 
-#include "QtGraph/GraphLib.h"
+#include "qtgraph.h"
 #include "QtGraph/TypeManagers/nodetypemanager.h"
 #include "QtGraph/TypeManagers/pintypemanager.h"
 #include "QtGraph/NodeFactoryModule/typednodeimage.h"
 #include "QtGraph/NodeFactoryModule/nfbuttonminimize.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
-namespace NodeFactoryModule {
-
-class GRAPHLIB_EXPORT TypeBrowser : public QWidget
+class TypeBrowser : public QWidget
 {
     Q_OBJECT
 
@@ -71,7 +69,5 @@ private:
     NFButtonMinimize _btnMinimize;
     QVector<QSharedPointer<TypedNodeImage>> _nodeImages;
 };
-
-}
 
 }

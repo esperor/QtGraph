@@ -8,21 +8,21 @@
 #include "type/point.pb.h"
 #include "type/color.pb.h"
 
-#include "QtGraph/GraphLib.h"
+#include "qtgraph.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
 class BaseNode;
-enum class PinDirection;
+enum class EPinDirection;
 class TypedNode;
 
 std::optional<QJsonObject> loadFile(const char* name);
 
-QFont GRAPHLIB_EXPORT standardFont(int size);
+QFont standardFont(int size);
 
-QPoint GRAPHLIB_EXPORT snap(const QPointF &position, short interval);
+QPoint snap(const QPointF &position, short interval);
 
-QPainterPath GRAPHLIB_EXPORT standardPath(const QPoint &origin, const QPoint &target, float zoomMult = 1.0f);
+QPainterPath standardPath(const QPoint &origin, const QPoint &target, float zoomMult = 1.0f);
 
 protocol::type::Color   convertTo_protocolColor(const QColor &color);
 QColor convertFrom_protocolColor(const protocol::type::Color &color);
@@ -34,7 +34,7 @@ QPointF convertFrom_protocolPointF(const protocol::type::PointF &point);
 
 namespace NodeFactoryModule {
 
-QColor GRAPHLIB_EXPORT parseToColor(const QString &str);
+QColor parseToColor(const QString &str);
 
 }
 

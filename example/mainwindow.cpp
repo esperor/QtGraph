@@ -21,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    _canvas = new Canvas(this);
+    _canvas = new WCanvas(this);
     setCentralWidget(_canvas);
 
     _menuFile = new QMenu("Menu", this);
@@ -51,7 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     _snapping = new QAction("Toggle snapping", this);
     _menuOptions->addAction(_snapping);
-    connect(_snapping, &QAction::triggered, _canvas, &Canvas::toggleSnapping);
+    connect(_snapping, &QAction::triggered, _canvas, &WCanvas::toggleSnapping);
 
     _menuBar->addMenu(_menuOptions);
 

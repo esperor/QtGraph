@@ -5,9 +5,7 @@
 
 #include "NodeFactoryModule/moc_nfbuttonminimize.cpp"
 
-namespace GraphLib {
-
-namespace NodeFactoryModule {
+namespace qtgraph {
 
 NFButtonMinimize::NFButtonMinimize(QWidget *parent)
     : QWidget{ parent }
@@ -33,8 +31,6 @@ void NFButtonMinimize::paintEvent(QPaintEvent *event)
 
     setUpdatesEnabled(true);
     _painter->end();
-}
-
 }
 
 }

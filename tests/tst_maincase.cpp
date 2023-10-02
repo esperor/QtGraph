@@ -45,14 +45,14 @@ protected:
 
 TEST(TestPinData, ByteArrayConversions)
 {
-    PinData first(PinDirection::In, 5, 6);
+    IPinData first(PinDirection::In, 5, 6);
     QByteArray arr = first.toByteArray();
-    PinData second = PinData::fromByteArray(arr);
+    IPinData second = IPinData::fromByteArray(arr);
     EXPECT_EQ(first, second);
 
     first.nodeID = 0;
     arr = first.toByteArray();
-    second = PinData::fromByteArray(arr);
+    second = IPinData::fromByteArray(arr);
     EXPECT_EQ(first, second);
 }
 

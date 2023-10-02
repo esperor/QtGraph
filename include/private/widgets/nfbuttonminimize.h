@@ -7,9 +7,7 @@
 #include <QPainter>
 #include <QString>
 
-namespace GraphLib {
-
-namespace NodeFactoryModule {
+namespace qtgraph {
 
 class NFButtonMinimize : public QWidget
 {
@@ -34,7 +32,5 @@ protected:
 private:
     QPainter *_painter;
 };
-
-}
 
 }

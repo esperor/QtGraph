@@ -1,6 +1,6 @@
 #include "idgenerator.h"
 
-namespace GraphLib {
+namespace qtgraph {
 
 IDGenerator::IDGenerator() {}
 IDGenerator::IDGenerator(std::set<uint32_t> aldreadyTakenIDs)
