@@ -345,31 +345,31 @@ void WCanvas::onPinConnectionBreak(IPinData outPin, IPinData inPin)
     }
 }
 
-void WCanvas::onPinDrag(PinDragSignal signal)
+void WCanvas::onPinDrag(IPinDragSignal signal)
 {
     switch (signal.type())
     {
-    case PinDragSignalType::Enter:
+    case EPinDragSignalType::Enter:
     {
         _nodes[signal.source().nodeID]->setPinConnected(signal.source().pinID, true);
         if (_draggedPinTargetInfo)
             _draggedPinTargetInfo.value() = signal.source();
         break;
     }
-    case PinDragSignalType::Leave:
+    case EPinDragSignalType::Leave:
     {
         _nodes[signal.source().nodeID]->setPinConnected(signal.source().pinID, false);
         if (_draggedPinTargetInfo)
             _draggedPinTargetInfo.value() = std::nullopt;
         break;
     }
-    case PinDragSignalType::Start:
+    case EPinDragSignalType::Start:
     {
         _draggedPin = signal.source();
         _draggedPinTargetInfo.emplace(std::nullopt);
         break;
     }
-    case PinDragSignalType::End:
+    case EPinDragSignalType::End:
     {
         _draggedPin = std::nullopt;
         _draggedPinTargetInfo = std::nullopt;

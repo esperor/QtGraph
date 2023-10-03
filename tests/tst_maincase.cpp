@@ -59,9 +59,9 @@ TEST(TestPinData, ByteArrayConversions)
 TEST(TestNodeSpawnData, ByteArrayConversions)
 {
     QString str("Text");
-    NodeSpawnData first(str);
+    INodeSpawnData first(str);
     QByteArray arr1 = first.toByteArray();
-    NodeSpawnData second = NodeSpawnData::fromByteArray(arr1);
+    INodeSpawnData second = INodeSpawnData::fromByteArray(arr1);
     EXPECT_EQ(first, second);
 
     TypedNodeSpawnData third(str, 1);

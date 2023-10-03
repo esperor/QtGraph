@@ -3,13 +3,14 @@
 #include <QMimeData>
 #include <string>
 
-#include "GraphWidgets/Abstracts/abstractpin.h"
-#include "GraphWidgets/Abstracts/basenode.h"
-#include "constants.h"
-#include "utility.h"
-#include "GraphWidgets/canvas.h"
+#include "widgets/pin.h"
+#include "widgets/node.h"
+#include "utilities/constants.h"
+#include "utilities/utility.h"
+#include "widgets/canvas.h"
+#include "logics/pin.h"
 
-#include "GraphWidgets/Abstracts/moc_abstractpin.cpp"
+#include "widgets/moc_pin.cpp"
 
 namespace qtgraph {
 
@@ -17,11 +18,8 @@ WPin::WPin(WANode *parent)
     : QWidget{ parent }
     , _parentNode{ parent }
     , _data{ IPinData(EPinDirection::In, parent->ID(), parent->newID()) }
-    , _color{ QColor(Qt::GlobalColor::black) }
+    , _fakeConnected{ false }
     , _normalD{ c_normalPinD }
-    , _bIsConnected{ false }
-    , _text{ QString("") }
-    , _connectedPins{ QMap<uint32_t, IPinData>() }
     , _breakConnectionActions{ QMap<int, QAction*>() }
     , _contextMenu{ QMenu(this) }
     , _painter{ new QPainter() }
@@ -32,57 +30,8 @@ WPin::WPin(WANode *parent)
 WPin::~WPin() { delete _painter; }
 
 
-// --------------- SERIALIZATION -------------------
-
-
-void WPin::protocolize(protocol::Pin *pPin) const
-{
-    *(pPin->mutable_color()) = convertTo_protocolColor(_color);
-    pPin->set_text(_text.toStdString());
-    pPin->set_direction((protocol::EPinDirection)_data.pinDirection);
-    pPin->set_id(_data.pinID);
-}
-
-void WPin::deprotocolize(const protocol::Pin &pPin)
-{
-    setColor(convertFrom_protocolColor(pPin.color()));
-    setText(QString::fromStdString(pPin.text()));
-    setDirection((EPinDirection)pPin.direction());
-}
-
-
 // ------------------- GENERAL ---------------------
 
-
-void WPin::setConnected(bool isConnected)
-{
-    if (_connectedPins.isEmpty())
-        _bIsConnected = isConnected;
-    else
-        _bIsConnected = true;
-}
-
-void WPin::addConnectedPin(IPinData pin)
-{
-    if (pin.pinDirection == _data.pinDirection)
-        throw std::invalid_argument("WPin::addConnectedPin - pin with the same direction passed as the argument.");
-    _connectedPins.insert(pin.pinID, pin);
-    _bIsConnected = true;
-}
-
-void WPin::removeConnectedPinByID(uint32_t ID)
-{
-    if (_connectedPins.contains(ID))
-    {
-        _connectedPins.remove(ID);
-        _bIsConnected = !(_connectedPins.empty());
-    }
-}
-
-uint32_t WPin::getNodeID() const
-{
-    return _parentNode->ID();
-}
 
 QPixmap WPin::getPixmap() const
 {
@@ -98,19 +47,14 @@ QPixmap WPin::getPixmap() const
     return pixmap;
 }
 
-IPinData WPin::getData() const
-{
-    return _data;
-}
-
 int WPin::getDesiredWidth(float zoom) const
 {
-    if (_text == "" || zoom <= c_changeRenderZoomMultiplier)
+    if (_lpin->getText() == "" || zoom <= c_changeRenderZoomMultiplier)
         return _normalD * zoom;
 
     QFont font = standardFont(static_cast<int>(_normalD * zoom * c_pinFontSizeCoef));
     QFontMetrics metrics(font);
-    int textWidth = metrics.size(Qt::TextSingleLine, _text).width();
+    int textWidth = metrics.size(Qt::TextSingleLine, _lpin->getText()).width();
     return static_cast<int>(textWidth + _normalD * 2 * zoom);
 }
 
@@ -126,24 +70,26 @@ void WPin::startDrag()
     drag->setPixmap(pixmap);
     drag->setHotSpot(QPoint(pixmap.width() / 2, pixmap.height() / 2));
 
-    onDrag(PinDragSignal(getData(), PinDragSignalType::Start));
+    onDrag(IPinDragSignal(_lpin->getData(), EPinDragSignalType::Start));
     drag->exec();
-    onDrag(PinDragSignal(getData(), PinDragSignalType::End));
+    onDrag(IPinDragSignal(_lpin->getData(), EPinDragSignalType::End));
 }
 
 void WPin::showContextMenu(const QMouseEvent *event)
 {
     _contextMenu.clear();
-    _contextMenu.setTitle(_text);
+    _contextMenu.setTitle(_lpin->getText());
 
-    if (!_connectedPins.isEmpty())
+    QVector<IPinData> connectedPins = _lpin->getConnectedPins();
+
+    if (!connectedPins.isEmpty())
     {
         QMenu *breakMenu = _contextMenu.addMenu("Break connnection");
-        std::ranges::for_each(_connectedPins.asKeyValueRange(), [&](const std::pair<uint32_t, IPinData> &pair){
-            QString nodeName = _parentNode->getParentCanvas()->getNodeName(pair.second.nodeID);
+        std::ranges::for_each(connectedPins, [&](IPinData data){
+            QString nodeName = _parentNode->getParentCanvas()->getNodeName(data.nodeID);
             breakMenu->addAction(new QAction("to " + nodeName, breakMenu));
             QAction *action = breakMenu->actions().last();
-            action->setData(QVariant(pair.second.toByteArray()));
+            action->setData(QVariant(data.toByteArray()));
 
             connect(action, &QAction::triggered, this, &WPin::onConnectionBreakActionClick);
         });
@@ -181,9 +127,9 @@ void WPin::dropEvent(QDropEvent *event)
         IPinData sourceData = IPinData::fromByteArray(byteArray);
 
         if (_data.pinDirection == EPinDirection::Out)
-            onConnect(getData(), sourceData);
+            onConnect(_lpin->getData(), sourceData);
         else
-            onConnect(sourceData, getData());
+            onConnect(sourceData, _lpin->getData());
     }
 }
 
@@ -198,7 +144,7 @@ void WPin::dragEnterEvent(QDragEnterEvent *event)
         {
             event->setDropAction(Qt::LinkAction);
             event->acceptProposedAction();
-            onDrag(PinDragSignal(getData(), PinDragSignalType::Enter));
+            onDrag(IPinDragSignal(_lpin->getData(), EPinDragSignalType::Enter));
             return;
         }
     }
@@ -206,7 +152,7 @@ void WPin::dragEnterEvent(QDragEnterEvent *event)
 
 void WPin::dragLeaveEvent(QDragLeaveEvent *)
 {
-    onDrag(PinDragSignal(getData(), PinDragSignalType::Leave));
+    onDrag(IPinDragSignal(_lpin->getData(), EPinDragSignalType::Leave));
 }
 
 
@@ -218,8 +164,8 @@ void WPin::onConnectionBreakActionClick()
     QAction *sender = (QAction*)QObject::sender();
     IPinData data = IPinData::fromByteArray(sender->data().toByteArray());
 
-    IPinData out = getDirection() == EPinDirection::Out ? getData() : data;
-    IPinData in  = getDirection() == EPinDirection::Out ? data : getData();
+    IPinData out = getDirection() == EPinDirection::Out ? _lpin->getData() : data;
+    IPinData in  = getDirection() == EPinDirection::Out ? data : _lpin->getData();
     onConnectionBreak(out, in);
 }
 
@@ -247,7 +193,7 @@ void WPin::paint(QPainter *painter, QPaintEvent *)
     painter->setPen(pen);
     QFont font = standardFont(desiredD * c_pinFontSizeCoef);
     painter->setFont(font);
-    painter->setBrush(_color);
+    painter->setBrush(_lpin->getColor());
 
     int outlineWidth = c_globalOutlineWidth * canvasZoom;
 
@@ -256,7 +202,7 @@ void WPin::paint(QPainter *painter, QPaintEvent *)
 
     QRect rectangle = QRect(desiredOrigin.x(), desiredOrigin.y(), desiredD, desiredD);
 
-    QSize textBounding = painter->fontMetrics().size(Qt::TextSingleLine, _text);
+    QSize textBounding = painter->fontMetrics().size(Qt::TextSingleLine, _lpin->getText());
 
 
 
@@ -273,7 +219,7 @@ void WPin::paint(QPainter *painter, QPaintEvent *)
     painter->drawEllipse(rectangle);
 
     // If needed, draw inner circle the color of the background
-    if (!(_bIsConnected || canvasZoom <= c_changeRenderZoomMultiplier))
+    if (!(canvasZoom <= c_changeRenderZoomMultiplier || _fakeConnected || _lpin->isConnected()))
     {
         painter->setBrush(c_nodesBackgroundColor);
         QRect innerRect = QRect(rectangle.x() + outlineWidth
@@ -286,17 +232,17 @@ void WPin::paint(QPainter *painter, QPaintEvent *)
 
 
     // Text-related stuff
-    if (_text != "" && !(canvasZoom <= c_changeRenderZoomMultiplier))
+    if (_lpin->getText() != "" && !(canvasZoom <= c_changeRenderZoomMultiplier))
     {
         pen.setStyle(Qt::SolidLine);
-        pen.setColor(_color);
+        pen.setColor(_lpin->getColor());
         painter->setPen(pen);
 
         if (_data.pinDirection == EPinDirection::Out)
             textOrigin.setX(this->width() - desiredD * 2 - textBounding.width());
 
         painter->drawText(QRect(textOrigin.x(), textOrigin.y(), textBounding.width(), rectangle.height())
-                          , Qt::AlignVCenter, _text);
+                          , Qt::AlignVCenter, _lpin->getText());
     }
 }
 

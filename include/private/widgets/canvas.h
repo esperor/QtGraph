@@ -84,7 +84,7 @@ protected:
 private slots:
     void onNodeDestroyed(QObject *obj);
     void onNodeSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID);
-    void onPinDrag(PinDragSignal signal);
+    void onPinDrag(IPinDragSignal signal);
     void onPinConnect(IPinData outPin, IPinData inPin);
     void onPinConnectionBreak(IPinData outPin, IPinData inPin);
     void onTypeBrowserMove(QVector2D offset);

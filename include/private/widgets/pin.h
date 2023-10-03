@@ -34,37 +34,18 @@ public:
     WPin(WANode *parent);
     ~WPin();
 
-    virtual void protocolize(protocol::Pin *pPin) const;
-    virtual void deprotocolize(const protocol::Pin &pPin);
-
-    void setID(uint32_t newID) { _data.pinID = newID; }
-    void setConnected(bool isConnected);
-    void setColor(QColor color) { _color = color; }
+    void setFakeConnected(bool isConnected) { _fakeConnected = isConnected; }
     void setNormalD(float newD) { _normalD = newD; }
-    void setText(QString text) { _text = text; }
-    void setDirection(EPinDirection dir) { _data.pinDirection = dir; }
-    void addConnectedPin(IPinData pin);
-    void removeConnectedPinByID(uint32_t ID);
 
-    uint32_t ID() const { return _data.pinID; }
-    uint32_t getNodeID() const;
-    bool isConnected() const { return _bIsConnected; }
-    const QColor &getColor() const { return _color; }
     const float &getNormalD() const { return _normalD; }
-    QString getText() const { return _text; }
     int getDesiredWidth(float zoom) const;
     EPinDirection getDirection() const { return _data.pinDirection; }
     bool isInPin() const { return _data.pinDirection == EPinDirection::In; }
     QPoint getCenter() const { return mapToParent(_center); }
     QPixmap getPixmap() const;
-    IPinData getData() const;
-
-    QVector<IPinData> getConnectedPins() const { return _connectedPins.values(); }
-
-    static bool static_isInPin(const WPin *pin) { return pin->getDirection() == EPinDirection::In; }
 
 signals:
-    void onDrag(PinDragSignal signal);
+    void onDrag(IPinDragSignal signal);
     void onConnect(IPinData outPin, IPinData inPin);
     void onConnectionBreak(IPinData outPin, IPinData inPin);
 
@@ -85,18 +66,14 @@ private:
 
 protected:
     WANode *_parentNode;
+    QSharedPointer<LPin> _lpin;
     IPinData _data;
-    QColor _color;
     float _normalD;
-    bool _bIsConnected;
-    QString _text;
+    // used to show pin as connected when connection is in progress
+    bool _fakeConnected;
     QPoint _center;
-    // uint32_t here is pinID of connected pin
-    QMap<uint32_t, IPinData> _connectedPins;
     QMap<int, QAction*> _breakConnectionActions;
-
     QMenu _contextMenu;
-
     QPainter *_painter;
 };
 

@@ -93,13 +93,13 @@ void WANode::deprotocolize(const protocol::Node &pNode)
 
 void WANode::setPinConnection(uint32_t pinID, IPinData connectedPin)
 {
-    _pins[pinID]->setConnected(true);
+    _pins[pinID]->setFakeConnected(true);
     _pins[pinID]->addConnectedPin(connectedPin);
 }
 
 void WANode::setPinConnected(uint32_t pinID, bool isConnected)
 {
-    _pins[pinID]->setConnected(isConnected);
+    _pins[pinID]->setFakeConnected(isConnected);
 }
 
 float WANode::getParentCanvasZoomMultiplier() const
@@ -169,15 +169,15 @@ void WANode::addPin(QString text, EPinDirection direction, QColor color)
     addPin(newPin);
 }
 
-void WANode::slot_onPinDrag(PinDragSignal signal)
+void WANode::slot_onPinDrag(IPinDragSignal signal)
 {
     switch (signal.type())
     {
-    case PinDragSignalType::Start:
-        _pins[signal.source().pinID]->setConnected(true);
+    case EPinDragSignalType::Start:
+        _pins[signal.source().pinID]->setFakeConnected(true);
         break;
-    case PinDragSignalType::End:
-        _pins[signal.source().pinID]->setConnected(false);
+    case EPinDragSignalType::End:
+        _pins[signal.source().pinID]->setFakeConnected(false);
         break;
     default:;
     }
@@ -313,6 +313,7 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
         return maxInWidth + maxOutWidth + normalPinDZoomed * (bShouldSimplifyRender ? 8 : 4);
     };
 
+    // TODO: write lambda
     int inPins = std::ranges::count_if(_pins, &WPin::static_isInPin);
     int pinRows = std::max(inPins, static_cast<int>(_pins.size() - inPins));
 

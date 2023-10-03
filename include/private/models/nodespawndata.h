@@ -7,21 +7,21 @@
 
 namespace qtgraph {
 
-class NodeSpawnData
+class INodeSpawnData
 {
 public:
-    NodeSpawnData() {}
-    NodeSpawnData(const NodeSpawnData &other);
-    NodeSpawnData(const QString &_name);
+    INodeSpawnData() {}
+    INodeSpawnData(const INodeSpawnData &other);
+    INodeSpawnData(const QString &_name);
 
     QByteArray toByteArray();
-    static NodeSpawnData fromByteArray(const QByteArray &byteArray);
+    static INodeSpawnData fromByteArray(const QByteArray &byteArray);
 
     QString name;
 
 };
 
-class TypedNodeSpawnData : public NodeSpawnData
+class TypedNodeSpawnData : public INodeSpawnData
 {
 public:
     TypedNodeSpawnData() {}
@@ -35,13 +35,13 @@ public:
 
 };
 
-QDebug &operator<<(QDebug &debug, const NodeSpawnData &obj);
+QDebug &operator<<(QDebug &debug, const INodeSpawnData &obj);
 
-QDataStream &operator<<(QDataStream &out, const NodeSpawnData &obj);
+QDataStream &operator<<(QDataStream &out, const INodeSpawnData &obj);
 
-inline bool operator<(const NodeSpawnData &first, const NodeSpawnData &second) { return first.name < second.name; }
-inline bool operator>(const NodeSpawnData &first, const NodeSpawnData &second) { return first.name > second.name; }
-bool operator==(const NodeSpawnData &first, const NodeSpawnData &second);
+inline bool operator<(const INodeSpawnData &first, const INodeSpawnData &second) { return first.name < second.name; }
+inline bool operator>(const INodeSpawnData &first, const INodeSpawnData &second) { return first.name > second.name; }
+bool operator==(const INodeSpawnData &first, const INodeSpawnData &second);
 
 
 QDebug &operator<<(QDebug &debug, const TypedNodeSpawnData &obj);
@@ -54,5 +54,5 @@ bool operator==(const TypedNodeSpawnData &first, const TypedNodeSpawnData &secon
 
 }
 
-Q_DECLARE_METATYPE(qtgraph::NodeSpawnData)
+Q_DECLARE_METATYPE(qtgraph::INodeSpawnData)
 Q_DECLARE_METATYPE(qtgraph::TypedNodeSpawnData)

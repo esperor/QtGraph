@@ -3,11 +3,11 @@
 #include <QPointF>
 
 #include "qtgraph.h"
-#include "QtGraph/DataClasses/pindata.h"
+#include "models/pindata.h"
 
 namespace qtgraph {
 
-enum class PinDragSignalType
+enum class EPinDragSignalType
 {
     Enter,
     Leave,
@@ -15,25 +15,25 @@ enum class PinDragSignalType
     End
 };
 
-struct PinDragSignal
+struct IPinDragSignal
 {
 public:
-    PinDragSignal();
-    PinDragSignal(IPinData source, PinDragSignalType type);
+    IPinDragSignal();
+    IPinDragSignal(IPinData source, EPinDragSignalType type);
 
     IPinData &source() { return _source; }
-    PinDragSignalType &type() { return _type; }
+    EPinDragSignalType &type() { return _type; }
 
 private:
     IPinData _source;
-    PinDragSignalType _type;
+    EPinDragSignalType _type;
 };
 
-struct PinDragMoveSignal : public PinDragSignal
+struct IPinDragMoveSignal : public IPinDragSignal
 {
 public:
-    PinDragMoveSignal();
-    PinDragMoveSignal(IPinData source, PinDragSignalType type, QPointF mousePosition);
+    IPinDragMoveSignal();
+    IPinDragMoveSignal(IPinData source, EPinDragSignalType type, QPointF mousePosition);
 
     QPointF &mousePosition() { return _mousePosition; }
 

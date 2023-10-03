@@ -66,7 +66,7 @@ public:
 
 signals:
     void onSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID);
-    void onPinDrag(PinDragSignal signal);
+    void onPinDrag(IPinDragSignal signal);
     void onPinConnect(IPinData outPin, IPinData inPin);
     void onPinConnectionBreak(IPinData outPin, IPinData inPin);
 
@@ -76,7 +76,7 @@ public slots:
 
 private slots:
     void onPinDestroyed(QObject *obj);
-    void slot_onPinDrag(PinDragSignal signal);
+    void slot_onPinDrag(IPinDragSignal signal);
     void slot_onPinConnect(IPinData outPin, IPinData inPin);
     void slot_onPinConnectionBreak(IPinData outPin, IPinData inPin);
 

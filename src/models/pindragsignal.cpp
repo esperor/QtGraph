@@ -1,13 +1,13 @@
-#include "DataClasses/pindragsignal.h"
+#include "models/pindragsignal.h"
 
 namespace qtgraph {
 
-PinDragSignal::PinDragSignal() {}
-PinDragSignal::PinDragSignal(IPinData source, PinDragSignalType type)
+IPinDragSignal::IPinDragSignal() {}
+IPinDragSignal::IPinDragSignal(IPinData source, EPinDragSignalType type)
     : _source{ source }, _type{ type } {}
 
-PinDragMoveSignal::PinDragMoveSignal() {}
-PinDragMoveSignal::PinDragMoveSignal(IPinData source, PinDragSignalType type, QPointF mousePosition)
-    : PinDragSignal(source, type), _mousePosition{ mousePosition } {}
+IPinDragMoveSignal::IPinDragMoveSignal() {}
+IPinDragMoveSignal::IPinDragMoveSignal(IPinData source, EPinDragSignalType type, QPointF mousePosition)
+    : IPinDragSignal(source, type), _mousePosition{ mousePosition } {}
 
 }
