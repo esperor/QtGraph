@@ -3,10 +3,10 @@
 #include <QJsonValue>
 #include <QObject>
 
-#include "QtGraph/TypeManagers/nodetypemanager.h"
-#include "QtGraph/TypeManagers/pintypemanager.h"
+#include "logics/nodetypemanager.h"
+#include "logics/pintypemanager.h"
 #include "qtgraph.h"
-#include "QtGraph/GraphWidgets/pin.h"
+#include "logics/pin.h"
 
 namespace qtgraph {
 

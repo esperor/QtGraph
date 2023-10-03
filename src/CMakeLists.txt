@@ -4,6 +4,7 @@ add_subdirectory(proto)
 
 set(SOURCES
     helpers/nodefactory.cpp
+    helpers/idgenerator.cpp
 
     logics/nodetypemanager.cpp
     logics/typemanager.cpp
@@ -24,7 +25,6 @@ set(SOURCES
     widgets/typednodeimage.cpp
     
     utilities/utility.cpp
-    utilities/idgenerator.cpp
 )
 
 qt_add_library(QtGraph

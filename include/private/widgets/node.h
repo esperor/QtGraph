@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include <QObject>
 #include <QWidget>
 #include <QPoint>
@@ -10,12 +12,9 @@
 #include <QFontMetrics>
 #include <QMap>
 
-#include <cstdint>
-
-#include "QtGraph/GraphWidgets/Abstracts/abstractpin.h"
+#include "widgets/pin.h"
 #include "qtgraph.h"
-#include "QtGraph/idgenerator.h"
-#include "QtGraph/NodeFactoryModule/nodefactory.h"
+#include "logics/node.h"
 
 #include "node.pb.h"
 
@@ -30,45 +29,20 @@ class WANode : public QWidget
 public:
     WANode(WCanvas *canvas);
     ~WANode();
-
-    virtual void protocolize(protocol::Node *pNode) const;
-    virtual void deprotocolize(const protocol::Node &pNode);
-
-    static uint32_t newID() { return _IDgenerator.generate(); }
-    // Static function! Returns taken id's for ALL THE NODES
-    static const std::set<uint32_t> &getTakenPinIDs() { return _IDgenerator.getTakenIDs(); }
-
-    std::optional<QWeakPointer<AbstractPin>> operator[](uint32_t id); 
-
-    // Alias for [id]
-    inline std::optional<QWeakPointer<AbstractPin>> pin(uint32_t id) { return this->operator[](id); }; 
-    const QPointF &canvasPosition() const { return _canvasPosition; }
-    uint32_t ID() const { return _ID; }
+    
     const QSize &normalSize() const { return _normalSize; }
     float getParentCanvasZoomMultiplier() const;
-    const QString &name() const { return _name; }
+    uint32_t ID() const { return _lnode->ID(); }
+    
     QPoint getOutlineCoordinateForPinID(uint32_t pinID) const { return mapToParent(_pinsOutlineCoords[pinID]); }
-    bool hasPinConnections() const;
-    QSharedPointer< QMap<uint32_t, QVector<IPinData> > > getPinConnections() const;
-    QList<uint32_t> getPinIDs() const { return _pins.keys(); }
-    // Insecure getter, use [] for secure approach
-    const AbstractPin *getPinByID(uint32_t pinID) const { return _pins[pinID]; }
     QRect getMappedRect() const;
     const WCanvas *getParentCanvas() const { return _parentCanvas; }
-    const QString &getName() const { return _name; }
-    bool doesPinExist(uint32_t id) const { return _pins.contains(id); };
 
-    void setFactory(NodeFactory *factory) { _factory = factory; }
-    void setCanvasPosition(QPointF newCanvasPosition) { _canvasPosition = newCanvasPosition; }
-    void setID(uint32_t ID) { _ID = ID; }
     void setNormalSize(QSize newSize) { _normalSize = newSize; }
-    void setName(QString name) { _name = name; }
-    void removePinConnection(uint32_t pinID, uint32_t connectedPinID);
-    void setPinConnection(uint32_t pinID, IPinData connectedPin);
+    void setSelected(bool b, bool bIsMultiSelectionModifierDown = false);
     void setPinConnected(uint32_t pinID, bool isConnected);
-    void setSelected(bool b, bool bIsMultiSelectionModifierDown = false) { _bIsSelected = b; if (b) onSelect(bIsMultiSelectionModifierDown, _ID); }
 
-    void moveCanvasPosition(QPointF vector) { _canvasPosition += vector; }
+    void addPin(WPin *pin);
 
 signals:
     void onSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID);
@@ -76,14 +50,7 @@ signals:
     void onPinConnect(IPinData outPin, IPinData inPin);
     void onPinConnectionBreak(IPinData outPin, IPinData inPin);
 
-public slots:
-    // Return pin id
-    uint32_t addPin(AbstractPin *pin);
-    // Returns pin id
-    uint32_t addPin(QString text, PinDirection direction, QColor color = QColor(Qt::GlobalColor::black));
-
 private slots:
-    void onPinDestroyed(QObject *obj);
     void slot_onPinDrag(IPinDragSignal signal);
     void slot_onPinConnect(IPinData outPin, IPinData inPin);
     void slot_onPinConnectionBreak(IPinData outPin, IPinData inPin);
@@ -106,24 +73,20 @@ private:
 // -----------------------------------------------------------
 
 protected:
-    static IDGenerator _IDgenerator;
+    QSharedPointer<LNode> _lnode;
 
-    NodeFactory *_factory;
     const WCanvas *_parentCanvas;
-    uint32_t _ID;
     float _zoom;
     QSize _normalSize;
     QPainter *_painter;
-    QPointF _canvasPosition;
     // Hidden position is used when the node is being moved for snapping
     QPointF _hiddenPosition;
-    bool _bIsSelected;
     QPointF _lastMouseDownPosition;
     QPointF _mousePressPosition;
-    QString _name;
+    
     QMap<uint32_t, QPoint> _pinsOutlineCoords;
 
-    QMap<uint32_t, WPin*> _pins;
+    QMap<uint32_t, QSharedPointer<WPin>> _pins;
 };
 
 } 

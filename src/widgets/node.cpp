@@ -4,97 +4,44 @@
 #include <QApplication>
 #include <algorithm>
 
-#include "GraphWidgets/Abstracts/basenode.h"
-#include "GraphWidgets/canvas.h"
-#include "utility.h"
-#include "constants.h"
-#include "GraphWidgets/pin.h"
+#include "widgets/node.h"
+#include "widgets/canvas.h"
+#include "utilities/utility.h"
+#include "utilities/constants.h"
+#include "widgets/pin.h"
 
-#include "GraphWidgets/Abstracts/moc_basenode.cpp"
+#include "widgets/moc_node.cpp"
 
 namespace qtgraph {
 
 WANode::WANode(WCanvas *canvas)
     : QWidget{ canvas }
     , _parentCanvas{ canvas }
-    , _ID{ canvas->newID() }
     , _zoom{ _parentCanvas->getZoomMultiplier() }
     , _painter{ new QPainter() }
-    , _canvasPosition{ QPointF(0, 0) }
     , _hiddenPosition{ QPointF() }
-    , _bIsSelected{ false }
     , _lastMouseDownPosition{ QPointF(0, 0) }
     , _mousePressPosition{ QPointF(0, 0) }
-    , _name{ QString("") }
     , _pinsOutlineCoords{ QMap<uint32_t, QPoint>() }
-    , _pins{ QMap<uint32_t, WPin*>() }
+    , _pins{ QMap<uint32_t, QSharedPointer<WPin>>() }
 {
     _normalSize.setWidth(200);
     _normalSize.setHeight(150);
 
     this->setFixedSize(_normalSize);
-
-    connect(this, &WANode::onSelect, this, [this](){
-        _bIsSelected = true;
-    });
 }
 
 WANode::~WANode()
 {
     delete _painter;
-    std::ranges::for_each(_pins, [](WPin *pin) { delete pin; });
 }
-
-IDGenerator WANode::_IDgenerator = IDGenerator();
-
-
-// ---------------- SERIALIZATION -----------------
-
-
-void WANode::protocolize(protocol::Node *pNode) const
-{
-    *(pNode->mutable_canvas_position()) = convertTo_protocolPointF(_canvasPosition);
-    pNode->set_id(_ID);
-    pNode->set_is_selected(_bIsSelected);
-    pNode->set_name(_name.toStdString());
-    std::ranges::for_each(_pins, [pNode](WPin *pin) {
-        pin->protocolize(pNode->add_pins());
-    });
-}
-
-void WANode::deprotocolize(const protocol::Node &pNode)
-{
-    setSelected(pNode.is_selected());
-    setCanvasPosition(convertFrom_protocolPointF(pNode.canvas_position()));
-    setName(QString::fromStdString(pNode.name()));
-
-    std::ranges::for_each(pNode.pins(), [this](const protocol::Pin &pn){
-        WPin *pin;
-
-        // if (pn.has_type())
-        //     pin = new Pin(this);
-        // else
-        pin = new Pin(this);
-
-        // pin automatically gets new id as it's created
-        // that's what we don't need in case of deserialization
-        _IDgenerator.removeTaken(pin->ID());
-        pin->setID(pn.id());
-        _IDgenerator.addTaken(pin->ID());
-
-        pin->deprotocolize(pn);
-        addPin(pin);
-    });
-}
-
 
 // ------------------- GENERAL --------------------
 
 
-void WANode::setPinConnection(uint32_t pinID, IPinData connectedPin)
-{
-    _pins[pinID]->setFakeConnected(true);
-    _pins[pinID]->addConnectedPin(connectedPin);
+void WANode::setSelected(bool b, bool bIsMultiSelectionModifierDown = false)
+{ 
+    if (b) onSelect(bIsMultiSelectionModifierDown, ID()); 
 }
 
 void WANode::setPinConnected(uint32_t pinID, bool isConnected)
@@ -115,59 +62,18 @@ QRect WANode::getMappedRect() const
     return mapped;
 }
 
-bool WANode::hasPinConnections() const
-{
-    return std::ranges::any_of(_pins, [&](WPin *pin){
-        return !pin->getConnectedPins().isEmpty();
-    });
-}
-
-QSharedPointer< QMap<uint32_t, QVector<IPinData> > > WANode::getPinConnections() const
-{
-    auto out = QSharedPointer<QMap<uint32_t, QVector<IPinData> >>(new QMap<uint32_t, QVector<IPinData> >());
-    std::ranges::for_each(_pins, [&](WPin *pin){
-        out->insert(pin->ID(), pin->getConnectedPins());
-    });
-    return out;
-}
-
-void WANode::removePinConnection(uint32_t pinID, uint32_t connectedPinID)
-{
-    _pins[pinID]->removeConnectedPinByID(connectedPinID);
-}
-
-
-// -------------------- SLOTS ---------------------
-
-
-void WANode::onPinDestroyed(QObject *obj)
-{
-    if (obj == nullptr) qDebug() << "Pointer to destroyed pin is nullptr";
-
-    _IDgenerator.removeTaken( ((WPin*)obj)->ID() );
-}
-
 void WANode::addPin(WPin *pin)
 {
-    _pins.insert(pin->ID(), pin);
+    _pins.insert(pin->getLogical()->ID(), QSharedPointer<WPin>(pin));
     connect(pin, &WPin::onDrag, this, &WANode::slot_onPinDrag);
     connect(pin, &WPin::onConnect, this, &WANode::slot_onPinConnect);
     connect(pin, &WPin::onConnectionBreak, this, &WANode::slot_onPinConnectionBreak);
-    connect(pin, &WPin::destroyed, this, &WANode::onPinDestroyed);
     pin->show();
+    _pinsOutlineCoords.insert(pin->getLogical()->ID(), QPoint(0, 0));
 }
 
-void WANode::addPin(QString text, EPinDirection direction, QColor color)
-{
-    Pin *newPin = new Pin(this);
-    uint32_t id = newPin->ID();
-    
-    _pinsOutlineCoords.insert(id, QPoint(0, 0));
-    newPin->setColor(color);
-    newPin->setText(text);
-    newPin->setDirection(direction);
-    addPin(newPin);
-}
+// -------------------- SLOTS ---------------------
+
 
 void WANode::slot_onPinDrag(IPinDragSignal signal)
 {
@@ -200,14 +106,14 @@ void WANode::mousePressEvent(QMouseEvent *event)
     {
         _lastMouseDownPosition = mapToParent(event->position());
         _mousePressPosition = event->position();
-        _hiddenPosition = _canvasPosition;
+        _hiddenPosition = _lnode->canvasPosition();
     }
 }
 
 void WANode::mouseReleaseEvent(QMouseEvent *event)
 {
     this->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
-    onSelect(event->modifiers() & c_multiSelectionModifier, _ID);
+    onSelect(event->modifiers() & c_multiSelectionModifier, _lnode->ID());
 }
 
 void WANode::mouseMoveEvent(QMouseEvent *event)
@@ -218,18 +124,18 @@ void WANode::mouseMoveEvent(QMouseEvent *event)
             > QApplication::startDragDistance())
         {
             this->setCursor(QCursor(Qt::CursorShape::OpenHandCursor));
-            if (!_bIsSelected)
-                onSelect(event->modifiers() & c_multiSelectionModifier, _ID);
+            if (!_lnode->isSelected())
+                onSelect(event->modifiers() & c_multiSelectionModifier, _lnode->ID());
         }
 
         QPointF offset = mapToParent(event->position()) - _lastMouseDownPosition;
         if (_parentCanvas->getSnappingEnabled())
         {
             _hiddenPosition += (offset / _zoom);
-            _canvasPosition = snap(_hiddenPosition, _parentCanvas->getSnappingInterval());
+            _lnode->setCanvasPosition(snap(_hiddenPosition, _parentCanvas->getSnappingInterval()));
         }
         else
-            _canvasPosition += (offset / _zoom);
+            _lnode->moveCanvasPosition(offset / _zoom);
 
         _lastMouseDownPosition = mapToParent(event->position());
     }
@@ -241,14 +147,14 @@ void WANode::mouseMoveEvent(QMouseEvent *event)
 
 void WANode::paintSimplifiedName(QPainter *painter, int desiredWidth, QPoint textOrigin)
 {
-    QSize nameBounding = painter->fontMetrics().size(Qt::TextSingleLine, _name);
+    QSize nameBounding = painter->fontMetrics().size(Qt::TextSingleLine, _lnode->getName());
     float roundingRadiusZoomed = _zoom * c_nodeRoundingRadius;
     float nameRoundedRectRoundingRadius = roundingRadiusZoomed * 0.1f;
 
 
 
     QRect bounded = painter->boundingRect(QRect(textOrigin.x(), textOrigin.y(), desiredWidth, nameBounding.height() * 2),
-                                          Qt::AlignCenter, _name);
+                                          Qt::AlignCenter, _lnode->getName());
 
     int oldWidth = bounded.width(), oldHeight = bounded.height();
     bounded.setWidth(bounded.width() * c_nodeNameRoundedRectSizeX);
@@ -262,18 +168,18 @@ int WANode::calculateRowsOffset(QPainter *painter) const
 {
     QFont font = standardFont(c_nodeNameSize * _zoom);
     painter->setFont(font);
-    QSize nameBounding = painter->fontMetrics().size(Qt::TextSingleLine, _name);
+    QSize nameBounding = painter->fontMetrics().size(Qt::TextSingleLine, _lnode->getName());
     return nameBounding.height() * 1.5 + c_normalPinD * _zoom;
 }
 
 void WANode::paintName(QPainter *painter, int desiredWidth, QPoint textOrigin)
 {
-    QSize nameBounding = painter->fontMetrics().size(Qt::TextSingleLine, _name);
+    QSize nameBounding = painter->fontMetrics().size(Qt::TextSingleLine, _lnode->getName());
     QFont font = standardFont(c_nodeNameSize * _zoom);
     painter->setFont(font);
 
     painter->drawText(QRect(textOrigin.x(), textOrigin.y(), desiredWidth, nameBounding.height() * 2),
-                      (Qt::AlignVCenter | Qt::AlignHCenter), _name);
+                      (Qt::AlignVCenter | Qt::AlignHCenter), _lnode->getName());
 }
 
 
@@ -297,7 +203,7 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
     auto calculateWidth = [&](){
         int maxInWidth = 0, maxOutWidth = 0;
 
-        std::ranges::for_each(_pins, [&](WPin *pin){
+        std::ranges::for_each(_pins, [&](const QSharedPointer<WPin> &pin){
             switch (pin->getDirection())
             {
             case EPinDirection::In:
@@ -313,8 +219,9 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
         return maxInWidth + maxOutWidth + normalPinDZoomed * (bShouldSimplifyRender ? 8 : 4);
     };
 
-    // TODO: write lambda
-    int inPins = std::ranges::count_if(_pins, &WPin::static_isInPin);
+    int inPins = std::ranges::count_if(_pins, [](const QSharedPointer<WPin> &pin){
+        return pin->getDirection() == EPinDirection::In;
+    });
     int pinRows = std::max(inPins, static_cast<int>(_pins.size() - inPins));
 
     QPen pen(Qt::NoPen);
@@ -339,7 +246,7 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
     QPainterPath path;
 
     // paint OUTER
-    if (_bIsSelected)
+    if (_lnode->isSelected())
     {
         QPen pen(Qt::SolidLine);
         pen.setColor(c_selectionColor);
@@ -381,7 +288,7 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
         int inPinsOffsetY = pinsOffsetY;
         int outPinsOffsetY = pinsOffsetY;
 
-        auto manage = [&](WPin *pin){
+        auto manage = [&](const QSharedPointer<WPin> &pin){
             switch (pin->getDirection())
             {
             case EPinDirection::In:
@@ -395,14 +302,16 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
             default:;
             }
 
-            pin->setFixedSize(pin->getDesiredWidth(_zoom), pin->getNormalD() * _zoom);
-            _pinsOutlineCoords[pin->ID()] = QPoint(pin->isInPin() ? 0 : desiredWidth, pin->getCenter().y());
+            const QSharedPointer<LPin> &logicalPin = logicalPin;
 
-            if (pin->isConnected())
+            pin->setFixedSize(pin->getDesiredWidth(_zoom), pin->getNormalD() * _zoom);
+            _pinsOutlineCoords[logicalPin->ID()] = QPoint(pin->isInPin() ? 0 : desiredWidth, pin->getCenter().y());
+
+            if (logicalPin->isConnected())
             {
-                pen.setColor(pin->getColor());
+                pen.setColor(logicalPin->getColor());
                 painter->setPen(pen);
-                painter->drawLine(_pinsOutlineCoords[pin->ID()], pin->getCenter());
+                painter->drawLine(_pinsOutlineCoords[logicalPin->ID()], pin->getCenter());
             }
         };
 

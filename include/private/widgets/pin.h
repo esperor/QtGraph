@@ -43,6 +43,7 @@ public:
     bool isInPin() const { return _data.pinDirection == EPinDirection::In; }
     QPoint getCenter() const { return mapToParent(_center); }
     QPixmap getPixmap() const;
+    const QSharedPointer<LPin> &getLogical() const { return _lpin; }
 
 signals:
     void onDrag(IPinDragSignal signal);

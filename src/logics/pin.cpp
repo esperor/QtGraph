@@ -2,13 +2,20 @@
 
 #include "logics/pin.h"
 #include "utilities/utility.h"
+#include "logics/node.h"
 
 #include "logics/moc_pin.cpp"
 
-namespace qtgraph {
+namespace qtgraph
+{
 
-LPin::LPin(uint32_t parentID)
-{}
+LPin::LPin(LNode *parent)
+    : _data{ IPinData(EPinDirection::In, parent->newID(), parent->ID()) }
+    , _text{ QString("") }
+    , _color{ QColor(0, 0, 0) }
+    , _connectedPins{ QMap<uint32_t, IPinData>() }
+{
+}
 
 void LPin::protocolize(protocol::Pin *pPin) const
 {
@@ -28,7 +35,6 @@ void LPin::deprotocolize(const protocol::Pin &pPin)
     setDirection((EPinDirection)pPin.direction());
 }
 
-
 IPinData LPin::getData() const
 {
     return _data;
@@ -39,17 +45,12 @@ void LPin::addConnectedPin(IPinData pin)
     if (pin.pinDirection == _data.pinDirection)
         throw std::invalid_argument("LPin::addConnectedPin - pin with the same direction passed as the argument.");
     _connectedPins.insert(pin.pinID, pin);
-    _bIsConnected = true;
 }
 
 void LPin::removeConnectedPinByID(uint32_t ID)
 {
     if (_connectedPins.contains(ID))
-    {
         _connectedPins.remove(ID);
-        _bIsConnected = !(_connectedPins.empty());
-    }
 }
 
 }
-

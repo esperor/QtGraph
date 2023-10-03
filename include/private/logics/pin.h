@@ -4,24 +4,26 @@
 #include <QMap>
 
 #include "models/pindata.h"
-#include "logics/node.h"
 
 #include "pin.pb.h"
 
 namespace qtgraph {
+
+class LNode;
 
 class LPin : public QObject
 {
     Q_OBJECT
 
 public:
-    LPin(uint32_t parentID);
+    LPin(LNode *parent);
+    ~LPin() {}
 
     void protocolize(protocol::Pin *pPin) const;
     void deprotocolize(const protocol::Pin &pPin);
 
     IPinData getData() const { return _data; }
-    bool isConnected() const { return _bIsConnected; }
+    bool isConnected() const { return _connectedPin.empty(); }
     const QColor &getColor() const { return _color; }
     QString getText() const { return _text; }
     inline uint32_t ID() const { return getData().pinID; }
@@ -42,8 +44,6 @@ private:
     IPinData _data;
     // uint32_t here is pinID of connected pin
     QMap<uint32_t, IPinData> _connectedPins;
-    // Bound to _connectedPins emptyness
-    bool _bIsConnected;
     QString _text;
     QColor _color;
 };

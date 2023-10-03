@@ -2,6 +2,7 @@ project(QtGraph)
 
 set(QTGRAPH_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/private/helpers/nodefactory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/private/helpers/idgenerator.h
 
     ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/pintypemanager.h 
     ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/nodetypemanager.h
@@ -22,7 +23,6 @@ set(QTGRAPH_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/private/widgets/node.h
 
     ${CMAKE_CURRENT_SOURCE_DIR}/private/utilities/constants.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/private/utilities/idgenerator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/utilities/utility.h
 
     ${CMAKE_CURRENT_SOURCE_DIR}/private/qtgraph.h
