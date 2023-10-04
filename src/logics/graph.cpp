@@ -2,6 +2,19 @@
 
 #include "logics/graph.h"
 
+namespace qtgraph {
+
+LGraph::LGraph()
+    : _connectedPins{ QMultiMap<IPinData, IPinData>() }
+
+{}
+
+LGraph::~LGraph()
+{}
+
+
+// ------------------------ SERIALIZATION --------------------------
+
 
 bool LGraph::serialize(std::fstream *output) const
 {
@@ -22,6 +35,7 @@ bool LGraph::protocolize(protocol::Graph &graph) const
     });
 
     writeStructure(graph.mutable_structure());
+    return true;
 }
 
 bool LGraph::deserialize(std::fstream *input)
@@ -96,4 +110,19 @@ bool LGraph::readStructure(const protocol::Structure &structure)
         });
     });
     return true;
+}
+
+
+// ---------------------- GENERAL FUNCTIONS ---------------------------
+
+
+QString LGraph::getPinText(uint32_t nodeID, uint32_t pinID) const
+{
+    return _nodes[nodeID]->pin(pinID)->toStrongRef()->getText();
+}
+QString LGraph::getNodeName(uint32_t nodeID) const
+{
+    return _nodes[nodeID]->getName();
+}
+
 }

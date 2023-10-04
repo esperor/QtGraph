@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QObject>
-#include <QWidget>
+#include <QtWidgets/QWidget>
 #include <QPainter>
 #include <QWeakPointer>
 #include <QSharedPointer>
@@ -17,6 +17,9 @@
 #include <cstdint>
 
 #include "logics/graph.h"
+#include "widgets/typebrowser.h"
+#include "widgets/node.h"
+#include "models/pindragsignal.h"
 
 #include "structure.pb.h"
 
@@ -31,20 +34,18 @@ public:
     WCanvas(QWidget *parent = nullptr);
     ~WCanvas();
 
-    // std:: istream and ostream serialization
+    // Serializes attached graph and some canvas properties
     bool serialize(std::fstream *output) const;
+    // Deserializes attached graph and some canvas properties
     bool deserialize(std::fstream *input);
-    bool writeStructure(protocol::Structure *structure) const;
-    bool readStructure(const protocol::Structure &structure);
-
-
-    uint32_t newID() { return _IDgenerator.generate(); }
 
     float getZoomMultiplier() const     { return _zoomMultipliers[_zoom]; }
     bool getSnappingEnabled() const     { return _bIsSnappingEnabled; }
     int getSnappingInterval() const     { return _snappingInterval; }
     const QPointF &getOffset() const    { return _offset; }
 
+    // Visualizes attached graph. Performance-heavy, don't call in cycle
+    void visualize();
     void setSnappingEnabled(bool enabled) { _bIsSnappingEnabled = enabled; }
     void toggleSnapping() { _bIsSnappingEnabled = !_bIsSnappingEnabled; }
     void setSnappingInterval(int num) { _snappingInterval = num; }
@@ -96,7 +97,7 @@ private:
     void zoom(int times, QPointF where);
     void processSelectionArea(const QMouseEvent *event);
 
-    LGraph *graph;
+    LGraph *_graph;
 
     QPainter *_painter;
     int _dotPaintGap;
@@ -119,7 +120,10 @@ private:
 
     QTimer *_timer;
     TypeBrowser *_typeBrowser;
+    // uint32_t represents node's id 
     QMap<uint32_t, QSharedPointer<WANode>> _selectedNodes;
+    // uint32_t represents node's id
+    QMap<uint32_t, QSharedPointer<WANode>> _nodes;
 
     const static QMap<short, float> _zoomMultipliers;
 

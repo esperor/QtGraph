@@ -11,10 +11,11 @@
 #include <fstream>
 
 #include "widgets/canvas.h"
+#include "utilities/constants.h"
+#include "utilities/utility.h"
 
-
-// protobuf
 #include "data.pb.h"
+#include "graph.pb.h"
 
 #include "widgets/moc_canvas.cpp"
 
@@ -36,7 +37,6 @@ WCanvas::WCanvas(QWidget *parent)
     , _bIsSnappingEnabled{ true }
     , _selectionRect{ std::nullopt }
     , _selectionAreaPreviousNodes{ QSet<uint32_t>() }
-    , _connectedPins{ QMultiMap<IPinData, IPinData>() }
     , _typeBrowser{ new TypeBrowser(this) }
     , _selectedNodes{ QMap<uint32_t, QSharedPointer<WANode>>() }
 {
@@ -88,103 +88,50 @@ const QMap<short, float> WCanvas::_zoomMultipliers =
 
 bool WCanvas::serialize(std::fstream *output) const
 {
-    return graph->serialize(output);
+    protocol::Graph graph;
+    if (!_graph->protocolize(graph))
+    {
+        qDebug() << "Couldn't protocolize graph";
+        return false;
+    }
+
+    *(graph.mutable_offset()) = convertTo_protocolPointF(_offset);
+    graph.set_zoom(_zoom);
+    graph.SerializeToOstream(output);
+    return true;
 }
 
 bool WCanvas::deserialize(std::fstream *input)
 {
     setUpdatesEnabled(false);
-    protocol::Data data;
-    data.ParseFromIstream(input);
+    protocol::Graph graph;
+    graph.ParseFromIstream(input);
 
-    // canvas
-    protocol::State state = data.state();
-    setNodeTypeManager(NodeTypeManager::fromProtocolTypeManager(state.node_type_manager()));
-    setPinTypeManager(PinTypeManager::fromProtocolTypeManager(state.pin_type_manager()));
-    _offset = convertFrom_protocolPointF(state.offset());
-    _zoom = state.zoom();
-    _snappingInterval = state.snapping_interval();
-    _bIsSnappingEnabled = state.is_snapping_enabled();
+    if (!_graph->deprotocolize(graph))
+    {
+        qDebug() << "Couldn't deprotocolize graph";
+        return false;
+    }
 
-    // nodes
-    std::ranges::for_each(state.nodes(), [this](const protocol::Node &nd){
-        WANode *node;
-        if (nd.has_type()) 
-            node = _factory->makeNodeOfType(nd.type(), this);
-        else
-            node = new WANode(this);
+    _offset = convertFrom_protocolPointF(graph.offset());
+    _zoom = graph.zoom();
 
-        // node automatically gets new id as it's created
-        // that's what we don't need in case of deserialization
-        _IDgenerator.removeTaken(node->ID());
-        node->setID(nd.id());
-        _IDgenerator.addTaken(node->ID());
-
-        node->deprotocolize(nd);
-        addNode(node);
-
-        if (nd.is_selected())
-            _selectedNodes.insert(nd.id(), _nodes[nd.id()]);
-    });
-
-    // structure
-    readStructure(data.structure());
+    visualize();
 
     setUpdatesEnabled(true);
     return true;
 }
 
-bool WCanvas::writeStructure(protocol::Structure *structure) const
+void WCanvas::visualize()
 {
-    auto *edges = structure->mutable_edges();
-    std::ranges::for_each(_connectedPins.keys(), [this, edges](IPinData key){
-        QList<IPinData> values = this->_connectedPins.values(key);
-
-        protocol::IntArray arr;
-        std::ranges::for_each(values, [&arr](IPinData &value){ arr.add_elements(value.pinID); });
-
-        (*edges)[key.pinID] = arr;
+    std::ranges::for_each(_graph->nodes(), [this](const QSharedPointer<LNode> &node){
+        _nodes.insert(node->ID(), )
     });
-    return true;
-}
-
-// this function can perhaps be optimized 
-// (but probably not without pain in the ass)
-bool WCanvas::readStructure(const protocol::Structure &structure)
-{
-    std::map<uint32_t, uint32_t> pin_node_map = {};
-    int l = _nodes.size();
-    std::ranges::for_each(_nodes, [this, &pin_node_map](const QSharedPointer<WANode> node){
-        std::ranges::for_each(node->getPinIDs(), [&node, &pin_node_map](uint32_t id) {
-            pin_node_map.insert({id, node->ID()});
-        });
-    });
-    std::ranges::for_each(structure.edges(), [this, &pin_node_map](std::pair<uint32_t, protocol::IntArray> pair){
-        IPinData first = _nodes[pin_node_map[pair.first]]->getPinByID(pair.first)->getData();
-
-        std::ranges::for_each(*pair.second.mutable_elements(), 
-        [this, &pin_node_map, &first](uint32_t &id){
-            IPinData second = _nodes[pin_node_map[id]]->getPinByID(id)->getData();
-            _nodes[second.nodeID]->setPinConnection(second.pinID, first);  
-            _nodes[first.nodeID]->setPinConnection(first.pinID, second);
-            _connectedPins.insert(first, second);
-        });
-    });
-    return true;
 }
 
 
 // ---------------------- GENERAL FUNCTIONS ---------------------------
 
-
-QString WCanvas::getPinText(uint32_t nodeID, uint32_t pinID) const
-{
-    return _nodes[nodeID]->getPinByID(pinID)->getText();
-}
-QString WCanvas::getNodeName(uint32_t nodeID) const
-{
-    return _nodes[nodeID]->getName();
-}
 
 void WCanvas::moveCanvasOnPinDragNearEdge(QPointF mousePosition)
 {

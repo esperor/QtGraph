@@ -123,8 +123,6 @@ QPointF convertFrom_protocolPointF(const protocol::type::PointF &point)
     return QPointF(point.x(), point.y());
 }
 
-namespace NodeFactoryModule {
-
 QColor parseToColor(const QString &str)
 {
     const short rgbNums = 3;
@@ -150,8 +148,6 @@ QColor parseToColor(const QString &str)
         nums[i++] = num;
     }
     return QColor(nums[0], nums[1], nums[2]);
-}
-
 }
 
 }

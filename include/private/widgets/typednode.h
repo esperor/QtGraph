@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QObject>
-#include <QWidget>
+#include <QtWidgets/QWidget>
 
 #include "widgets/node.h"
 

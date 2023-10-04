@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QObject>
-#include <QWidget>
+#include <QtWidgets/QWidget>
 #include <QColor>
 #include <QPainter>
 #include <QPaintEvent>

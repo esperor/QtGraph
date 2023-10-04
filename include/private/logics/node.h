@@ -41,9 +41,16 @@ public:
     QList<uint32_t> getPinIDs() const { return _pins.keys(); }
     const QString &getName() const { return _name; }
     bool doesPinExist(uint32_t id) const { return _pins.contains(id); };
+    std::optional<uint32_t> getTypeID() const { return _typeID; }
 
+    void setNodeTypeManager(QSharedPointer<const NodeTypeManager> manager);
+    void setPinTypeManager(QSharedPointer<const PinTypeManager> manager);
+    inline void setTypeManagers(QSharedPointer<const PinTypeManager> pins, QSharedPointer<const NodeTypeManager> nodes)
+    {
+        setNodeTypeManager(nodes);
+        setPinTypeManager(pins);
+    }
     void moveCanvasPosition(QPointF by) { _canvasPosition += by; }
-    void setFactory(NodeFactory *factory) { _factory = factory; }
     void setCanvasPosition(QPointF newCanvasPosition) { _canvasPosition = newCanvasPosition; }
     void setID(uint32_t ID) { _ID = ID; }
     void moveCanvasPosition(QPointF vector) { _canvasPosition += vector; }
@@ -63,12 +70,14 @@ private slots:
 private:
     static IDGenerator _IDgenerator;
 
-    NodeFactory *_factory;
+    QSharedPointer<const NodeTypeManager> _nodeTypeManager;
+    QSharedPointer<const PinTypeManager> _pinTypeManager;
 
     uint32_t _ID;
     QString _name;
     bool _bIsSelected;
     QPointF _canvasPosition;
+    std::optional<uint32_t> _typeID;
 
     QMap<uint32_t, QSharedPointer<LPin>> _pins;
 

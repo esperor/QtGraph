@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #include <QObject>
-#include <QWidget>
+#include <QtWidgets/QWidget>
 #include <QPoint>
 #include <QPointF>
 #include <QPainter>
@@ -27,7 +27,7 @@ class WANode : public QWidget
     Q_OBJECT
 
 public:
-    WANode(WCanvas *canvas);
+    WANode(WCanvas *canvas, LNode *logical);
     ~WANode();
     
     const QSize &normalSize() const { return _normalSize; }
@@ -74,6 +74,8 @@ private:
 
 protected:
     QSharedPointer<LNode> _lnode;
+
+    QSharedPointer<NodeFactory> _factory;
 
     const WCanvas *_parentCanvas;
     float _zoom;

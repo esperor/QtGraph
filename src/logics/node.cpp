@@ -2,6 +2,7 @@
 
 #include "logics/node.h"
 #include "logics/graph.h"
+#include "utilities/utility.h"
 
 namespace qtgraph {
 
@@ -16,6 +17,53 @@ LNode::LNode(LGraph *graph)
 
 LNode::~LNode()
 {}
+
+void LNode::protocolize(protocol::Node *pNode) const
+{
+    *(pNode->mutable_canvas_position()) = convertTo_protocolPointF(_canvasPosition);
+    pNode->set_id(_ID);
+    pNode->set_is_selected(_bIsSelected);
+    pNode->set_name(_name.toStdString());
+    std::ranges::for_each(_pins, [pNode](QSharedPointer<LPin> pin) {
+        pin->protocolize(pNode->add_pins());
+    });
+}
+
+void LNode::deprotocolize(const protocol::Node &pNode)
+{
+    setSelected(pNode.is_selected());
+    setCanvasPosition(convertFrom_protocolPointF(pNode.canvas_position()));
+    setName(QString::fromStdString(pNode.name()));
+
+    std::ranges::for_each(pNode.pins(), [this](const protocol::Pin &pn){
+        LPin *pin = new LPin(this);
+
+        // pin automatically gets new id as it's created
+        // that's what we don't need in case of deserialization
+        _IDgenerator.removeTaken(pin->ID());
+        pin->setID(pn.id());
+        _IDgenerator.addTaken(pin->ID());
+
+        pin->deprotocolize(pn);
+        addPin(pin);
+    });
+}
+
+std::optional<QWeakPointer<LPin>> LNode::operator[](uint32_t id)
+{
+    if (!_pins.contains(id)) return {};
+    else return _pins[id].toWeakRef();
+}
+
+void LNode::setNodeTypeManager(QSharedPointer<const NodeTypeManager> manager)
+{
+    _nodeTypeManager.swap(manager);
+}
+
+void LNode::setPinTypeManager(QSharedPointer<const PinTypeManager> manager)
+{
+    _pinTypeManager.swap(manager);
+}
 
 void LNode::setPinConnection(uint32_t pinID, IPinData connectedPin)
 {

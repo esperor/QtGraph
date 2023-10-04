@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QObject>
-#include <QWidget>
+#include <QtWidgets/QWidget>
 
 #include "QtGraph/DataClasses/nodespawndata.h"
 #include "QtGraph/TypeManagers/nodetypemanager.h"

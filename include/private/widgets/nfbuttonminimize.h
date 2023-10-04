@@ -3,7 +3,7 @@
 
 
 #include <QObject>
-#include <QWidget>
+#include <QtWidgets/QWidget>
 #include <QPainter>
 #include <QString>
 

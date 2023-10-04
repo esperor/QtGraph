@@ -32,10 +32,7 @@ QPoint convertFrom_protocolPoint(const protocol::type::Point &point);
 protocol::type::PointF  convertTo_protocolPointF(const QPointF &point);
 QPointF convertFrom_protocolPointF(const protocol::type::PointF &point);
 
-namespace NodeFactoryModule {
-
+// Parses string like "A2C2AA" into QColor
 QColor parseToColor(const QString &str);
-
-}
 
 }
