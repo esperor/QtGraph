@@ -23,7 +23,7 @@ public:
     void deprotocolize(const protocol::Pin &pPin);
 
     IPinData getData() const { return _data; }
-    bool isConnected() const { return _connectedPin.empty(); }
+    bool isConnected() const { return _connectedPins.empty(); }
     const QColor &getColor() const { return _color; }
     QString getText() const { return _text; }
     inline uint32_t ID() const { return getData().pinID; }

@@ -72,15 +72,15 @@ void LNode::setPinConnection(uint32_t pinID, IPinData connectedPin)
 
 bool LNode::hasPinConnections() const
 {
-    return std::ranges::any_of(_pins, [&](const QSharedPointer<LPin> &pin){
+    return std::ranges::any_of(_pins, [&](QSharedPointer<LPin> pin){
         return pin->isConnected();
     });
 }
 
-const QSharedPointer< QMap<uint32_t, QVector<IPinData> > > &LNode::getPinConnections() const
+const QMap<uint32_t, QVector<IPinData> > *LNode::getPinConnections() const
 {
-    QSharedPointer<QMap<uint32_t, QVector<IPinData> >> out(new QMap<uint32_t, QVector<IPinData> >());
-    std::ranges::for_each(_pins, [&](const QSharedPointer<LPin> &pin){
+    QMap<uint32_t, QVector<IPinData> > *out = new QMap<uint32_t, QVector<IPinData>>();
+    std::ranges::for_each(_pins, [&](QSharedPointer<LPin> pin){
         out->insert(pin->ID(), pin->getConnectedPins());
     });
     return out;

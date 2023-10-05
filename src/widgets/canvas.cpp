@@ -15,7 +15,6 @@
 #include "utilities/utility.h"
 #include "models/nodespawndata.h"
 
-#include "data.pb.h"
 #include "graph.pb.h"
 
 #include "widgets/moc_canvas.cpp"
@@ -225,6 +224,20 @@ void WCanvas::processSelectionArea(const QMouseEvent *event)
             _selectionAreaPreviousNodes.insert(node->ID());
         }
     });
+}
+
+void WCanvas::setNodeTypeManager(NodeTypeManager *manager)
+{
+    _graph->setNodeTypeManager(manager);
+    _typeBrowser->_nodeTypeManager = manager;
+    _typeBrowser->initTypes();
+}
+
+void WCanvas::setPinTypeManager(PinTypeManager *manager)
+{
+    _graph->setPinTypeManager(manager);
+    _typeBrowser->_pinTypeManager = manager;
+
 }
 
 

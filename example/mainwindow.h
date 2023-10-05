@@ -5,8 +5,7 @@
 #include <QTimer>
 #include <QFileDialog>
 
-#include "QtGraph/GraphLib.h"
-#include "QtGraph/GraphWidgets/canvas.h"
+#include <QtGraph/WCanvas>
 
 
 QT_BEGIN_NAMESPACE
@@ -37,7 +36,7 @@ private:
     std::string _associatedFileName = "";
 
     Ui::MainWindow *ui;
-    GraphLib::WCanvas *_canvas;
+    qtgraph::WCanvas *_canvas;
     QTimer *_timer;
 
     QAction *_openTypes, *_save, *_saveAs, *_open, *_snapping;

@@ -32,6 +32,7 @@ public:
     bool deprotocolize(protocol::Graph &graph);
     bool writeStructure(protocol::Structure *structure) const;
     bool readStructure(const protocol::Structure &structure);
+    protocol::Structure getStructure() const;
 
     const QMap<uint32_t, QSharedPointer<LNode>> &nodes() const { return _nodes; }
     const std::set<uint32_t> &getTakenIDs() const { return _IDgenerator.getTakenIDs(); }

@@ -15,7 +15,7 @@
 #include "private/models/nodespawndata.h"
 #include "private/utilities/utility.h"
 #include "private/helpers/idgenerator.h"
-
+#include "private/models/pindata.h"
 
 using namespace testing;
 using namespace qtgraph;
@@ -44,7 +44,7 @@ protected:
 
 TEST(PinData, ByteArrayConversions)
 {
-    IPinData first(PinDirection::In, 5, 6);
+    IPinData first(EPinDirection::In, 5, 6);
     QByteArray arr = first.toByteArray();
     IPinData second = IPinData::fromByteArray(arr);
     EXPECT_EQ(first, second);
@@ -133,7 +133,7 @@ TEST_F(TypeManagers, Properties)
 TEST(NodeFactory, ParseToColor)
 {
     auto check = [](QString str, int r, int g, int b) {
-        QColor clr = NodeFactoryModule::parseToColor(str);
+        QColor clr = parseToColor(str);
 
         EXPECT_EQ(clr.isValid(), true);
 

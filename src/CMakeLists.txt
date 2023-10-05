@@ -23,6 +23,8 @@ set(SOURCES
     widgets/typebrowser.cpp
     widgets/canvas.cpp
     widgets/typednodeimage.cpp
+    widgets/typednode.cpp
+    widgets/customnode.cpp
     
     utilities/utility.cpp
 )
@@ -56,6 +58,7 @@ target_include_directories(QtGraph PRIVATE
 
 target_include_directories(QtGraph INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    ${CMAKE_SOURCE_DIR}/include/private
     $<INSTALL_INTERFACE:include>
 )
 

@@ -21,6 +21,8 @@ set(QTGRAPH_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/private/widgets/typednodeimage.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/widgets/pin.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/widgets/node.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/private/widgets/typednode.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/private/widgets/customnode.h
 
     ${CMAKE_CURRENT_SOURCE_DIR}/private/utilities/constants.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/utilities/utility.h

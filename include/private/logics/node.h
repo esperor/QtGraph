@@ -37,7 +37,7 @@ public:
     const QPointF &canvasPosition() const { return _canvasPosition; }
     uint32_t ID() const { return _ID; }
     bool hasPinConnections() const;
-    const QSharedPointer< QMap<uint32_t, QVector<IPinData> > > &getPinConnections() const;
+    const QMap<uint32_t, QVector<IPinData> > *getPinConnections() const;
     QList<uint32_t> getPinIDs() const { return _pins.keys(); }
     const QString &getName() const { return _name; }
     bool doesPinExist(uint32_t id) const { return _pins.contains(id); };
@@ -54,7 +54,6 @@ public:
     void moveCanvasPosition(QPointF by) { _canvasPosition += by; }
     void setCanvasPosition(QPointF newCanvasPosition) { _canvasPosition = newCanvasPosition; }
     void setID(uint32_t ID) { _ID = ID; }
-    void moveCanvasPosition(QPointF vector) { _canvasPosition += vector; }
     void setName(QString name) { _name = name; }
     void setSelected(bool b) { _bIsSelected = b; }
     void removePinConnection(uint32_t pinID, uint32_t connectedPinID);

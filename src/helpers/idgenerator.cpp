@@ -1,4 +1,4 @@
-#include "idgenerator.h"
+#include "helpers/idgenerator.h"
 
 namespace qtgraph {
 

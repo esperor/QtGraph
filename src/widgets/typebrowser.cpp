@@ -12,8 +12,6 @@
 
 namespace qtgraph {
 
-namespace NodeFactoryModule {
-
 TypeBrowser::TypeBrowser(QWidget *parent)
     : QWidget{ parent }
     , _painter{ new QPainter() }
@@ -192,8 +190,6 @@ void TypeBrowser::paint(QPainter *painter, QPaintEvent *)
 
     // this line avoids flickering between this widget and nodes
     setUpdatesEnabled(true);
-}
-
 }
 
 }

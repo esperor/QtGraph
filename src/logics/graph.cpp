@@ -5,8 +5,9 @@
 namespace qtgraph {
 
 LGraph::LGraph()
-    : _connectedPins{ QMultiMap<IPinData, IPinData>() }
-
+    : _nodes{ QMap<uint32_t, QSharedPointer<LNode>>() }
+    , _connectedPins{ QMultiMap<IPinData, IPinData>() }
+    , _factory{ new NodeFactory() }
 {}
 
 LGraph::~LGraph()
@@ -71,11 +72,28 @@ bool LGraph::deprotocolize(protocol::Graph &graph)
 
     // structure
     readStructure(graph.structure());
+    return true;
 }
 
 bool LGraph::writeStructure(protocol::Structure *structure) const
 {
-    auto *edges = structure->mutable_edges();
+    try 
+    {
+        *structure = getStructure(); 
+    } 
+    catch (std::exception *e)
+    {
+        qDebug() << e->what();
+        return false;
+    }
+    
+    return true;
+}
+
+protocol::Structure LGraph::getStructure() const
+{
+    protocol::Structure st;
+    auto edges = st.mutable_edges();
     std::ranges::for_each(_connectedPins.keys(), [this, edges](IPinData key){
         QList<IPinData> values = this->_connectedPins.values(key);
 
@@ -84,7 +102,8 @@ bool LGraph::writeStructure(protocol::Structure *structure) const
 
         (*edges)[key.pinID] = arr;
     });
-    return true;
+
+    return st;
 }
 
 // this function can perhaps be optimized 
@@ -132,8 +151,8 @@ void LGraph::removeNode(uint32_t nodeID)
     uint32_t id = ptr->ID();
     if (ptr->hasPinConnections())
     {
-        QSharedPointer< QMap<uint32_t, QVector<IPinData> > > connections = ptr->getPinConnections();
-        std::ranges::for_each(connections->asKeyValueRange(), [&](std::pair<const uint32_t&, QVector<IPinData>&> pair){
+        const QMap<uint32_t, QVector<IPinData> > *connections = ptr->getPinConnections();
+        std::ranges::for_each(connections->asKeyValueRange(), [&](std::pair<const uint32_t&, const QVector<IPinData>&> pair){
             uint32_t id = pair.first;
             std::ranges::for_each(pair.second, [&](IPinData connectedPin){
                 _nodes[connectedPin.nodeID]->removePinConnection(connectedPin.pinID, id);

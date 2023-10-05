@@ -1,20 +1,20 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "QtGraph/constants.h"
-#include "QtGraph/TypeManagers/nodetypemanager.h"
-#include "QtGraph/TypeManagers/pintypemanager.h"
-#include "QtGraph/utility.h"
+#include "private/utilities/constants.h"
+#include <QtGraph/TypeManagers>
+#include "private/utilities/utility.h"
 
 #include <fstream>
 #include <iostream>
 
 #include <QFileDialog>
 #include <QJsonDocument>
+#include <QApplication>
 
-// #include "QtGraph/TypeManagers/moc_typemanager.cpp"
+// #include "logics/moc_typemanager.cpp"
 
-using namespace GraphLib;
+using namespace qtgraph;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui{new Ui::MainWindow}

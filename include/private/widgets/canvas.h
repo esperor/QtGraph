@@ -43,6 +43,8 @@ public:
     bool getSnappingEnabled() const     { return _bIsSnappingEnabled; }
     int getSnappingInterval() const     { return _snappingInterval; }
     const QPointF &getOffset() const    { return _offset; }
+    LGraph *getGraph() { return _graph; }
+    const LGraph *getGraph_const() const { return _graph; }
 
     // Visualizes attached graph. Performance-heavy, don't call in cycle
     void visualize();
@@ -55,8 +57,8 @@ public:
     inline void moveViewLeft(float by) { moveCanvas(QPointF(by, 0)); }
     inline void moveViewRight(float by) { moveCanvas(QPointF(-by, 0)); }
 
-    void setNodeTypeManager(NodeTypeManager *manager) { _graph->setNodeTypeManager(manager); }
-    void setPinTypeManager(PinTypeManager *manager) { _graph->setPinTypeManager(manager); }
+    void setNodeTypeManager(NodeTypeManager *manager);
+    void setPinTypeManager(PinTypeManager *manager);
     inline void setTypeManagers(PinTypeManager *pins, NodeTypeManager *nodes)
     {
         setNodeTypeManager(nodes);
@@ -95,7 +97,6 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
-    void onNodeDestroyed(QObject *obj);
     void onNodeSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID);
     void onPinDrag(IPinDragSignal signal);
     void onPinConnect(IPinData outPin, IPinData inPin);
