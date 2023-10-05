@@ -4,8 +4,8 @@
 #include <QJsonObject>
 #include <QtDebug>
 
-#include "utility.h"
-#include "constants.h"
+#include "utilities/utility.h"
+#include "utilities/constants.h"
 
 namespace qtgraph {
 

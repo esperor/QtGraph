@@ -43,6 +43,8 @@ public:
     bool getSnappingEnabled() const     { return _bIsSnappingEnabled; }
     int getSnappingInterval() const     { return _snappingInterval; }
     const QPointF &getOffset() const    { return _offset; }
+    LGraph *getGraph() { return _graph; }
+    const LGraph *getGraph_const() const { return _graph; }
 
     // Visualizes attached graph. Performance-heavy, don't call in cycle
     void visualize();

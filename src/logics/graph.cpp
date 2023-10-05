@@ -71,6 +71,7 @@ bool LGraph::deprotocolize(protocol::Graph &graph)
 
     // structure
     readStructure(graph.structure());
+    return true;
 }
 
 bool LGraph::writeStructure(protocol::Structure *structure) const
@@ -132,8 +133,8 @@ void LGraph::removeNode(uint32_t nodeID)
     uint32_t id = ptr->ID();
     if (ptr->hasPinConnections())
     {
-        QSharedPointer< QMap<uint32_t, QVector<IPinData> > > connections = ptr->getPinConnections();
-        std::ranges::for_each(connections->asKeyValueRange(), [&](std::pair<const uint32_t&, QVector<IPinData>&> pair){
+        const QMap<uint32_t, QVector<IPinData> > *connections = ptr->getPinConnections();
+        std::ranges::for_each(connections->asKeyValueRange(), [&](std::pair<const uint32_t&, const QVector<IPinData>&> pair){
             uint32_t id = pair.first;
             std::ranges::for_each(pair.second, [&](IPinData connectedPin){
                 _nodes[connectedPin.nodeID]->removePinConnection(connectedPin.pinID, id);

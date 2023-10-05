@@ -40,7 +40,7 @@ WANode::~WANode()
 // ------------------- GENERAL --------------------
 
 
-void WANode::setSelected(bool b, bool bIsMultiSelectionModifierDown = false)
+void WANode::setSelected(bool b, bool bIsMultiSelectionModifierDown)
 { 
     if (b) onSelect(bIsMultiSelectionModifierDown, ID()); 
 }
@@ -303,7 +303,7 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
             default:;
             }
 
-            const QSharedPointer<LPin> &logicalPin = logicalPin;
+            QSharedPointer<const LPin> logicalPin = pin->getLogical();
 
             pin->setFixedSize(pin->getDesiredWidth(_zoom), pin->getNormalD() * _zoom);
             _pinsOutlineCoords[logicalPin->ID()] = QPoint(pin->isInPin() ? 0 : desiredWidth, pin->getCenter().y());

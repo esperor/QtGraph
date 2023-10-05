@@ -86,7 +86,7 @@ void WPin::showContextMenu(const QMouseEvent *event)
     {
         QMenu *breakMenu = _contextMenu.addMenu("Break connnection");
         std::ranges::for_each(connectedPins, [&](IPinData data){
-            QString nodeName = _parentNode->getParentCanvas()->getNodeName(data.nodeID);
+            QString nodeName = _parentNode->getParentCanvas()->getGraph_const()->getNodeName(data.nodeID);
             breakMenu->addAction(new QAction("to " + nodeName, breakMenu));
             QAction *action = breakMenu->actions().last();
             action->setData(QVariant(data.toByteArray()));

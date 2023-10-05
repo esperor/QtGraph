@@ -19,6 +19,7 @@
 #include "qtgraph.h"
 #include "models/pindata.h"
 #include "models/pindragsignal.h"
+#include "logics/pin.h"
 
 #include "pin.pb.h"
 

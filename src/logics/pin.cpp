@@ -21,7 +21,7 @@ void LPin::protocolize(protocol::Pin *pPin) const
 {
     *(pPin->mutable_color()) = convertTo_protocolColor(_color);
     pPin->set_text(_text.toStdString());
-    pPin->set_direction((protocol::PinDirection)_data.pinDirection);
+    pPin->set_direction((protocol::EPinDirection)_data.pinDirection);
     pPin->set_id(_data.pinID);
 
     // TODO: wrap IPinData.typeID with std::optional
@@ -33,11 +33,6 @@ void LPin::deprotocolize(const protocol::Pin &pPin)
     setColor(convertFrom_protocolColor(pPin.color()));
     setText(QString::fromStdString(pPin.text()));
     setDirection((EPinDirection)pPin.direction());
-}
-
-IPinData LPin::getData() const
-{
-    return _data;
 }
 
 void LPin::addConnectedPin(IPinData pin)

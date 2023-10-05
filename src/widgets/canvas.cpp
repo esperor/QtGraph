@@ -15,7 +15,6 @@
 #include "utilities/utility.h"
 #include "models/nodespawndata.h"
 
-#include "data.pb.h"
 #include "graph.pb.h"
 
 #include "widgets/moc_canvas.cpp"

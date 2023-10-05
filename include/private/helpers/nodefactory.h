@@ -5,13 +5,14 @@
 
 #include "logics/nodetypemanager.h"
 #include "logics/pintypemanager.h"
-#include "qtgraph.h"
 
 namespace qtgraph {
 
 class LNode;
 class LGraph;
 class LPin;
+class WANode;
+class WCanvas;
 enum class EPinDirection;
 
 
