@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <QtCore/qglobal.h>
 #include <QString>
 #include <QByteArray>
 #include <QMap>
@@ -9,16 +10,15 @@
 #include <string>
 #include <QSet>
 
-#include "QtGraph/NodeFactoryModule/nodefactory.h"
-#include "QtGraph/TypeManagers/nodetypemanager.h"
-#include "QtGraph/TypeManagers/pintypemanager.h"
-#include "QtGraph/DataClasses/nodespawndata.h"
-#include "QtGraph/utility.h"
-#include "QtGraph/idgenerator.h"
-#include "QtGraph/GraphLib.h"
+#include <QtGraph/NodeFactory>
+#include <QtGraph/TypeManagers>
+#include "private/models/nodespawndata.h"
+#include "private/utilities/utility.h"
+#include "private/helpers/idgenerator.h"
+
 
 using namespace testing;
-using namespace GraphLib;
+using namespace qtgraph;
 
 class TypeManagers : public ::testing::Test
 {
