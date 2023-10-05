@@ -3,8 +3,8 @@
 #include <QObject>
 #include <QtWidgets/QWidget>
 
-#include "QtGraph/DataClasses/nodespawndata.h"
-#include "QtGraph/TypeManagers/nodetypemanager.h"
+#include "models/nodespawndata.h"
+#include "logics/nodetypemanager.h"
 
 namespace qtgraph {
 
@@ -17,7 +17,7 @@ public:
     TypedNodeImage(QString type, QWidget *parent = nullptr);
     ~TypedNodeImage();
 
-    TypedNodeSpawnData getData() const;
+    ITypedNodeSpawnData getData() const;
     QSize getDesiredSize() const;
     void initType() { typeID = TypeManager->TypeNames()[typeName]; }
 

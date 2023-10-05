@@ -23,8 +23,9 @@ LNode *NodeFactory::makeNodeOfType(int typeID, LGraph *graph) const
     LNode *node = new LNode(graph);
 
     node->setName(_nodeTypeManager->Types()[typeID].value("name").toString());
-    node->setNodeTypeManager(_nodeTypeManager);
-    node->setPinTypeManager(_pinTypeManager);
+    node->setNodeTypeManager(QSharedPointer<const NodeTypeManager>(_nodeTypeManager));
+    node->setPinTypeManager(QSharedPointer<const PinTypeManager>(_pinTypeManager));
+    node->setTypeID(typeID);
 
     return node;
 }
@@ -46,13 +47,15 @@ LNode *NodeFactory::makeNodeAndPinsOfType(int typeID, LGraph *graph) const
     return node;
 }
 
-WANode *NodeFactory::makeSuitableWNode(QSharedPointer<LNode> lnode, WCanvas *canvas) const
+WANode *NodeFactory::makeSuitableWNode(LNode *lnode, WCanvas *canvas) const
 {
     WANode *node;
     if (lnode->getTypeID())
-        node = new WTypedNode(lnode->getTypeID(), canvas);
-        
+        node = new WTypedNode(*lnode->getTypeID(), lnode, canvas);
+    else
+        node = new WCustomNode(lnode, canvas);
 
+    return node;
 }
 
 LPin *NodeFactory::makePinOfType(int typeID, LNode *node) const

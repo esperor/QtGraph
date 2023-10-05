@@ -14,7 +14,7 @@
 
 namespace qtgraph {
 
-WANode::WANode(WCanvas *canvas, LNode *logical)
+WANode::WANode(LNode *logical, WCanvas *canvas)
     : QWidget{ canvas }
     , _lnode{ logical }
     , _parentCanvas{ canvas }
@@ -25,7 +25,6 @@ WANode::WANode(WCanvas *canvas, LNode *logical)
     , _mousePressPosition{ QPointF(0, 0) }
     , _pinsOutlineCoords{ QMap<uint32_t, QPoint>() }
     , _pins{ QMap<uint32_t, QSharedPointer<WPin>>() }
-    , _factory
 {
     _normalSize.setWidth(200);
     _normalSize.setHeight(150);

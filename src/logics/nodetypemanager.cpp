@@ -4,8 +4,8 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
-#include "TypeManagers/nodetypemanager.h"
-#include "utility.h"
+#include "logics/nodetypemanager.h"
+#include "utilities/utility.h"
 
 namespace qtgraph {
 

@@ -1,9 +1,9 @@
 #include <QPaintEvent>
 
-#include "NodeFactoryModule/nfbuttonminimize.h"
-#include "constants.h"
+#include "widgets/nfbuttonminimize.h"
+#include "utilities/constants.h"
 
-#include "NodeFactoryModule/moc_nfbuttonminimize.cpp"
+#include "widgets/moc_nfbuttonminimize.cpp"
 
 namespace qtgraph {
 

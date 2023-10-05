@@ -3,12 +3,12 @@
 #include <QGroupBox>
 #include <QApplication>
 
-#include "constants.h"
-#include "TypeManagers/nodetypemanager.h"
-#include "NodeFactoryModule/typebrowser.h"
-#include "utility.h"
+#include "utilities/constants.h"
+#include "logics/nodetypemanager.h"
+#include "widgets/typebrowser.h"
+#include "utilities/utility.h"
 
-#include "NodeFactoryModule/moc_typebrowser.cpp"
+#include "widgets/moc_typebrowser.cpp"
 
 namespace qtgraph {
 

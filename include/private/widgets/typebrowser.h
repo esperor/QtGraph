@@ -9,10 +9,10 @@
 #include <QScrollArea>
 
 #include "qtgraph.h"
-#include "QtGraph/TypeManagers/nodetypemanager.h"
-#include "QtGraph/TypeManagers/pintypemanager.h"
-#include "QtGraph/NodeFactoryModule/typednodeimage.h"
-#include "QtGraph/NodeFactoryModule/nfbuttonminimize.h"
+#include "logics/nodetypemanager.h"
+#include "logics/pintypemanager.h"
+#include "widgets/typednodeimage.h"
+#include "widgets/nfbuttonminimize.h"
 
 namespace qtgraph {
 

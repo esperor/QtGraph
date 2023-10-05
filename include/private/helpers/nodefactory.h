@@ -36,7 +36,7 @@ public:
 
     // This function must be kept up to date with all the
     // changes made for WANode and its children classes
-    WANode *makeSuitableWNode(QSharedPointer<LNode> lnode) const;
+    WANode *makeSuitableWNode(LNode *lnode, WCanvas *canvas) const;
 
     LPin *makePinOfType(int typeID, LNode *node) const;
 

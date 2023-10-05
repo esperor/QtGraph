@@ -55,6 +55,14 @@ public:
     inline void moveViewLeft(float by) { moveCanvas(QPointF(by, 0)); }
     inline void moveViewRight(float by) { moveCanvas(QPointF(-by, 0)); }
 
+    void setNodeTypeManager(NodeTypeManager *manager) { _graph->setNodeTypeManager(manager); }
+    void setPinTypeManager(PinTypeManager *manager) { _graph->setPinTypeManager(manager); }
+    inline void setTypeManagers(PinTypeManager *pins, NodeTypeManager *nodes)
+    {
+        setNodeTypeManager(nodes);
+        setPinTypeManager(pins);
+    }
+
     QPointF mapToCanvas(QPointF point) const;
     QPoint mapToCanvas(QPoint point) const;
 
@@ -63,6 +71,10 @@ public:
 
     // If one of params of QPointF is negative, current mouse position will be used
     void zoomOut(int times = 1, QPointF where = QPointF(-1, -1));
+
+    QWeakPointer<LNode> addNode(QPoint canvasPosition, QString name);
+    QWeakPointer<LNode> addNode(LNode *node);
+    QWeakPointer<LNode> addNode(QPoint canvasPosition, int typeID);
 
 public slots:
     void moveCanvas(QPointF offset);

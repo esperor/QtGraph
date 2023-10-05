@@ -32,17 +32,17 @@ INodeSpawnData INodeSpawnData::fromByteArray(const QByteArray &byteArray)
 
 
 
-TypedNodeSpawnData::TypedNodeSpawnData(const TypedNodeSpawnData &other)
+ITypedNodeSpawnData::ITypedNodeSpawnData(const ITypedNodeSpawnData &other)
     : INodeSpawnData{ other.name }
     , typeID{ other.typeID }
 {}
 
-TypedNodeSpawnData::TypedNodeSpawnData(const QString &_name, int _typeID)
+ITypedNodeSpawnData::ITypedNodeSpawnData(const QString &_name, int _typeID)
     : INodeSpawnData{ _name }
     , typeID{ _typeID }
 {}
 
-QByteArray TypedNodeSpawnData::toByteArray()
+QByteArray ITypedNodeSpawnData::toByteArray()
 {
     QByteArray output;
     output.append(name.toStdString());
@@ -51,11 +51,11 @@ QByteArray TypedNodeSpawnData::toByteArray()
     return output;
 }
 
-TypedNodeSpawnData TypedNodeSpawnData::fromByteArray(const QByteArray &byteArray)
+ITypedNodeSpawnData ITypedNodeSpawnData::fromByteArray(const QByteArray &byteArray)
 {
     unsigned short i = 0;
 
-    TypedNodeSpawnData data;
+    ITypedNodeSpawnData data;
     QList<QByteArray> arrays = byteArray.split(c_dataSeparator);
 
     data.name = QString::fromStdString(arrays[i++].toStdString());
@@ -84,24 +84,24 @@ QDataStream &operator<<(QDataStream &out, const INodeSpawnData &obj)
 
 bool operator==(const INodeSpawnData &first, const INodeSpawnData &second) { return first.name == second.name; }
 
-QDebug &operator<<(QDebug &debug, const TypedNodeSpawnData &obj)
+QDebug &operator<<(QDebug &debug, const ITypedNodeSpawnData &obj)
 {
     bool temp = debug.autoInsertSpaces();
     debug.setAutoInsertSpaces(false);
 
-    debug << "TypedNodeSpawnData(" << obj.name << ", " << obj.typeID << ")";
+    debug << "ITypedNodeSpawnData(" << obj.name << ", " << obj.typeID << ")";
 
     debug.setAutoInsertSpaces(temp);
     return debug;
 }
 
-QDataStream &operator<<(QDataStream &out, const TypedNodeSpawnData &obj)
+QDataStream &operator<<(QDataStream &out, const ITypedNodeSpawnData &obj)
 {
-    out << "TypedNodeSpawnData(" << obj.name << ", " << obj.typeID << ")";
+    out << "ITypedNodeSpawnData(" << obj.name << ", " << obj.typeID << ")";
     return out;
 }
 
-bool operator==(const TypedNodeSpawnData &first, const TypedNodeSpawnData &second)
+bool operator==(const ITypedNodeSpawnData &first, const ITypedNodeSpawnData &second)
 {
     return first.name == second.name &&
            first.typeID == second.typeID;

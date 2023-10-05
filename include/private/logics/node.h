@@ -43,6 +43,7 @@ public:
     bool doesPinExist(uint32_t id) const { return _pins.contains(id); };
     std::optional<uint32_t> getTypeID() const { return _typeID; }
 
+    void setTypeID(uint32_t newTypeID) { _typeID = newTypeID; }
     void setNodeTypeManager(QSharedPointer<const NodeTypeManager> manager);
     void setPinTypeManager(QSharedPointer<const PinTypeManager> manager);
     inline void setTypeManagers(QSharedPointer<const PinTypeManager> pins, QSharedPointer<const NodeTypeManager> nodes)

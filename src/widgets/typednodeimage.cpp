@@ -4,12 +4,12 @@
 #include <QMimeData>
 #include <QByteArray>
 
-#include "NodeFactoryModule/typednodeimage.h"
-#include "constants.h"
-#include "TypeManagers/nodetypemanager.h"
-#include "utility.h"
+#include "widgets/typednodeimage.h"
+#include "utilities/constants.h"
+#include "logics/nodetypemanager.h"
+#include "utilities/utility.h"
 
-#include "NodeFactoryModule/moc_typednodeimage.cpp"
+#include "widgets/moc_typednodeimage.cpp"
 
 namespace qtgraph {
 
@@ -30,9 +30,9 @@ TypedNodeImage::~TypedNodeImage()
 
 
 
-TypedNodeSpawnData TypedNodeImage::getData() const
+ITypedNodeSpawnData TypedNodeImage::getData() const
 {
-    return TypedNodeSpawnData(typeName, typeID);
+    return ITypedNodeSpawnData(typeName, typeID);
 }
 
 QSize TypedNodeImage::getDesiredSize() const

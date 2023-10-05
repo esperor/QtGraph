@@ -31,16 +31,17 @@ class WPin : public QWidget
     Q_OBJECT
 
 public:
-    WPin(WANode *parent);
+    WPin(LPin *lpin, WANode *parent);
     ~WPin();
 
     void setFakeConnected(bool isConnected) { _fakeConnected = isConnected; }
     void setNormalD(float newD) { _normalD = newD; }
+    void setLogical(QSharedPointer<LPin> logical) { _lpin.swap(logical); }
 
     const float &getNormalD() const { return _normalD; }
     int getDesiredWidth(float zoom) const;
-    EPinDirection getDirection() const { return _data.pinDirection; }
-    bool isInPin() const { return _data.pinDirection == EPinDirection::In; }
+    EPinDirection getDirection() const { return _lpin->getData().pinDirection; }
+    bool isInPin() const { return _lpin->getData().pinDirection == EPinDirection::In; }
     QPoint getCenter() const { return mapToParent(_center); }
     QPixmap getPixmap() const;
     const QSharedPointer<LPin> &getLogical() const { return _lpin; }
@@ -68,7 +69,6 @@ private:
 protected:
     WANode *_parentNode;
     QSharedPointer<LPin> _lpin;
-    IPinData _data;
     float _normalD;
     // used to show pin as connected when connection is in progress
     bool _fakeConnected;

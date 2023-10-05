@@ -10,7 +10,7 @@ public:
     IDGenerator();
     IDGenerator(std::set<uint32_t> aldreadyTakenIDs);
 
-    const std::set<uint32_t> &getTakenIDs();
+    const std::set<uint32_t> &getTakenIDs() const;
 
     uint32_t generate();
 

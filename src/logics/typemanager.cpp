@@ -1,9 +1,9 @@
 #include <QCborMap>
 #include <QCborValue>
 
-#include "TypeManagers/typemanager.h"
+#include "logics/typemanager.h"
 
-#include "TypeManagers/moc_typemanager.cpp"
+#include "logics/moc_typemanager.cpp"
 
 namespace qtgraph {
 

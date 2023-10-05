@@ -14,10 +14,10 @@
 
 namespace qtgraph {
 
-WPin::WPin(WANode *parent)
+WPin::WPin(LPin *lpin, WANode *parent)
     : QWidget{ parent }
+    , _lpin{ lpin }
     , _parentNode{ parent }
-    , _data{ IPinData(EPinDirection::In, parent->ID(), parent->newID()) }
     , _fakeConnected{ false }
     , _normalD{ c_normalPinD }
     , _breakConnectionActions{ QMap<int, QAction*>() }
@@ -63,7 +63,7 @@ void WPin::startDrag()
     QDrag *drag = new QDrag(this);
     QMimeData *mimeData = new QMimeData;
 
-    mimeData->setData(c_mimeFormatForPinConnection, _data.toByteArray());
+    mimeData->setData(c_mimeFormatForPinConnection, _lpin->getData().toByteArray());
     drag->setMimeData(mimeData);
 
     QPixmap pixmap = getPixmap();
@@ -126,7 +126,7 @@ void WPin::dropEvent(QDropEvent *event)
         QByteArray byteArray = event->mimeData()->data(c_mimeFormatForPinConnection);
         IPinData sourceData = IPinData::fromByteArray(byteArray);
 
-        if (_data.pinDirection == EPinDirection::Out)
+        if (_lpin->getData().pinDirection == EPinDirection::Out)
             onConnect(_lpin->getData(), sourceData);
         else
             onConnect(sourceData, _lpin->getData());
@@ -140,7 +140,7 @@ void WPin::dragEnterEvent(QDragEnterEvent *event)
         IPinData data = IPinData::fromByteArray(event->mimeData()->data(c_mimeFormatForPinConnection));
         EPinDirection sourceDirection = data.pinDirection;
         uint32_t sourceNodeID = data.nodeID;
-        if (sourceDirection != _data.pinDirection && sourceNodeID != _parentNode->ID())
+        if (sourceDirection != _lpin->getData().pinDirection && sourceNodeID != _parentNode->ID())
         {
             event->setDropAction(Qt::LinkAction);
             event->acceptProposedAction();
@@ -206,7 +206,7 @@ void WPin::paint(QPainter *painter, QPaintEvent *)
 
 
 
-    if (_data.pinDirection == EPinDirection::Out && !(canvasZoom <= c_changeRenderZoomMultiplier))
+    if (_lpin->getData().pinDirection == EPinDirection::Out && !(canvasZoom <= c_changeRenderZoomMultiplier))
     {
         rectangle.setX(this->width() - desiredD);
         rectangle.setWidth(desiredD);
@@ -238,7 +238,7 @@ void WPin::paint(QPainter *painter, QPaintEvent *)
         pen.setColor(_lpin->getColor());
         painter->setPen(pen);
 
-        if (_data.pinDirection == EPinDirection::Out)
+        if (_lpin->getData().pinDirection == EPinDirection::Out)
             textOrigin.setX(this->width() - desiredD * 2 - textBounding.width());
 
         painter->drawText(QRect(textOrigin.x(), textOrigin.y(), textBounding.width(), rectangle.height())

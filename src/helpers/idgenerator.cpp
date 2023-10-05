@@ -8,7 +8,7 @@ IDGenerator::IDGenerator(std::set<uint32_t> aldreadyTakenIDs)
     _takenIDs = aldreadyTakenIDs;
 }
 
-const std::set<uint32_t> &IDGenerator::getTakenIDs()
+const std::set<uint32_t> &IDGenerator::getTakenIDs() const
 { return _takenIDs; }
 
 uint32_t IDGenerator::generate()

@@ -4,8 +4,8 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
-#include "utility.h"
-#include "TypeManagers/pintypemanager.h"
+#include "utilities/utility.h"
+#include "logics/pintypemanager.h"
 
 namespace qtgraph {
 

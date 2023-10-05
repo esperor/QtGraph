@@ -27,7 +27,7 @@ class WANode : public QWidget
     Q_OBJECT
 
 public:
-    WANode(WCanvas *canvas, LNode *logical);
+    WANode(LNode *logical, WCanvas *canvas);
     ~WANode();
     
     const QSize &normalSize() const { return _normalSize; }
@@ -37,7 +37,9 @@ public:
     QPoint getOutlineCoordinateForPinID(uint32_t pinID) const { return mapToParent(_pinsOutlineCoords[pinID]); }
     QRect getMappedRect() const;
     const WCanvas *getParentCanvas() const { return _parentCanvas; }
+    QSharedPointer<const LNode> getLogical() const { return _lnode; }
 
+    void setLogical(QSharedPointer<LNode> logical) { _lnode.swap(logical); }
     void setNormalSize(QSize newSize) { _normalSize = newSize; }
     void setSelected(bool b, bool bIsMultiSelectionModifierDown = false);
     void setPinConnected(uint32_t pinID, bool isConnected);
@@ -74,8 +76,6 @@ private:
 
 protected:
     QSharedPointer<LNode> _lnode;
-
-    QSharedPointer<NodeFactory> _factory;
 
     const WCanvas *_parentCanvas;
     float _zoom;

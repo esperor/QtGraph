@@ -27,8 +27,8 @@ bool LGraph::serialize(std::fstream *output) const
 bool LGraph::protocolize(protocol::Graph &graph) const
 {
     protocol::State *state = graph.mutable_state();
-    *(state->mutable_node_type_manager()) = _nodeTypeManager.toProtocolTypeManager();
-    *(state->mutable_pin_type_manager()) = _pinTypeManager.toProtocolTypeManager();
+    *(state->mutable_node_type_manager()) = _factory->getNodeTypeManager()->toProtocolTypeManager();
+    *(state->mutable_pin_type_manager()) = _factory->getPinTypeManager()->toProtocolTypeManager();
 
     std::ranges::for_each(_nodes, [state](QSharedPointer<LNode> node) {
         node->protocolize(state->add_nodes());
@@ -93,17 +93,17 @@ bool LGraph::readStructure(const protocol::Structure &structure)
 {
     std::map<uint32_t, uint32_t> pin_node_map = {};
     int l = _nodes.size();
-    std::ranges::for_each(_nodes, [this, &pin_node_map](const QSharedPointer<WANode> node){
+    std::ranges::for_each(_nodes, [this, &pin_node_map](const QSharedPointer<LNode> node){
         std::ranges::for_each(node->getPinIDs(), [&node, &pin_node_map](uint32_t id) {
             pin_node_map.insert({id, node->ID()});
         });
     });
     std::ranges::for_each(structure.edges(), [this, &pin_node_map](std::pair<uint32_t, protocol::IntArray> pair){
-        IPinData first = _nodes[pin_node_map[pair.first]]->getPinByID(pair.first)->getData();
+        IPinData first = _nodes[pin_node_map[pair.first]]->pin(pair.first)->toStrongRef()->getData();
 
         std::ranges::for_each(*pair.second.mutable_elements(), 
         [this, &pin_node_map, &first](uint32_t &id){
-            IPinData second = _nodes[pin_node_map[id]]->getPinByID(id)->getData();
+            IPinData second = _nodes[pin_node_map[id]]->pin(id)->toStrongRef()->getData();
             _nodes[second.nodeID]->setPinConnection(second.pinID, first);  
             _nodes[first.nodeID]->setPinConnection(first.pinID, second);
             _connectedPins.insert(first, second);
@@ -124,5 +124,88 @@ QString LGraph::getNodeName(uint32_t nodeID) const
 {
     return _nodes[nodeID]->getName();
 }
+
+void LGraph::removeNode(uint32_t nodeID)
+{
+    if (!_nodes.contains(nodeID)) return;
+    QSharedPointer<LNode> ptr = _nodes[nodeID];
+    uint32_t id = ptr->ID();
+    if (ptr->hasPinConnections())
+    {
+        QSharedPointer< QMap<uint32_t, QVector<IPinData> > > connections = ptr->getPinConnections();
+        std::ranges::for_each(connections->asKeyValueRange(), [&](std::pair<const uint32_t&, QVector<IPinData>&> pair){
+            uint32_t id = pair.first;
+            std::ranges::for_each(pair.second, [&](IPinData connectedPin){
+                _nodes[connectedPin.nodeID]->removePinConnection(connectedPin.pinID, id);
+
+                const QSharedPointer<LPin> pin = ptr->pin(id)->toStrongRef();
+                if (pin->getData().pinDirection == EPinDirection::Out)
+                    _connectedPins.remove(pin->getData());
+                else
+                    _connectedPins.remove(connectedPin, pin->getData());
+            });
+        });
+    }
+    _nodes.remove(id);
+}
+
+
+bool LGraph::connectPins(IPinData in, IPinData out)
+{
+    if (_connectedPins.contains(out, in)) return false;
+
+    _connectedPins.insert(out, in);
+    _nodes[out.nodeID]->setPinConnection(out.pinID, in);
+    _nodes[in.nodeID]->setPinConnection(in.pinID, out);
+    return true;
+}
+
+void LGraph::disconnectPins(IPinData in, IPinData out)
+{
+    auto it = _connectedPins.find(out, in);
+    if (it != _connectedPins.end())
+    {
+        _connectedPins.erase(it);
+
+        _nodes[out.nodeID]->removePinConnection(out.pinID, in.pinID);
+        _nodes[in.nodeID]->removePinConnection(in.pinID, out.pinID);
+    }
+}
+
+QWeakPointer<LNode> LGraph::addNode(QPoint canvasPosition, QString name)
+{
+    LNode *node = new LNode(this);
+    node->setCanvasPosition(canvasPosition);
+    node->setName(name);
+    return addNode(node);
+}
+
+QWeakPointer<LNode> LGraph::addNode(LNode *node)
+{
+    uint32_t id = node->ID();
+    _nodes.insert(id, QSharedPointer<LNode>(node));
+    connect(_nodes[id].get(), &LNode::destroyed, this, &LGraph::onNodeDestroyed);
+    return QWeakPointer<LNode>(_nodes[id]);
+}
+
+QWeakPointer<LNode> LGraph::addNode(QPoint canvasPosition, int typeID)
+{
+    LNode *node = _factory->makeNodeAndPinsOfType(typeID, this);
+    node->setCanvasPosition(canvasPosition);
+    return addNode(node);
+}
+
+
+// ------------------------- SLOTS ----------------------
+
+
+void LGraph::onNodeDestroyed(QObject *obj)
+{
+    if (obj == nullptr) qDebug() << "Pointer to destroyed node is nullptr";
+    uint32_t id = ((LNode*)obj)->ID();
+    _IDgenerator.removeTaken(id);
+    emit onNodeRemoved(id);
+}
+    
 
 }

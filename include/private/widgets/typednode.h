@@ -15,18 +15,7 @@ class WTypedNode : public WANode
     Q_OBJECT
 
 public:
-    WTypedNode(int typeID, WCanvas *canvas);
-
-    void protocolize(protocol::Node *pNode) const override;
-
-    int getTypeID() const { return _typeID; }
-    void setTypeID(int newTypeID) { _typeID = newTypeID; }
-
-    const NodeTypeManager *getNodeTypeManager() const { return _nodeTypeManager; }
-    const PinTypeManager *getPinTypeManager() const { return _pinTypeManager; }
-
-    void setNodeTypeManager(const NodeTypeManager *manager) { _nodeTypeManager = manager; }
-    void setPinTypeManager(const PinTypeManager *manager) { _pinTypeManager = manager; }
+    WTypedNode(int typeID, LNode *lnode, WCanvas *canvas);
 
 private:
     void paintName(QPainter *painter, int desiredWidth, QPoint textOrigin) override;
@@ -36,7 +25,6 @@ private:
     const PinTypeManager *_pinTypeManager;
 
 protected:
-    int _typeID;
 
 };
 
