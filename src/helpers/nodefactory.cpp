@@ -16,6 +16,8 @@
 namespace qtgraph {
 
 NodeFactory::NodeFactory()
+    : _nodeTypeManager{ new NodeTypeManager() }
+    , _pinTypeManager{ new PinTypeManager() }
 {}
 
 LNode *NodeFactory::makeNodeOfType(int typeID, LGraph *graph) const
