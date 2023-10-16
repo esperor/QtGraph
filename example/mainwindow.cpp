@@ -91,16 +91,18 @@ void MainWindow::openTypes()
     dialog.setNameFilter("Json file (*.json)");
     dialog.setDirectory(QCoreApplication::applicationDirPath());
 
-    QString fileName;
+    QString fileName = "";
     if (dialog.exec())
         fileName = dialog.selectedFiles()[0];
+    else return;
+
+    if (fileName.isEmpty()) return;
 
     NodeTypeManager *nodeManager = new NodeTypeManager();
     PinTypeManager *pinManager = new PinTypeManager();
     nodeManager->readTypes(fileName);
     pinManager->readTypes(fileName);
-    _canvas->setNodeTypeManager(nodeManager);
-    _canvas->setPinTypeManager(pinManager);
+    _canvas->setTypeManagers(pinManager, nodeManager);
 }
 
 std::string MainWindow::getFileName(QFileDialog::FileMode mode)
