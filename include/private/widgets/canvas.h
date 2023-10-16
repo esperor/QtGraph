@@ -75,7 +75,7 @@ public:
     void zoomOut(int times = 1, QPointF where = QPointF(-1, -1));
 
     QWeakPointer<LNode> addNode(QPoint canvasPosition, QString name);
-    QWeakPointer<LNode> addNode(LNode *node);
+    QWeakPointer<LNode> addNode(QSharedPointer<LNode> lnode);
     QWeakPointer<LNode> addNode(QPoint canvasPosition, int typeID);
 
 public slots:

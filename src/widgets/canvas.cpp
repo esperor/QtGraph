@@ -331,17 +331,14 @@ void WCanvas::onNodeSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID)
 QWeakPointer<LNode> WCanvas::addNode(QPoint canvasPosition, QString name)
 {
     QWeakPointer<LNode> node = _graph->addNode(canvasPosition, name);
-    return addNode(node.toStrongRef().get());
+    return addNode(node.toStrongRef());
 }
 
-QWeakPointer<LNode> WCanvas::addNode(LNode *lnode)
+QWeakPointer<LNode> WCanvas::addNode(QSharedPointer<LNode> lnode)
 {
-    auto weakPtr = _graph->addNode(lnode);
-    auto strongPtr = weakPtr.toStrongRef();
-
     uint32_t id = _nodes.insert(lnode->ID(), 
         QSharedPointer<WANode>(
-            _graph->getFactory()->makeSuitableWNode(lnode, this)
+            _graph->getFactory()->makeSuitableWNode(lnode.get(), this)
         )).key();
 
     _nodes[id]->show();
@@ -351,13 +348,13 @@ QWeakPointer<LNode> WCanvas::addNode(LNode *lnode)
     connect(_nodes[id].get(), &WANode::onSelect, this, &WCanvas::onNodeSelect);
     connect(_nodes[id].get(), &WANode::onPinConnectionBreak, this, &WCanvas::onPinConnectionBreak);
 
-    return weakPtr;
+    return lnode.toWeakRef();
 }
 
 QWeakPointer<LNode> WCanvas::addNode(QPoint canvasPosition, int typeID)
 {
     QWeakPointer<LNode> node = _graph->addNode(canvasPosition, typeID);
-    return addNode(node.toStrongRef().get());
+    return addNode(node.toStrongRef());
 }
 
 

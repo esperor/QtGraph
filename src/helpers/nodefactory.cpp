@@ -53,7 +53,10 @@ WANode *NodeFactory::makeSuitableWNode(LNode *lnode, WCanvas *canvas) const
 {
     WANode *node;
     if (lnode->getTypeID())
+    {
         node = new WTypedNode(*lnode->getTypeID(), lnode, canvas);
+        ((WTypedNode*)node)->setNodeTypeManager(_nodeTypeManager);
+    }
     else
         node = new WCustomNode(lnode, canvas);
 
