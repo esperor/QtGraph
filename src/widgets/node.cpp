@@ -30,6 +30,10 @@ WANode::WANode(LNode *logical, WCanvas *canvas)
     _normalSize.setHeight(150);
 
     this->setFixedSize(_normalSize);
+
+    std::ranges::for_each(_lnode->pins(), [&, this](const auto &lpin){
+        _pins.insert(lpin->ID(), QSharedPointer<WPin>(new WPin(lpin.get(), this)));
+    });
 }
 
 WANode::~WANode()

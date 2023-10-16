@@ -31,6 +31,7 @@ public:
     static uint32_t newID() { return _IDgenerator.generate(); }
 
     bool isSelected() const { return _bIsSelected; }
+    const QMap<uint32_t, QSharedPointer<LPin>> &pins() const { return _pins; }
     std::optional<QWeakPointer<LPin>> operator[](uint32_t id); 
     // Alias for [id]
     inline std::optional<QWeakPointer<LPin>> pin(uint32_t id) { return this->operator[](id); };
