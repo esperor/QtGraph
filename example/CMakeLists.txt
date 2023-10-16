@@ -1,11 +1,13 @@
 project(QtGraph)
 
 set(SOURCES main.cpp mainwindow.cpp)
+set(HEADERS mainwindow.h)
 
 qt_wrap_ui(SOURCES mainwindow.ui)
 
 qt_add_executable(QtGraphExample
     ${SOURCES}
+    ${HEADERS}
 )
 
 set_property(TARGET QtGraphExample PROPERTY

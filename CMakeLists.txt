@@ -29,7 +29,6 @@ add_subdirectory(src)
 
 option(BUILD_TESTS "" ON)
 option(BUILD_EXAMPLE "" ON)
-option(CREATE_DLL "" OFF)
 
 if (BUILD_EXAMPLE)
     message(STATUS "Configuring example...")

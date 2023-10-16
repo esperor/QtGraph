@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <QtCore/qglobal.h>
 #include <QString>
 #include <QByteArray>
 #include <QMap>
@@ -9,16 +10,15 @@
 #include <string>
 #include <QSet>
 
-#include "QtGraph/NodeFactoryModule/nodefactory.h"
-#include "QtGraph/TypeManagers/nodetypemanager.h"
-#include "QtGraph/TypeManagers/pintypemanager.h"
-#include "QtGraph/DataClasses/nodespawndata.h"
-#include "QtGraph/utility.h"
-#include "QtGraph/idgenerator.h"
-#include "QtGraph/GraphLib.h"
+#include <QtGraph/NodeFactory>
+#include <QtGraph/TypeManagers>
+#include "private/models/nodespawndata.h"
+#include "private/utilities/utility.h"
+#include "private/helpers/idgenerator.h"
+#include "private/models/pindata.h"
 
 using namespace testing;
-using namespace GraphLib;
+using namespace qtgraph;
 
 class TypeManagers : public ::testing::Test
 {
@@ -44,28 +44,28 @@ protected:
 
 TEST(PinData, ByteArrayConversions)
 {
-    PinData first(PinDirection::In, 5, 6);
+    IPinData first(EPinDirection::In, 5, 6);
     QByteArray arr = first.toByteArray();
-    PinData second = PinData::fromByteArray(arr);
+    IPinData second = IPinData::fromByteArray(arr);
     EXPECT_EQ(first, second);
 
     first.nodeID = 0;
     arr = first.toByteArray();
-    second = PinData::fromByteArray(arr);
+    second = IPinData::fromByteArray(arr);
     EXPECT_EQ(first, second);
 }
 
 TEST(NodeSpawnData, ByteArrayConversions)
 {
     QString str("Text");
-    NodeSpawnData first(str);
+    INodeSpawnData first(str);
     QByteArray arr1 = first.toByteArray();
-    NodeSpawnData second = NodeSpawnData::fromByteArray(arr1);
+    INodeSpawnData second = INodeSpawnData::fromByteArray(arr1);
     EXPECT_EQ(first, second);
 
-    TypedNodeSpawnData third(str, 1);
+    ITypedNodeSpawnData third(str, 1);
     QByteArray arr2 = third.toByteArray();
-    TypedNodeSpawnData fourth = TypedNodeSpawnData::fromByteArray(arr2);
+    ITypedNodeSpawnData fourth = ITypedNodeSpawnData::fromByteArray(arr2);
     EXPECT_EQ(third, fourth);
 }
 
@@ -133,7 +133,7 @@ TEST_F(TypeManagers, Properties)
 TEST(NodeFactory, ParseToColor)
 {
     auto check = [](QString str, int r, int g, int b) {
-        QColor clr = NodeFactoryModule::parseToColor(str);
+        QColor clr = parseToColor(str);
 
         EXPECT_EQ(clr.isValid(), true);
 
