@@ -45,8 +45,8 @@ public:
     bool connectPins(IPinData in, IPinData out);
     void disconnectPins(IPinData in, IPinData out);
 
-    void setNodeTypeManager(NodeTypeManager *manager) { _factory->setNodeTypeManager(manager); }
-    void setPinTypeManager(PinTypeManager *manager) { _factory->setPinTypeManager(manager); }
+    void setNodeTypeManager(NodeTypeManager *manager) { _factory->setNodeTypeManager(QSharedPointer<NodeTypeManager>(manager)); }
+    void setPinTypeManager(PinTypeManager *manager) { _factory->setPinTypeManager(QSharedPointer<PinTypeManager>(manager)); }
     inline void setTypeManagers(PinTypeManager *pins, NodeTypeManager *nodes)
     {
         setNodeTypeManager(nodes);

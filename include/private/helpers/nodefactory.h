@@ -41,17 +41,17 @@ public:
 
     LPin *makePinOfType(int typeID, LNode *node) const;
 
-    const NodeTypeManager *getNodeTypeManager() const { return _nodeTypeManager; }
-    const PinTypeManager *getPinTypeManager() const { return _pinTypeManager; }
+    QSharedPointer<const NodeTypeManager> getNodeTypeManager() const { return _nodeTypeManager; }
+    QSharedPointer<const PinTypeManager> getPinTypeManager() const { return _pinTypeManager; }
 
-    void setNodeTypeManager(const NodeTypeManager *manager) { _nodeTypeManager = manager; }
-    void setPinTypeManager(const PinTypeManager *manager) { _pinTypeManager = manager; }
+    void setNodeTypeManager(QSharedPointer<const NodeTypeManager> manager) { _nodeTypeManager = manager; }
+    void setPinTypeManager(QSharedPointer<const PinTypeManager> manager) { _pinTypeManager = manager; }
 
 private:
     void addPinsToNodeByJsonValue(const QJsonValue &val, LNode *node, EPinDirection direction) const;
 
-    const NodeTypeManager *_nodeTypeManager;
-    const PinTypeManager *_pinTypeManager;
+    QSharedPointer<const NodeTypeManager> _nodeTypeManager;
+    QSharedPointer<const PinTypeManager> _pinTypeManager;
 };
 
 }
