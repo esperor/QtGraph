@@ -10,7 +10,7 @@ namespace qtgraph
 {
 
 LPin::LPin(LNode *parent)
-    : _data{ IPinData(EPinDirection::In, parent->newID(), parent->ID()) }
+    : _data{ IPinData(EPinDirection::In, parent->ID(), parent->newID()) }
     , _text{ QString("") }
     , _color{ QColor(0, 0, 0) }
     , _connectedPins{ QMap<uint32_t, IPinData>() }

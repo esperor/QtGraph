@@ -82,7 +82,7 @@ void NodeFactory::addPinsToNodeByJsonValue(const QJsonValue &val, LNode *node, E
     const QVector<QJsonObject> &pinTypes = _pinTypeManager->Types();
     QJsonArray pins = val.toArray();
 
-    for (auto it = pins.begin(); it < pins.end(); it++)
+    for (auto it = pins.begin(); it != pins.end(); it++)
     {
         QJsonObject pinObject = (*it).toObject();
 
