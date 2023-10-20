@@ -31,10 +31,10 @@ public:
     static uint32_t newID() { return _IDgenerator.generate(); }
 
     bool isSelected() const { return _bIsSelected; }
-    const QMap<uint32_t, QSharedPointer<LPin>> &pins() const { return _pins; }
-    std::optional<QWeakPointer<LPin>> operator[](uint32_t id); 
+    const QMap<uint32_t, LPin*> &pins() const { return _pins; }
+    std::optional<LPin*> operator[](uint32_t id); 
     // Alias for [id]
-    inline std::optional<QWeakPointer<LPin>> pin(uint32_t id) { return this->operator[](id); };
+    inline std::optional<LPin*> pin(uint32_t id) { return this->operator[](id); };
     const QPointF &canvasPosition() const { return _canvasPosition; }
     uint32_t ID() const { return _ID; }
     bool hasPinConnections() const;
@@ -45,9 +45,9 @@ public:
     std::optional<uint32_t> getTypeID() const { return _typeID; }
 
     void setTypeID(uint32_t newTypeID) { _typeID = newTypeID; }
-    void setNodeTypeManager(QSharedPointer<const NodeTypeManager> manager);
-    void setPinTypeManager(QSharedPointer<const PinTypeManager> manager);
-    inline void setTypeManagers(QSharedPointer<const PinTypeManager> pins, QSharedPointer<const NodeTypeManager> nodes)
+    void setNodeTypeManager(NodeTypeManager *manager);
+    void setPinTypeManager(PinTypeManager *manager);
+    inline void setTypeManagers(PinTypeManager *pins, NodeTypeManager *nodes)
     {
         setNodeTypeManager(nodes);
         setPinTypeManager(pins);
@@ -71,8 +71,8 @@ private slots:
 private:
     static IDGenerator _IDgenerator;
 
-    QSharedPointer<const NodeTypeManager> _nodeTypeManager;
-    QSharedPointer<const PinTypeManager> _pinTypeManager;
+    NodeTypeManager *_nodeTypeManager;
+    PinTypeManager *_pinTypeManager;
 
     uint32_t _ID;
     QString _name;
@@ -80,7 +80,7 @@ private:
     QPointF _canvasPosition;
     std::optional<uint32_t> _typeID;
 
-    QMap<uint32_t, QSharedPointer<LPin>> _pins;
+    QMap<uint32_t, LPin*> _pins;
 
 };
 

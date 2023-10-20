@@ -37,7 +37,7 @@ public:
 
     void setFakeConnected(bool isConnected) { _fakeConnected = isConnected; }
     void setNormalD(float newD) { _normalD = newD; }
-    void setLogical(QSharedPointer<LPin> logical) { _lpin.swap(logical); }
+    void setLogical(LPin *logical) { _lpin = logical; }
 
     const float &getNormalD() const { return _normalD; }
     int getDesiredWidth(float zoom) const;
@@ -45,7 +45,7 @@ public:
     bool isInPin() const { return _lpin->getData().pinDirection == EPinDirection::In; }
     QPoint getCenter() const { return mapToParent(_center); }
     QPixmap getPixmap() const;
-    const QSharedPointer<LPin> &getLogical() const { return _lpin; }
+    const LPin *getLogical() const { return _lpin; }
 
 signals:
     void onDrag(IPinDragSignal signal);
@@ -69,7 +69,7 @@ private:
 
 protected:
     WANode *_parentNode;
-    QSharedPointer<LPin> _lpin;
+    LPin *_lpin;
     float _normalD;
     // used to show pin as connected when connection is in progress
     bool _fakeConnected;

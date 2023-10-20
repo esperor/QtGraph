@@ -29,7 +29,7 @@ public:
     int getGap() const { return _gap; }
     bool isMinimized() const { return _bIsMinimized; }
 
-    inline void setDirection(QBoxLayout::Direction dir) { _layout.setDirection(dir); }
+    inline void setDirection(QBoxLayout::Direction dir) { _layout->setDirection(dir); }
     void setGap(int g) { _gap = g; }
     void setPosition(QPointF pos) { _position = pos; }
     inline void setPosition(qreal x, qreal y) { setPosition(QPointF(x, y)); }
@@ -64,10 +64,10 @@ private:
     int _gap;
     bool _bIsMinimized;
     QPointF _position, _lastMouseDownPosition, _mousePressPosition;
-    QWidget _layoutHolder;
-    QBoxLayout _layout;
-    NFButtonMinimize _btnMinimize;
-    QVector<QSharedPointer<TypedNodeImage>> _nodeImages;
+    QWidget *_layoutHolder;
+    QBoxLayout *_layout;
+    NFButtonMinimize *_btnMinimize;
+    QVector<TypedNodeImage*> _nodeImages;
 };
 
 }

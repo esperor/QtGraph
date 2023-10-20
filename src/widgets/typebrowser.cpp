@@ -14,24 +14,24 @@ namespace qtgraph {
 
 TypeBrowser::TypeBrowser(QWidget *parent)
     : QWidget{ parent }
-    , _painter{ new QPainter() }
+    , _painter{ new QPainter(this) }
     , _gap{ 20 }
     , _bIsMinimized{ false }
     , _position{ QPointF() }
     , _lastMouseDownPosition{ QPointF() }
     , _mousePressPosition{ QPointF() }
-    , _layoutHolder{ QWidget(this) }
-    , _layout{ QBoxLayout(QBoxLayout::TopToBottom, &_layoutHolder) }
-    , _btnMinimize{ NFButtonMinimize(this) }
-    , _nodeImages{ QVector<QSharedPointer<TypedNodeImage>>() }
+    , _layoutHolder{ new QWidget(this) }
+    , _layout{ new QBoxLayout(QBoxLayout::TopToBottom, _layoutHolder) }
+    , _btnMinimize{ new NFButtonMinimize(this) }
+    , _nodeImages{ QVector<TypedNodeImage*>() }
 {
     setMouseTracking(true);
-    _layoutHolder.setLayout(&_layout);
+    _layoutHolder->setLayout(_layout);
 
-    _btnMinimize.text = c_typeBrowserArrowUp;
-    _btnMinimize.color = c_highlightColor;
+    _btnMinimize->text = c_typeBrowserArrowUp;
+    _btnMinimize->color = c_highlightColor;
 
-    connect(&_btnMinimize, &NFButtonMinimize::onClick, this, &TypeBrowser::onButtonMinimizeClick);
+    connect(_btnMinimize, &NFButtonMinimize::onClick, this, &TypeBrowser::onButtonMinimizeClick);
 }
 
 TypeBrowser::~TypeBrowser()
@@ -40,11 +40,11 @@ TypeBrowser::~TypeBrowser()
 void TypeBrowser::onButtonMinimizeClick()
 {
     _bIsMinimized = !_bIsMinimized;
-    _btnMinimize.text = _bIsMinimized ? c_typeBrowserArrowDown : c_typeBrowserArrowUp;
+    _btnMinimize->text = _bIsMinimized ? c_typeBrowserArrowDown : c_typeBrowserArrowUp;
     if (_bIsMinimized)
-        _layoutHolder.hide();
+        _layoutHolder->hide();
     else
-        _layoutHolder.show();
+        _layoutHolder->show();
 }
 
 QSize TypeBrowser::getDesiredSize() const
@@ -56,14 +56,14 @@ QSize TypeBrowser::getDesiredSize() const
     int maxMetric = 0;
 
     int maxImgWidth = 0, maxImgHeight = 0;
-    std::ranges::for_each(_nodeImages, [&](QSharedPointer<TypedNodeImage> ptr){
+    std::ranges::for_each(_nodeImages, [&](TypedNodeImage *ptr){
         QSize imgSize = ptr->getDesiredSize();
         maxImgWidth = std::max(maxImgWidth, imgSize.width());
         maxImgHeight = std::max(maxImgHeight, imgSize.height());
     });
 
-    if (_layout.direction() == QBoxLayout::LeftToRight ||
-        _layout.direction() == QBoxLayout::RightToLeft)
+    if (_layout->direction() == QBoxLayout::LeftToRight ||
+        _layout->direction() == QBoxLayout::RightToLeft)
     {
         maxMetric += c_typeBrowserSpacing;
         maxMetric += _nodeImages.size() * (maxImgWidth + _gap);
@@ -82,13 +82,13 @@ QSize TypeBrowser::getDesiredSize() const
 void TypeBrowser::clear()
 {
     QLayoutItem* child;
-    while(_layout.count() != 0)
+    while(_layout->count() != 0)
     {
-        child = _layout.takeAt(0);
+        child = _layout->takeAt(0);
         delete child;
     }
 
-    _layout.addSpacing(c_typeBrowserSpacing);
+    _layout->addSpacing(c_typeBrowserSpacing);
 }
 
 bool TypeBrowser::initTypes()
@@ -100,13 +100,13 @@ bool TypeBrowser::initTypes()
 
     try {
         std::ranges::for_each(_nodeTypeManager->TypeNames().keys(), [&](const QString &typeName){
-            _nodeImages.append(QSharedPointer<TypedNodeImage>(new TypedNodeImage(typeName)));
-            TypedNodeImage *image = _nodeImages.last().get();
+            _nodeImages.append(new TypedNodeImage(typeName));
+            TypedNodeImage *image = _nodeImages.last();
             image->TypeManager = _nodeTypeManager;
             image->initType();
-            _layout.addWidget(image);
+            _layout->addWidget(image);
         });
-        _layout.addSpacing(c_typeBrowserSpacing / 2);
+        _layout->addSpacing(c_typeBrowserSpacing / 2);
     } catch (...) { return false; }
 
     return true;
@@ -181,11 +181,11 @@ void TypeBrowser::paint(QPainter *painter, QPaintEvent *)
                       (Qt::AlignTop | Qt::AlignHCenter), "drag & place");
 
 
-    _layoutHolder.setFixedSize(getDesiredSize());
+    _layoutHolder->setFixedSize(getDesiredSize());
 
     // button minimize
     {
-        _btnMinimize.move((this->width() - _btnMinimize.width()) / 2, this->height() - _btnMinimize.height());
+        _btnMinimize->move((this->width() - _btnMinimize->width()) / 2, this->height() - _btnMinimize->height());
     }
 
     // this line avoids flickering between this widget and nodes
