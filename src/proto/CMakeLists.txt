@@ -15,9 +15,6 @@ add_library(protos OBJECT
 
 set(PROTO_BINARY_DIR ${CMAKE_SOURCE_DIR}/protos_generated)
 
-set_property(TARGET protos PROPERTY
-    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
 target_link_libraries(protos PUBLIC protobuf::libprotobuf)
 
 target_include_directories(protos PUBLIC $<BUILD_INTERFACE:${PROTO_BINARY_DIR}>)
