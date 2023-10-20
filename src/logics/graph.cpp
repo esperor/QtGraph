@@ -28,8 +28,10 @@ bool LGraph::serialize(std::fstream *output) const
 bool LGraph::protocolize(protocol::Graph &graph) const
 {
     protocol::State *state = graph.mutable_state();
-    *(state->mutable_node_type_manager()) = _factory->getNodeTypeManager()->toProtocolTypeManager();
-    *(state->mutable_pin_type_manager()) = _factory->getPinTypeManager()->toProtocolTypeManager();
+    auto ntm = _factory->getNodeTypeManager();
+    auto ptm = _factory->getPinTypeManager();
+    if (ntm) *(state->mutable_node_type_manager()) = ntm->toProtocolTypeManager();
+    if (ptm) *(state->mutable_pin_type_manager()) = ptm->toProtocolTypeManager();
 
     std::ranges::for_each(_nodes, [state](QSharedPointer<LNode> node) {
         node->protocolize(state->add_nodes());
@@ -50,8 +52,10 @@ bool LGraph::deserialize(std::fstream *input)
 bool LGraph::deprotocolize(protocol::Graph &graph)
 {
     protocol::State state = graph.state();
-    setNodeTypeManager(NodeTypeManager::fromProtocolTypeManager(state.node_type_manager()));
-    setPinTypeManager(PinTypeManager::fromProtocolTypeManager(state.pin_type_manager()));
+    if (state.has_node_type_manager())
+        setNodeTypeManager(NodeTypeManager::fromProtocolTypeManager(state.node_type_manager()));
+    if (state.has_pin_type_manager())
+        setPinTypeManager(PinTypeManager::fromProtocolTypeManager(state.pin_type_manager()));
 
     std::ranges::for_each(state.nodes(), [this](const protocol::Node &nd){
         LNode *node;
