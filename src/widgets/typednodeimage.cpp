@@ -16,7 +16,7 @@ namespace qtgraph {
 TypedNodeImage::TypedNodeImage(QWidget *parent)
     : QWidget{ parent }
     , fontSize{ 11 }
-    , _painter{ new QPainter() }
+    , _painter{ new QPainter(this) }
 {}
 
 TypedNodeImage::TypedNodeImage(QString type, QWidget *parent)
@@ -26,7 +26,7 @@ TypedNodeImage::TypedNodeImage(QString type, QWidget *parent)
 }
 
 TypedNodeImage::~TypedNodeImage()
-{ delete _painter; }
+{}
 
 
 

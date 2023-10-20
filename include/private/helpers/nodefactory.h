@@ -29,7 +29,7 @@ class NodeFactory : public QObject
     Q_OBJECT
 
 public:
-    NodeFactory();
+    NodeFactory(QObject *parent = nullptr);
 
     
     LNode *makeNodeOfType(int typeID, LGraph *graph) const;
@@ -41,17 +41,17 @@ public:
 
     LPin *makePinOfType(int typeID, LNode *node) const;
 
-    QSharedPointer<const NodeTypeManager> getNodeTypeManager() const { return _nodeTypeManager; }
-    QSharedPointer<const PinTypeManager> getPinTypeManager() const { return _pinTypeManager; }
+    NodeTypeManager *getNodeTypeManager() const { return _nodeTypeManager; }
+    PinTypeManager *getPinTypeManager() const { return _pinTypeManager; }
 
-    void setNodeTypeManager(QSharedPointer<const NodeTypeManager> manager) { _nodeTypeManager = manager; }
-    void setPinTypeManager(QSharedPointer<const PinTypeManager> manager) { _pinTypeManager = manager; }
+    void setNodeTypeManager(NodeTypeManager *manager);
+    void setPinTypeManager(PinTypeManager *manager);
 
 private:
     void addPinsToNodeByJsonValue(const QJsonValue &val, LNode *node, EPinDirection direction) const;
 
-    QSharedPointer<const NodeTypeManager> _nodeTypeManager;
-    QSharedPointer<const PinTypeManager> _pinTypeManager;
+    NodeTypeManager *_nodeTypeManager;
+    PinTypeManager *_pinTypeManager;
 };
 
 }
