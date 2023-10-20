@@ -74,9 +74,9 @@ public:
     // If one of params of QPointF is negative, current mouse position will be used
     void zoomOut(int times = 1, QPointF where = QPointF(-1, -1));
 
-    QWeakPointer<LNode> addNode(QPoint canvasPosition, QString name);
-    QWeakPointer<LNode> addNode(QSharedPointer<LNode> lnode);
-    QWeakPointer<LNode> addNode(QPoint canvasPosition, int typeID);
+    LNode* addNode(QPoint canvasPosition, QString name);
+    LNode* addNode(LNode *lnode);
+    LNode* addNode(QPoint canvasPosition, int typeID);
 
 public slots:
     void moveCanvas(QPointF offset);
@@ -134,9 +134,9 @@ private:
     QTimer *_timer;
     TypeBrowser *_typeBrowser;
     // uint32_t represents node's id 
-    QMap<uint32_t, QSharedPointer<WANode>> _selectedNodes;
+    QMap<uint32_t, WANode*> _selectedNodes;
     // uint32_t represents node's id
-    QMap<uint32_t, QSharedPointer<WANode>> _nodes;
+    QMap<uint32_t, WANode*> _nodes;
 
     const static QMap<short, float> _zoomMultipliers;
 

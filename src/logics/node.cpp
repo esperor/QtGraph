@@ -11,7 +11,7 @@ LNode::LNode(LGraph *graph)
     , _canvasPosition{ QPointF(0, 0) }
     , _bIsSelected{ false }
     , _name{ QString("") }
-    , _pins{ QMap<uint32_t, QSharedPointer<LPin>>() }
+    , _pins{ QMap<uint32_t, LPin*>() }
 
 {}
 
@@ -24,7 +24,7 @@ void LNode::protocolize(protocol::Node *pNode) const
     pNode->set_id(_ID);
     pNode->set_is_selected(_bIsSelected);
     pNode->set_name(_name.toStdString());
-    std::ranges::for_each(_pins, [pNode](QSharedPointer<LPin> pin) {
+    std::ranges::for_each(_pins, [pNode](LPin *pin) {
         pin->protocolize(pNode->add_pins());
     });
 }
@@ -49,20 +49,20 @@ void LNode::deprotocolize(const protocol::Node &pNode)
     });
 }
 
-std::optional<QWeakPointer<LPin>> LNode::operator[](uint32_t id)
+std::optional<LPin*> LNode::operator[](uint32_t id)
 {
     if (!_pins.contains(id)) return {};
-    else return _pins[id].toWeakRef();
+    else return _pins[id];
 }
 
-void LNode::setNodeTypeManager(QSharedPointer<const NodeTypeManager> manager)
+void LNode::setNodeTypeManager(NodeTypeManager *manager)
 {
-    _nodeTypeManager.swap(manager);
+    _nodeTypeManager = manager;
 }
 
-void LNode::setPinTypeManager(QSharedPointer<const PinTypeManager> manager)
+void LNode::setPinTypeManager(PinTypeManager *manager)
 {
-    _pinTypeManager.swap(manager);
+    _pinTypeManager = manager;
 }
 
 void LNode::setPinConnection(uint32_t pinID, IPinData connectedPin)
@@ -72,7 +72,7 @@ void LNode::setPinConnection(uint32_t pinID, IPinData connectedPin)
 
 bool LNode::hasPinConnections() const
 {
-    return std::ranges::any_of(_pins, [&](QSharedPointer<LPin> pin){
+    return std::ranges::any_of(_pins, [&](LPin *pin){
         return pin->isConnected();
     });
 }
@@ -80,7 +80,7 @@ bool LNode::hasPinConnections() const
 const QMap<uint32_t, QVector<IPinData> > *LNode::getPinConnections() const
 {
     QMap<uint32_t, QVector<IPinData> > *out = new QMap<uint32_t, QVector<IPinData>>();
-    std::ranges::for_each(_pins, [&](QSharedPointer<LPin> pin){
+    std::ranges::for_each(_pins, [&](LPin *pin){
         out->insert(pin->ID(), pin->getConnectedPins());
     });
     return out;
@@ -101,7 +101,7 @@ void LNode::onPinDestroyed(QObject *obj)
 
 uint32_t LNode::addPin(LPin *pin)
 {
-    _pins.insert(pin->ID(), QSharedPointer<LPin>(pin));
+    _pins.insert(pin->ID(), pin);
     connect(pin, &LPin::destroyed, this, &LNode::onPinDestroyed);
 
     return pin->ID();

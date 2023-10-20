@@ -9,7 +9,7 @@ namespace qtgraph {
 
 NFButtonMinimize::NFButtonMinimize(QWidget *parent)
     : QWidget{ parent }
-    , _painter{ new QPainter() }
+    , _painter{ new QPainter(this) }
 {}
 
 void NFButtonMinimize::paintEvent(QPaintEvent *event)

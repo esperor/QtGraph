@@ -15,9 +15,10 @@
 
 namespace qtgraph {
 
-NodeFactory::NodeFactory()
-    : _nodeTypeManager{ new NodeTypeManager() }
-    , _pinTypeManager{ new PinTypeManager() }
+NodeFactory::NodeFactory(QObject *parent)
+    : QObject(parent)
+    , _nodeTypeManager{ nullptr }
+    , _pinTypeManager{ nullptr }
 {}
 
 LNode *NodeFactory::makeNodeOfType(int typeID, LGraph *graph) const
@@ -25,8 +26,8 @@ LNode *NodeFactory::makeNodeOfType(int typeID, LGraph *graph) const
     LNode *node = new LNode(graph);
 
     node->setName(_nodeTypeManager->Types()[typeID].value("name").toString());
-    node->setNodeTypeManager(QSharedPointer<const NodeTypeManager>(_nodeTypeManager));
-    node->setPinTypeManager(QSharedPointer<const PinTypeManager>(_pinTypeManager));
+    node->setNodeTypeManager(_nodeTypeManager);
+    node->setPinTypeManager(_pinTypeManager);
     node->setTypeID(typeID);
 
     return node;
@@ -94,6 +95,18 @@ void NodeFactory::addPinsToNodeByJsonValue(const QJsonValue &val, LNode *node, E
 
         node->addPin(pin);
     }
+}
+
+void NodeFactory::setNodeTypeManager(NodeTypeManager *manager)
+{ 
+    _nodeTypeManager = manager; 
+    _nodeTypeManager->setParent(this); 
+}
+
+void NodeFactory::setPinTypeManager(PinTypeManager *manager) 
+{ 
+    _pinTypeManager = manager; 
+    _pinTypeManager->setParent(this); 
 }
 
 }

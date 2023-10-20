@@ -23,8 +23,8 @@ namespace qtgraph {
 
 WCanvas::WCanvas(QWidget *parent)
     : QWidget{ parent }
-    , _graph{ new LGraph() }
-    , _painter{ new QPainter() }
+    , _graph{ new LGraph(this) }
+    , _painter{ new QPainter(this) }
     , _dotPaintGap{ 40 }
     , _draggedPin{ std::nullopt }
     , _draggedPinTargetInfo{ std::nullopt }
@@ -39,7 +39,7 @@ WCanvas::WCanvas(QWidget *parent)
     , _selectionRect{ std::nullopt }
     , _selectionAreaPreviousNodes{ QSet<uint32_t>() }
     , _typeBrowser{ new TypeBrowser(this) }
-    , _selectedNodes{ QMap<uint32_t, QSharedPointer<WANode>>() }
+    , _selectedNodes{ QMap<uint32_t, WANode*>() }
 {
     setMouseTracking(true);
     setAutoFillBackground(true);
@@ -63,10 +63,6 @@ WCanvas::WCanvas(QWidget *parent)
 
 WCanvas::~WCanvas()
 {
-    delete _graph;
-    delete _painter;
-    delete _timer;
-    delete _typeBrowser;
     delete _lastResizedSize;
 }
 
@@ -129,11 +125,8 @@ bool WCanvas::deserialize(std::fstream *input)
 
 void WCanvas::visualize()
 {
-    std::ranges::for_each(_graph->nodes(), [this](QSharedPointer<LNode> lnode){
-        _nodes.insert(lnode->ID(), 
-            QSharedPointer<WANode>(
-                _graph->getFactory()->makeSuitableWNode(lnode.get(), this)
-            ));
+    std::ranges::for_each(_graph->nodes(), [this](LNode *lnode){
+        _nodes.insert(lnode->ID(), _graph->getFactory()->makeSuitableWNode(lnode, this));
     });
 }
 
@@ -209,7 +202,7 @@ void WCanvas::zoomOut(int times, QPointF where) { zoom(-times, where); }
 void WCanvas::processSelectionArea(const QMouseEvent *event)
 {
     _selectionRect = QRect(_lastMouseDownPosition.toPoint(), event->position().toPoint());
-    std::ranges::for_each(_nodes, [&](QSharedPointer<WANode> &node){
+    std::ranges::for_each(_nodes, [&](WANode *node){
         if (_selectionAreaPreviousNodes.contains(node->ID()))
         {
             if (!node->getMappedRect().intersects(*_selectionRect))
@@ -317,44 +310,43 @@ void WCanvas::onNodeSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID)
 
     if (bIsMultiSelectionModifierDown) return;
 
-    std::ranges::for_each(_selectedNodes.values(), [&](QSharedPointer<WANode> &ptr){
+    std::ranges::for_each(_selectedNodes.values(), [&](WANode *ptr){
         if (ptr->ID() == nodeID)
             return;
         ptr->setSelected(false);
     });
 
-    _selectedNodes.removeIf([&](QMap<uint32_t, QSharedPointer<WANode>>::iterator &it){
+    _selectedNodes.removeIf([&](QMap<uint32_t, WANode*>::iterator &it){
         return it.value()->ID() != nodeID;
     });
 }
 
-QWeakPointer<LNode> WCanvas::addNode(QPoint canvasPosition, QString name)
+LNode *WCanvas::addNode(QPoint canvasPosition, QString name)
 {
-    QWeakPointer<LNode> node = _graph->addNode(canvasPosition, name);
-    return addNode(node.toStrongRef());
+    LNode *node = _graph->addNode(canvasPosition, name);
+    return addNode(node);
 }
 
-QWeakPointer<LNode> WCanvas::addNode(QSharedPointer<LNode> lnode)
+LNode *WCanvas::addNode(LNode *lnode)
 {
     uint32_t id = _nodes.insert(lnode->ID(), 
-        QSharedPointer<WANode>(
-            _graph->getFactory()->makeSuitableWNode(lnode.get(), this)
-        )).key();
+            _graph->getFactory()->makeSuitableWNode(lnode, this)
+        ).key();
 
     _nodes[id]->show();
 
-    connect(_nodes[id].get(), &WANode::onPinDrag, this, &WCanvas::onPinDrag);
-    connect(_nodes[id].get(), &WANode::onPinConnect, this, &WCanvas::onPinConnect);
-    connect(_nodes[id].get(), &WANode::onSelect, this, &WCanvas::onNodeSelect);
-    connect(_nodes[id].get(), &WANode::onPinConnectionBreak, this, &WCanvas::onPinConnectionBreak);
+    connect(_nodes[id], &WANode::onPinDrag, this, &WCanvas::onPinDrag);
+    connect(_nodes[id], &WANode::onPinConnect, this, &WCanvas::onPinConnect);
+    connect(_nodes[id], &WANode::onSelect, this, &WCanvas::onNodeSelect);
+    connect(_nodes[id], &WANode::onPinConnectionBreak, this, &WCanvas::onPinConnectionBreak);
 
-    return lnode.toWeakRef();
+    return lnode;
 }
 
-QWeakPointer<LNode> WCanvas::addNode(QPoint canvasPosition, int typeID)
+LNode *WCanvas::addNode(QPoint canvasPosition, int typeID)
 {
-    QWeakPointer<LNode> node = _graph->addNode(canvasPosition, typeID);
-    return addNode(node.toStrongRef());
+    LNode *node = _graph->addNode(canvasPosition, typeID);
+    return addNode(node);
 }
 
 
@@ -365,7 +357,7 @@ void WCanvas::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Delete && !_selectedNodes.isEmpty())
     {
-        std::ranges::for_each(_selectedNodes, [&](QSharedPointer<WANode> &ptr){ 
+        std::ranges::for_each(_selectedNodes, [&](WANode *ptr){ 
             _graph->removeNode(ptr->ID());
         });
         _selectedNodes.clear();
@@ -388,7 +380,7 @@ void WCanvas::mousePressEvent(QMouseEvent *event)
         if (event->modifiers() & c_multiSelectionModifier)
             break;
 
-        std::ranges::for_each(_selectedNodes.values(), [&](QSharedPointer<WANode> &ptr){
+        std::ranges::for_each(_selectedNodes.values(), [&](WANode *ptr){
             ptr->setSelected(false);
         });
 
@@ -558,7 +550,7 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
     setUpdatesEnabled(false);
 
     auto getColorOfPinByPinData = [&](const IPinData &data){
-        const LPin *pin = _graph->nodes()[data.nodeID]->pin(data.pinID)->toStrongRef().get();
+        const LPin *pin = _graph->nodes()[data.nodeID]->pin(data.pinID).value();
         return pin->getColor();
     };
 
@@ -595,7 +587,7 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
     }
 
     // manage NODES
-    std::ranges::for_each(_nodes, [&](QSharedPointer<WANode> &node) {
+    std::ranges::for_each(_nodes, [&](WANode *node) {
 
         // this->rect()->center() is used instead of center purposefully
         // in order to fix flicking and lagging of the nodes (dk why it fixes the problem)

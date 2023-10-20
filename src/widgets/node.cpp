@@ -24,7 +24,7 @@ WANode::WANode(LNode *logical, WCanvas *canvas)
     , _lastMouseDownPosition{ QPointF(0, 0) }
     , _mousePressPosition{ QPointF(0, 0) }
     , _pinsOutlineCoords{ QMap<uint32_t, QPoint>() }
-    , _pins{ QMap<uint32_t, QSharedPointer<WPin>>() }
+    , _pins{ QMap<uint32_t, WPin*>() }
 {
     _normalSize.setWidth(200);
     _normalSize.setHeight(150);
@@ -32,7 +32,7 @@ WANode::WANode(LNode *logical, WCanvas *canvas)
     this->setFixedSize(_normalSize);
 
     std::ranges::for_each(_lnode->pins(), [&, this](const auto &lpin){
-        _pins.insert(lpin->ID(), QSharedPointer<WPin>(new WPin(lpin.get(), this)));
+        _pins.insert(lpin->ID(), new WPin(lpin, this));
     });
 }
 
@@ -69,7 +69,7 @@ QRect WANode::getMappedRect() const
 
 void WANode::addPin(WPin *pin)
 {
-    _pins.insert(pin->getLogical()->ID(), QSharedPointer<WPin>(pin));
+    _pins.insert(pin->getLogical()->ID(), pin);
     connect(pin, &WPin::onDrag, this, &WANode::slot_onPinDrag);
     connect(pin, &WPin::onConnect, this, &WANode::slot_onPinConnect);
     connect(pin, &WPin::onConnectionBreak, this, &WANode::slot_onPinConnectionBreak);
@@ -208,7 +208,7 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
     auto calculateWidth = [&](){
         int maxInWidth = 0, maxOutWidth = 0;
 
-        std::ranges::for_each(_pins, [&](const QSharedPointer<WPin> &pin){
+        std::ranges::for_each(_pins, [&](WPin* pin){
             switch (pin->getDirection())
             {
             case EPinDirection::In:
@@ -224,7 +224,7 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
         return maxInWidth + maxOutWidth + normalPinDZoomed * (bShouldSimplifyRender ? 8 : 4);
     };
 
-    int inPins = std::ranges::count_if(_pins, [](const QSharedPointer<WPin> &pin){
+    int inPins = std::ranges::count_if(_pins, [](WPin* pin){
         return pin->getDirection() == EPinDirection::In;
     });
     int pinRows = std::max(inPins, static_cast<int>(_pins.size() - inPins));
@@ -293,7 +293,7 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
         int inPinsOffsetY = pinsOffsetY;
         int outPinsOffsetY = pinsOffsetY;
 
-        auto manage = [&](const QSharedPointer<WPin> &pin){
+        auto manage = [&](WPin* pin){
             switch (pin->getDirection())
             {
             case EPinDirection::In:
@@ -307,7 +307,7 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
             default:;
             }
 
-            QSharedPointer<const LPin> logicalPin = pin->getLogical();
+            const LPin *logicalPin = pin->getLogical();
 
             pin->setFixedSize(pin->getDesiredWidth(_zoom), pin->getNormalD() * _zoom);
             _pinsOutlineCoords[logicalPin->ID()] = QPoint(pin->isInPin() ? 0 : desiredWidth, pin->getCenter().y());

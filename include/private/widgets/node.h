@@ -37,9 +37,9 @@ public:
     QPoint getOutlineCoordinateForPinID(uint32_t pinID) const { return mapToParent(_pinsOutlineCoords[pinID]); }
     QRect getMappedRect() const;
     const WCanvas *getParentCanvas() const { return _parentCanvas; }
-    QSharedPointer<const LNode> getLogical() const { return _lnode; }
+    const LNode *getLogical() const { return _lnode; }
 
-    void setLogical(QSharedPointer<LNode> logical) { _lnode.swap(logical); }
+    void setLogical(LNode *logical) { _lnode = logical; }
     void setNormalSize(QSize newSize) { _normalSize = newSize; }
     void setSelected(bool b, bool bIsMultiSelectionModifierDown = false);
     void setPinConnected(uint32_t pinID, bool isConnected);
@@ -75,7 +75,7 @@ private:
 // -----------------------------------------------------------
 
 protected:
-    QSharedPointer<LNode> _lnode;
+    LNode *_lnode;
 
     const WCanvas *_parentCanvas;
     float _zoom;
@@ -88,7 +88,7 @@ protected:
     
     QMap<uint32_t, QPoint> _pinsOutlineCoords;
 
-    QMap<uint32_t, QSharedPointer<WPin>> _pins;
+    QMap<uint32_t, WPin*> _pins;
 };
 
 } 

@@ -17,13 +17,13 @@ class WTypedNode : public WANode
 public:
     WTypedNode(int typeID, LNode *lnode, WCanvas *canvas);
 
-    void setNodeTypeManager(QSharedPointer<const NodeTypeManager> ntm) { _nodeTypeManager = ntm; }
+    void setNodeTypeManager(NodeTypeManager *ntm) { _nodeTypeManager = ntm; }
 
 private:
     void paintName(QPainter *painter, int desiredWidth, QPoint textOrigin) override;
     int calculateRowsOffset(QPainter *painter) const override;
 
-    QSharedPointer<const NodeTypeManager> _nodeTypeManager;
+    NodeTypeManager *_nodeTypeManager;
 
 protected:
 

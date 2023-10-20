@@ -22,7 +22,7 @@ WPin::WPin(LPin *lpin, WANode *parent)
     , _normalD{ c_normalPinD }
     , _breakConnectionActions{ QMap<int, QAction*>() }
     , _contextMenu{ QMenu(this) }
-    , _painter{ new QPainter() }
+    , _painter{ new QPainter(this) }
 {
     setAcceptDrops(true);
 }
