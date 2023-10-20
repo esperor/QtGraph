@@ -36,9 +36,6 @@ qt_add_library(QtGraph
     $<TARGET_OBJECTS:protos>
 )
 
-set_property(TARGET QtGraph PROPERTY
-    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
 target_link_libraries(QtGraph
     PUBLIC
     Qt6::Core
