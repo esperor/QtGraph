@@ -39,6 +39,7 @@ public:
     void setNormalD(float newD) { _normalD = newD; }
     void setLogical(LPin *logical) { _lpin = logical; }
 
+    bool isFakeConnected() const { return _fakeConnected; }
     const float &getNormalD() const { return _normalD; }
     int getDesiredWidth(float zoom) const;
     EPinDirection getDirection() const { return _lpin->getData().pinDirection; }

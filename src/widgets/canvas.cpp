@@ -53,7 +53,9 @@ WCanvas::WCanvas(QWidget *parent)
 
     connect(_typeBrowser, &TypeBrowser::onMove, this, &WCanvas::onTypeBrowserMove);
     connect(_graph, &LGraph::onNodeRemoved, this, [this](uint32_t id){
+        delete _nodes[id];
         _nodes.remove(id);
+        onNodeRemoved(id);
     });
 
     _timer = new QTimer(this);
@@ -114,6 +116,12 @@ bool WCanvas::deserialize(std::fstream *input)
         return false;
     }
 
+    auto *ntm = _graph->getNodeTypeManager();
+    auto *ptm = _graph->getPinTypeManager();
+
+    if (ntm) setNodeTypeManager(ntm);
+    if (ptm) setPinTypeManager(ptm);
+
     _offset = convertFrom_protocolPointF(graph.offset());
     _zoom = graph.zoom();
 
@@ -126,7 +134,7 @@ bool WCanvas::deserialize(std::fstream *input)
 void WCanvas::visualize()
 {
     std::ranges::for_each(_graph->nodes(), [this](LNode *lnode){
-        _nodes.insert(lnode->ID(), _graph->getFactory()->makeSuitableWNode(lnode, this));
+        addNode(lnode);
     });
 }
 
@@ -328,7 +336,10 @@ LNode *WCanvas::addNode(QPoint canvasPosition, QString name)
 }
 
 LNode *WCanvas::addNode(LNode *lnode)
-{
+{   
+    if (!_graph->containsNode(lnode->ID()))
+        _graph->addNode(lnode);
+    
     uint32_t id = _nodes.insert(lnode->ID(), 
             _graph->getFactory()->makeSuitableWNode(lnode, this)
         ).key();
@@ -361,7 +372,6 @@ void WCanvas::keyPressEvent(QKeyEvent *event)
             _graph->removeNode(ptr->ID());
         });
         _selectedNodes.clear();
-        emit onNodesRemoved();
     }
 
     QWidget::keyPressEvent(event);

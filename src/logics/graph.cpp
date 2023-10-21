@@ -29,8 +29,10 @@ bool LGraph::serialize(std::fstream *output) const
 bool LGraph::protocolize(protocol::Graph &graph) const
 {
     protocol::State *state = graph.mutable_state();
-    *(state->mutable_node_type_manager()) = _factory->getNodeTypeManager()->toProtocolTypeManager();
-    *(state->mutable_pin_type_manager()) = _factory->getPinTypeManager()->toProtocolTypeManager();
+    auto ntm = _factory->getNodeTypeManager();
+    auto ptm = _factory->getPinTypeManager();
+    if (ntm) *(state->mutable_node_type_manager()) = ntm->toProtocolTypeManager();
+    if (ptm) *(state->mutable_pin_type_manager()) = ptm->toProtocolTypeManager();
 
     std::ranges::for_each(_nodes, [state](LNode *node) {
         node->protocolize(state->add_nodes());
@@ -51,8 +53,10 @@ bool LGraph::deserialize(std::fstream *input)
 bool LGraph::deprotocolize(protocol::Graph &graph)
 {
     protocol::State state = graph.state();
-    setNodeTypeManager(NodeTypeManager::fromProtocolTypeManager(state.node_type_manager()));
-    setPinTypeManager(PinTypeManager::fromProtocolTypeManager(state.pin_type_manager()));
+    if (state.has_node_type_manager())
+        setNodeTypeManager(NodeTypeManager::fromProtocolTypeManager(state.node_type_manager()));
+    if (state.has_pin_type_manager())
+        setPinTypeManager(PinTypeManager::fromProtocolTypeManager(state.pin_type_manager()));
 
     std::ranges::for_each(state.nodes(), [this](const protocol::Node &nd){
         LNode *node;
@@ -149,7 +153,6 @@ void LGraph::removeNode(uint32_t nodeID)
 {
     if (!_nodes.contains(nodeID)) return;
     LNode *ptr = _nodes[nodeID];
-    uint32_t id = ptr->ID();
     if (ptr->hasPinConnections())
     {
         const QMap<uint32_t, QVector<IPinData> > *connections = ptr->getPinConnections();
@@ -166,7 +169,8 @@ void LGraph::removeNode(uint32_t nodeID)
             });
         });
     }
-    _nodes.remove(id);
+    delete _nodes[nodeID];
+    _nodes.remove(nodeID);
 }
 
 
@@ -202,6 +206,7 @@ LNode *LGraph::addNode(QPoint canvasPosition, QString name)
 
 LNode *LGraph::addNode(LNode *node)
 {
+    node->setParent(this);
     uint32_t id = node->ID();
     _nodes.insert(id, node);
     connect(_nodes[id], &LNode::destroyed, this, &LGraph::onNodeDestroyed);

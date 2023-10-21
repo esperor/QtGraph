@@ -6,7 +6,7 @@ import "typemanager.proto";
 import "node.proto";
 
 message State {
-    TypeManager node_type_manager = 1;
-    TypeManager pin_type_manager = 2;
+    optional TypeManager node_type_manager = 1;
+    optional TypeManager pin_type_manager = 2;
     repeated Node nodes = 3;
 }

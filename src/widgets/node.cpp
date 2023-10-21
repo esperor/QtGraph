@@ -32,7 +32,7 @@ WANode::WANode(LNode *logical, WCanvas *canvas)
     this->setFixedSize(_normalSize);
 
     std::ranges::for_each(_lnode->pins(), [&, this](const auto &lpin){
-        _pins.insert(lpin->ID(), new WPin(lpin, this));
+        addPin(new WPin(lpin, this));
     });
 }
 
@@ -46,6 +46,7 @@ WANode::~WANode()
 
 void WANode::setSelected(bool b, bool bIsMultiSelectionModifierDown)
 { 
+    _lnode->setSelected(b);
     if (b) onSelect(bIsMultiSelectionModifierDown, ID()); 
 }
 
@@ -118,6 +119,7 @@ void WANode::mousePressEvent(QMouseEvent *event)
 void WANode::mouseReleaseEvent(QMouseEvent *event)
 {
     this->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
+    _lnode->setSelected(true);
     onSelect(event->modifiers() & c_multiSelectionModifier, _lnode->ID());
 }
 
@@ -312,7 +314,7 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
             pin->setFixedSize(pin->getDesiredWidth(_zoom), pin->getNormalD() * _zoom);
             _pinsOutlineCoords[logicalPin->ID()] = QPoint(pin->isInPin() ? 0 : desiredWidth, pin->getCenter().y());
 
-            if (logicalPin->isConnected())
+            if (logicalPin->isConnected() || pin->isFakeConnected())
             {
                 pen.setColor(logicalPin->getColor());
                 painter->setPen(pen);

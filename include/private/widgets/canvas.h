@@ -82,7 +82,7 @@ public slots:
     void moveCanvas(QPointF offset);
 
 signals:
-    void onNodesRemoved();
+    void onNodeRemoved(uint32_t id);
 
 protected:
     void paintEvent(QPaintEvent *event) override;

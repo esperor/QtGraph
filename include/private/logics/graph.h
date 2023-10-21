@@ -34,6 +34,7 @@ public:
     bool readStructure(const protocol::Structure &structure);
     protocol::Structure getStructure() const;
 
+    bool containsNode(uint32_t id) const { return _nodes.contains(id); }
     const QMap<uint32_t, LNode*> &nodes() const { return _nodes; }
     const std::set<uint32_t> &getTakenIDs() const { return _IDgenerator.getTakenIDs(); }
     QString getPinText(uint32_t nodeID, uint32_t pinID) const;
@@ -44,6 +45,9 @@ public:
     void removeNode(uint32_t nodeID);
     bool connectPins(IPinData in, IPinData out);
     void disconnectPins(IPinData in, IPinData out);
+
+    NodeTypeManager *getNodeTypeManager() { return _factory->getNodeTypeManager(); }
+    PinTypeManager *getPinTypeManager() { return _factory->getPinTypeManager(); }
 
     void setNodeTypeManager(NodeTypeManager *manager) { _factory->setNodeTypeManager(manager); }
     void setPinTypeManager(PinTypeManager *manager) { _factory->setPinTypeManager(manager); }
