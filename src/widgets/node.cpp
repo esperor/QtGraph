@@ -314,7 +314,7 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
             pin->setFixedSize(pin->getDesiredWidth(_zoom), pin->getNormalD() * _zoom);
             _pinsOutlineCoords[logicalPin->ID()] = QPoint(pin->isInPin() ? 0 : desiredWidth, pin->getCenter().y());
 
-            if (logicalPin->isConnected())
+            if (logicalPin->isConnected() || pin->isFakeConnected())
             {
                 pen.setColor(logicalPin->getColor());
                 painter->setPen(pen);

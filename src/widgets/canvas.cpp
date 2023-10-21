@@ -116,6 +116,12 @@ bool WCanvas::deserialize(std::fstream *input)
         return false;
     }
 
+    auto *ntm = _graph->getNodeTypeManager();
+    auto *ptm = _graph->getPinTypeManager();
+
+    if (ntm) setNodeTypeManager(ntm);
+    if (ptm) setPinTypeManager(ptm);
+
     _offset = convertFrom_protocolPointF(graph.offset());
     _zoom = graph.zoom();
 

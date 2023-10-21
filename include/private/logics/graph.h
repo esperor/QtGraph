@@ -46,6 +46,9 @@ public:
     bool connectPins(IPinData in, IPinData out);
     void disconnectPins(IPinData in, IPinData out);
 
+    NodeTypeManager *getNodeTypeManager() { return _factory->getNodeTypeManager(); }
+    PinTypeManager *getPinTypeManager() { return _factory->getPinTypeManager(); }
+
     void setNodeTypeManager(NodeTypeManager *manager) { _factory->setNodeTypeManager(manager); }
     void setPinTypeManager(PinTypeManager *manager) { _factory->setPinTypeManager(manager); }
     inline void setTypeManagers(PinTypeManager *pins, NodeTypeManager *nodes)

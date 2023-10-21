@@ -28,6 +28,7 @@ void LNode::protocolize(protocol::Node *pNode) const
     pNode->set_id(_ID);
     pNode->set_is_selected(_bIsSelected);
     pNode->set_name(_name.toStdString());
+    if (_typeID) pNode->set_type(*_typeID);
     std::ranges::for_each(_pins, [pNode](LPin *pin) {
         pin->protocolize(pNode->add_pins());
     });
@@ -98,7 +99,11 @@ void LNode::removePinConnection(uint32_t pinID, uint32_t connectedPinID)
 
 void LNode::onPinDestroyed(QObject *obj)
 {
-    if (obj == nullptr) qDebug() << "Pointer to destroyed pin is nullptr";
+    if (obj == nullptr)
+    {
+        qDebug() << "Pointer to destroyed pin is nullptr";
+        return;
+    }
 
     _IDgenerator.removeTaken( ((LPin*)obj)->ID() );
 }
