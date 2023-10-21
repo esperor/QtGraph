@@ -16,7 +16,11 @@ LNode::LNode(LGraph *graph)
 {}
 
 LNode::~LNode()
-{}
+{
+    std::ranges::for_each(_pins.keys(), [&](uint32_t id){
+        _IDgenerator.removeTaken(id);
+    });
+}
 
 void LNode::protocolize(protocol::Node *pNode) const
 {
@@ -101,6 +105,7 @@ void LNode::onPinDestroyed(QObject *obj)
 
 uint32_t LNode::addPin(LPin *pin)
 {
+    pin->setParent(this);
     _pins.insert(pin->ID(), pin);
     connect(pin, &LPin::destroyed, this, &LNode::onPinDestroyed);
 

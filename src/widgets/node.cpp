@@ -46,6 +46,7 @@ WANode::~WANode()
 
 void WANode::setSelected(bool b, bool bIsMultiSelectionModifierDown)
 { 
+    _lnode->setSelected(b);
     if (b) onSelect(bIsMultiSelectionModifierDown, ID()); 
 }
 
@@ -118,6 +119,7 @@ void WANode::mousePressEvent(QMouseEvent *event)
 void WANode::mouseReleaseEvent(QMouseEvent *event)
 {
     this->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
+    _lnode->setSelected(true);
     onSelect(event->modifiers() & c_multiSelectionModifier, _lnode->ID());
 }
 

@@ -153,7 +153,6 @@ void LGraph::removeNode(uint32_t nodeID)
 {
     if (!_nodes.contains(nodeID)) return;
     LNode *ptr = _nodes[nodeID];
-    uint32_t id = ptr->ID();
     if (ptr->hasPinConnections())
     {
         const QMap<uint32_t, QVector<IPinData> > *connections = ptr->getPinConnections();
@@ -170,7 +169,8 @@ void LGraph::removeNode(uint32_t nodeID)
             });
         });
     }
-    _nodes.remove(id);
+    delete _nodes[nodeID];
+    _nodes.remove(nodeID);
 }
 
 

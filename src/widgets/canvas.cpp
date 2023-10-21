@@ -53,7 +53,9 @@ WCanvas::WCanvas(QWidget *parent)
 
     connect(_typeBrowser, &TypeBrowser::onMove, this, &WCanvas::onTypeBrowserMove);
     connect(_graph, &LGraph::onNodeRemoved, this, [this](uint32_t id){
+        delete _nodes[id];
         _nodes.remove(id);
+        onNodeRemoved(id);
     });
 
     _timer = new QTimer(this);
@@ -364,7 +366,6 @@ void WCanvas::keyPressEvent(QKeyEvent *event)
             _graph->removeNode(ptr->ID());
         });
         _selectedNodes.clear();
-        emit onNodesRemoved();
     }
 
     QWidget::keyPressEvent(event);
