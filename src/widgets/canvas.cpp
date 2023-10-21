@@ -126,7 +126,7 @@ bool WCanvas::deserialize(std::fstream *input)
 void WCanvas::visualize()
 {
     std::ranges::for_each(_graph->nodes(), [this](LNode *lnode){
-        _nodes.insert(lnode->ID(), _graph->getFactory()->makeSuitableWNode(lnode, this));
+        addNode(lnode);
     });
 }
 
@@ -328,7 +328,10 @@ LNode *WCanvas::addNode(QPoint canvasPosition, QString name)
 }
 
 LNode *WCanvas::addNode(LNode *lnode)
-{
+{   
+    if (!_graph->containsNode(lnode->ID()))
+        _graph->addNode(lnode);
+    
     uint32_t id = _nodes.insert(lnode->ID(), 
             _graph->getFactory()->makeSuitableWNode(lnode, this)
         ).key();

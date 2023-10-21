@@ -32,7 +32,7 @@ WANode::WANode(LNode *logical, WCanvas *canvas)
     this->setFixedSize(_normalSize);
 
     std::ranges::for_each(_lnode->pins(), [&, this](const auto &lpin){
-        _pins.insert(lpin->ID(), new WPin(lpin, this));
+        addPin(new WPin(lpin, this));
     });
 }
 

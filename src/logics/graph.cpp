@@ -206,6 +206,7 @@ LNode *LGraph::addNode(QPoint canvasPosition, QString name)
 
 LNode *LGraph::addNode(LNode *node)
 {
+    node->setParent(this);
     uint32_t id = node->ID();
     _nodes.insert(id, node);
     connect(_nodes[id], &LNode::destroyed, this, &LGraph::onNodeDestroyed);
