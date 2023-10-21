@@ -4,7 +4,7 @@ package protocol;
 
 import "type/color.proto";
 
-enum PinDirection {
+enum EPinDirection {
     DIRECTION_UNSPECIFIED = 0;
     IN = 1;
     OUT = 2;
@@ -14,6 +14,6 @@ message Pin {
     uint32 id = 1;
     type.Color color = 2;
     string text = 3;
-    PinDirection direction = 4;
+    EPinDirection direction = 4;
     optional int32 type = 5;
 }

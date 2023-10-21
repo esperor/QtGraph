@@ -1,27 +1,27 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "QtGraph/constants.h"
-#include "QtGraph/TypeManagers/nodetypemanager.h"
-#include "QtGraph/TypeManagers/pintypemanager.h"
-#include "QtGraph/utility.h"
+#include "private/utilities/constants.h"
+#include <QtGraph/TypeManagers>
+#include "private/utilities/utility.h"
 
 #include <fstream>
 #include <iostream>
 
 #include <QFileDialog>
 #include <QJsonDocument>
+#include <QApplication>
 
-// #include "QtGraph/TypeManagers/moc_typemanager.cpp"
+// #include "logics/moc_typemanager.cpp"
 
-using namespace GraphLib;
+using namespace qtgraph;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui{new Ui::MainWindow}
 {
     ui->setupUi(this);
 
-    _canvas = new Canvas(this);
+    _canvas = new WCanvas(this);
     setCentralWidget(_canvas);
 
     _menuFile = new QMenu("Menu", this);
@@ -51,7 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     _snapping = new QAction("Toggle snapping", this);
     _menuOptions->addAction(_snapping);
-    connect(_snapping, &QAction::triggered, _canvas, &Canvas::toggleSnapping);
+    connect(_snapping, &QAction::triggered, _canvas, &WCanvas::toggleSnapping);
 
     _menuBar->addMenu(_menuOptions);
 
@@ -91,16 +91,18 @@ void MainWindow::openTypes()
     dialog.setNameFilter("Json file (*.json)");
     dialog.setDirectory(QCoreApplication::applicationDirPath());
 
-    QString fileName;
+    QString fileName = "";
     if (dialog.exec())
         fileName = dialog.selectedFiles()[0];
+    else return;
+
+    if (fileName.isEmpty()) return;
 
     NodeTypeManager *nodeManager = new NodeTypeManager();
     PinTypeManager *pinManager = new PinTypeManager();
     nodeManager->readTypes(fileName);
     pinManager->readTypes(fileName);
-    _canvas->setNodeTypeManager(nodeManager);
-    _canvas->setPinTypeManager(pinManager);
+    _canvas->setTypeManagers(pinManager, nodeManager);
 }
 
 std::string MainWindow::getFileName(QFileDialog::FileMode mode)

@@ -22,15 +22,9 @@ enable_testing()
 
 qt_add_executable(tests 
     main.cpp
-    tst_maincase.cpp    
+    tst_main.cpp
+    tst_protobuf.cpp    
 )
-
-set_property(TARGET tests PROPERTY
-    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-set_property(TARGET gtest_main PROPERTY
-    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-set_property(TARGET gtest PROPERTY
-    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 target_link_libraries(tests PRIVATE
     gtest_main

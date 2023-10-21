@@ -17,7 +17,7 @@ set(CMAKE_AUTOMOC ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-find_package(Qt6 6.6.0 REQUIRED COMPONENTS Core Gui Widgets Protobuf ProtobufTools)
+find_package(Qt6 6.6.0 REQUIRED COMPONENTS Core Gui Widgets)
 find_package(protobuf REQUIRED CONFIG)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -29,7 +29,6 @@ add_subdirectory(src)
 
 option(BUILD_TESTS "" ON)
 option(BUILD_EXAMPLE "" ON)
-option(CREATE_DLL "" OFF)
 
 if (BUILD_EXAMPLE)
     message(STATUS "Configuring example...")

@@ -1,0 +1,3 @@
+#include "../private/logics/typemanager.h"
+#include "../private/logics/nodetypemanager.h"
+#include "../private/logics/pintypemanager.h"

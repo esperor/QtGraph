@@ -9,14 +9,11 @@ add_library(protos OBJECT
     type/color.proto
     type/point.proto
     typemanager.proto
-    data.proto
+    graph.proto
     structure.proto
 )
 
 set(PROTO_BINARY_DIR ${CMAKE_SOURCE_DIR}/protos_generated)
-
-set_property(TARGET protos PROPERTY
-    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 target_link_libraries(protos PUBLIC protobuf::libprotobuf)
 

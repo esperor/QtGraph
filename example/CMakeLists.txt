@@ -1,15 +1,14 @@
 project(QtGraph)
 
 set(SOURCES main.cpp mainwindow.cpp)
+set(HEADERS mainwindow.h)
 
 qt_wrap_ui(SOURCES mainwindow.ui)
 
 qt_add_executable(QtGraphExample
     ${SOURCES}
+    ${HEADERS}
 )
-
-set_property(TARGET QtGraphExample PROPERTY
-    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 target_link_libraries(QtGraphExample PRIVATE
     QtGraph
