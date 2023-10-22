@@ -32,7 +32,7 @@ protected:
         IPinData pin1_data = node1->pin(pin1_id).value()->getData();
         IPinData pin2_data = node2->pin(pin2_id).value()->getData();
         ASSERT_TRUE(graph->connectPins(pin1_data, pin2_data)) << "Couldn't add connection";
-        structure = graph->getStructure();
+        structure = graph->getConnections();
         file = "test_protocolization.graph";
     }
 
@@ -44,7 +44,7 @@ protected:
     LGraph *graph;
     std::string file;
     uint32_t node1_id, node2_id, pin1_id, pin2_id;
-    protocol::Structure structure;
+    QMultiMap<IPinData, IPinData> structure;
 };
 
 TEST_F(Protocolization, PinDirectionCompatibility)
@@ -84,12 +84,11 @@ TEST_F(Protocolization, PinsData)
 
 TEST_F(Protocolization, StructureData)
 {
-    auto deserializedStructure = graph->getStructure().mutable_edges();
-    auto initialStructure = structure.mutable_edges();
-    ASSERT_EQ(deserializedStructure->size(), initialStructure->size());
+    const auto &deserialized = graph->getConnections();
 
-    for (int i = 0; i < deserializedStructure->size(); i++)
-    {
-        EXPECT_TRUE(MessageDifferencer::Equals(deserializedStructure->at(i), initialStructure->at(i)));
-    }
+    ASSERT_EQ(deserialized.size(), structure.size());
+    
+    std::ranges::for_each(deserialized.asKeyValueRange(), [&](std::pair<const IPinData&, const IPinData&> pair){
+        EXPECT_TRUE(structure.contains(pair.first, pair.second));
+    });
 }
