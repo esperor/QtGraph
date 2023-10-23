@@ -18,44 +18,14 @@ using namespace qtgraph;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui{new Ui::MainWindow}
+    , _fps{ 60 }
 {
     ui->setupUi(this);
 
+    initMenuBar();
+
     _canvas = new WCanvas(this);
     setCentralWidget(_canvas);
-
-    _menuFile = new QMenu("Menu", this);
-
-    _save = new QAction("Save", this);
-    _menuFile->addAction(_save);
-    connect(_save, &QAction::triggered, this, &MainWindow::save);
-
-    _saveAs = new QAction("Save as", this);
-    _menuFile->addAction(_saveAs);
-    connect(_saveAs, &QAction::triggered, this, &MainWindow::save_as);
-
-    _open = new QAction("Open saved", this);
-    _menuFile->addAction(_open);
-    connect(_open, &QAction::triggered, this, &MainWindow::open);
-
-    _menuFile->addSeparator();
-
-    _openTypes = new QAction("Load types json", this);
-    _menuFile->addAction(_openTypes);
-    connect(_openTypes, &QAction::triggered, this, &MainWindow::openTypes);
-
-    _menuBar = new QMenuBar(this);
-    _menuBar->addMenu(_menuFile);
-
-    _menuOptions = new QMenu("Options", this);
-
-    _snapping = new QAction("Toggle snapping", this);
-    _menuOptions->addAction(_snapping);
-    connect(_snapping, &QAction::triggered, _canvas, &WCanvas::toggleSnapping);
-
-    _menuBar->addMenu(_menuOptions);
-
-    this->setMenuBar(_menuBar);
 
     QPalette palette(c_paletteDefaultColor);
     palette.setColor(QPalette::ColorRole::Window, c_paletteDefaultColor);
@@ -66,7 +36,7 @@ MainWindow::MainWindow(QWidget *parent)
     _timer = new QTimer(this);
     connect(_timer, &QTimer::timeout, this, [&]()
             { _canvas->update(); });
-    _timer->start(10);
+    _timer->start(1000 / _fps);
 }
 
 MainWindow::~MainWindow()
@@ -122,7 +92,7 @@ std::string MainWindow::getFileName(QFileDialog::FileMode mode)
 
 void MainWindow::save()
 {
-    std::string file = _associatedFileName.empty() ? getFileName(QFileDialog::AnyFile) : _associatedFileName;
+    std::string file = _associatedFileName ? *_associatedFileName : getFileName(QFileDialog::AnyFile);
     internal_save(file);
     _associatedFileName = file;  
 }
@@ -131,7 +101,7 @@ void MainWindow::save_as()
 {
     std::string file = getFileName(QFileDialog::AnyFile);
     internal_save(file);
-    if (_associatedFileName.empty())
+    if (_associatedFileName)
         _associatedFileName = file;
 }
 
@@ -177,4 +147,64 @@ void MainWindow::open()
 
     _associatedFileName = file;
     in.close();
+}
+
+void MainWindow::close()
+{
+    clear();
+    _associatedFileName = {};
+}
+
+void MainWindow::clear()
+{
+    _canvas->clear();
+}
+
+void MainWindow::initMenuBar()
+{
+    _menuFile = new QMenu("Menu", this);
+
+    _open = new QAction("Open saved", this);
+    _open->setShortcut(QKeySequence::Open);
+    _menuFile->addAction(_open);
+    connect(_open, &QAction::triggered, this, &MainWindow::open);
+
+    _save = new QAction("Save", this);
+    _save->setShortcut(QKeySequence::Save);
+    _menuFile->addAction(_save);
+    connect(_save, &QAction::triggered, this, &MainWindow::save);
+
+    _saveAs = new QAction("Save as", this);
+    _saveAs->setShortcut(QKeySequence::SaveAs);
+    _menuFile->addAction(_saveAs);
+    connect(_saveAs, &QAction::triggered, this, &MainWindow::save_as);
+
+    _close = new QAction("Close file", this);
+    _close->setShortcut(QKeySequence::Close);
+    _close->setToolTip("Clears related file and canvas. Doesn't save the file.");
+    _menuFile->addAction(_close);
+    connect(_close, &QAction::triggered, this, &MainWindow::close);
+
+    _menuFile->addSeparator();
+
+    _openTypes = new QAction("Load types json", this);
+    _menuFile->addAction(_openTypes);
+    connect(_openTypes, &QAction::triggered, this, &MainWindow::openTypes);
+
+    _menuBar = new QMenuBar(this);
+    _menuBar->addMenu(_menuFile);
+
+    _menuOptions = new QMenu("Options", this);
+
+    _snapping = new QAction("Toggle snapping", this);
+    _menuOptions->addAction(_snapping);
+    connect(_snapping, &QAction::triggered, _canvas, &WCanvas::toggleSnapping);
+
+    _clear = new QAction("Clear canvas", this);
+    _menuOptions->addAction(_clear);
+    connect(_clear, &QAction::triggered, this, &MainWindow::clear);
+
+    _menuBar->addMenu(_menuOptions);
+
+    this->setMenuBar(_menuBar);
 }

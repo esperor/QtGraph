@@ -51,6 +51,7 @@ public:
     void setSnappingEnabled(bool enabled) { _bIsSnappingEnabled = enabled; }
     void toggleSnapping() { _bIsSnappingEnabled = !_bIsSnappingEnabled; }
     void setSnappingInterval(int num) { _snappingInterval = num; }
+    void clear();
     inline void moveView(QVector2D vector) { moveCanvas(QPointF(-vector.x(), -vector.y())); }
     inline void moveViewUp(float by) { moveCanvas(QPointF(0, by)); }
     inline void moveViewDown(float by) { moveCanvas(QPointF(0, -by)); }
@@ -97,6 +98,7 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
+    void onLNodeRemoved(uint32_t id);
     void onNodeSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID);
     void onPinDrag(IPinDragSignal signal);
     void onPinConnect(IPinData outPin, IPinData inPin);

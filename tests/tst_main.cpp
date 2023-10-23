@@ -42,7 +42,7 @@ protected:
 
 
 
-TEST(PinData, ByteArrayConversions)
+TEST(IPinData, ByteArrayConversions)
 {
     IPinData first(EPinDirection::In, 5, 6);
     QByteArray arr = first.toByteArray();
@@ -55,7 +55,7 @@ TEST(PinData, ByteArrayConversions)
     EXPECT_EQ(first, second);
 }
 
-TEST(NodeSpawnData, ByteArrayConversions)
+TEST(INodeSpawnData, ByteArrayConversions)
 {
     QString str("Text");
     INodeSpawnData first(str);
@@ -69,7 +69,7 @@ TEST(NodeSpawnData, ByteArrayConversions)
     EXPECT_EQ(third, fourth);
 }
 
-TEST(Utility, Snapping)
+TEST(Utilities, Snapping)
 {
     auto pointToString = [](QPoint point) {
         return std::to_string(point.x()) + ", " + std::to_string(point.y());
@@ -95,42 +95,7 @@ TEST(Utility, Snapping)
     });
 }
 
-TEST(Utility, IDGeneration)
-{
-    IDGenerator gen;
-    EXPECT_EQ(0, gen.generate());
-    EXPECT_EQ(1, gen.generate());
-    EXPECT_EQ(2, gen.generate());
-    gen.removeTaken(1);
-    EXPECT_EQ(1, gen.generate());
-    EXPECT_EQ(3, gen.generate());
-    gen = IDGenerator(std::set({ 0U, 1U, 2U, 3U, 4U, 5U, 6U }));
-    EXPECT_EQ(7, gen.generate());
-    gen.removeTaken(4);
-    EXPECT_EQ(4, gen.generate());
-    gen.removeTaken(0);
-    EXPECT_EQ(0, gen.generate());
-}
-
-TEST_F(TypeManagers, JsonParsing)
-{
-    int node_types = 6;
-    int pin_types = 5;
-
-    EXPECT_EQ(node_types, _NodeTypeManager.Types().size()) << "Expected " << node_types << " and got " << _NodeTypeManager.Types().size() << " node types.";
-    EXPECT_EQ(pin_types, _PinTypeManager.Types().size()) << "Expected " << pin_types << " and got " << _PinTypeManager.Types().size() << " pin types.";
-}
-
-TEST_F(TypeManagers, Properties)
-{
-    EXPECT_EQ("power", _PinTypeManager.Types().at(0).value("name").toString());
-    EXPECT_EQ(0, _PinTypeManager.TypeNames()["power"]);
-
-    EXPECT_EQ("Socket", _NodeTypeManager.Types().at(0).value("name").toString());
-    EXPECT_EQ(0, _NodeTypeManager.TypeNames()["Socket"]);
-}
-
-TEST(NodeFactory, ParseToColor)
+TEST(Utilities, ParseToColor)
 {
     auto check = [](QString str, int r, int g, int b) {
         QColor clr = parseToColor(str);
@@ -150,3 +115,37 @@ TEST(NodeFactory, ParseToColor)
     check(str3, 0xFF, 0xFF, 0xFF);
 }
 
+TEST(IDGenerator, General)
+{
+    IDGenerator gen;
+    EXPECT_EQ(0, gen.generate());
+    EXPECT_EQ(1, gen.generate());
+    EXPECT_EQ(2, gen.generate());
+    gen.removeTaken(1);
+    EXPECT_EQ(1, gen.generate());
+    EXPECT_EQ(3, gen.generate());
+    gen = IDGenerator(std::set({ 0U, 1U, 2U, 3U, 4U, 5U, 6U }));
+    EXPECT_EQ(7, gen.generate());
+    gen.removeTaken(4);
+    EXPECT_EQ(4, gen.generate());
+    gen.removeTaken(0);
+    EXPECT_EQ(0, gen.generate());
+}
+
+TEST_F(TypeManagers, ParseJSON)
+{
+    int node_types = 6;
+    int pin_types = 5;
+
+    EXPECT_EQ(node_types, _NodeTypeManager.Types().size()) << "Expected " << node_types << " and got " << _NodeTypeManager.Types().size() << " node types.";
+    EXPECT_EQ(pin_types, _PinTypeManager.Types().size()) << "Expected " << pin_types << " and got " << _PinTypeManager.Types().size() << " pin types.";
+}
+
+TEST_F(TypeManagers, Properties)
+{
+    EXPECT_EQ("power", _PinTypeManager.Types().at(0).value("name").toString());
+    EXPECT_EQ(0, _PinTypeManager.TypeNames()["power"]);
+
+    EXPECT_EQ("Socket", _NodeTypeManager.Types().at(0).value("name").toString());
+    EXPECT_EQ(0, _NodeTypeManager.TypeNames()["Socket"]);
+}
