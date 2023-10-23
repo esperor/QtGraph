@@ -97,6 +97,7 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
+    void onLNodeRemoved(uint32_t id);
     void onNodeSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID);
     void onPinDrag(IPinDragSignal signal);
     void onPinConnect(IPinData outPin, IPinData inPin);
