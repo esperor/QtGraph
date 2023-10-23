@@ -51,6 +51,7 @@ public:
     void setSnappingEnabled(bool enabled) { _bIsSnappingEnabled = enabled; }
     void toggleSnapping() { _bIsSnappingEnabled = !_bIsSnappingEnabled; }
     void setSnappingInterval(int num) { _snappingInterval = num; }
+    void clear();
     inline void moveView(QVector2D vector) { moveCanvas(QPointF(-vector.x(), -vector.y())); }
     inline void moveViewUp(float by) { moveCanvas(QPointF(0, by)); }
     inline void moveViewDown(float by) { moveCanvas(QPointF(0, -by)); }

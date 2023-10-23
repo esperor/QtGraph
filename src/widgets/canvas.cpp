@@ -138,6 +138,12 @@ void WCanvas::visualize()
 // ---------------------- GENERAL FUNCTIONS ---------------------------
 
 
+void WCanvas::clear()
+{ 
+    getGraph()->clear(); 
+    _offset = QPointF(0, 0);
+}
+
 void WCanvas::moveCanvasOnPinDragNearEdge(QPointF mousePosition)
 {
     auto lerp = [&](float actual, float max) {
@@ -362,7 +368,7 @@ void WCanvas::onLNodeRemoved(uint32_t id)
     _nodes.remove(id);
     if (_selectedNodes.contains(id)) 
         _selectedNodes.remove(id);
-        
+
     delete ptr;
     onNodeRemoved(id);
 }

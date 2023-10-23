@@ -43,6 +43,7 @@ public:
     const QMultiMap<IPinData, IPinData> &getConnections() const { return _connectedPins; }
 
     void removeNode(uint32_t nodeID);
+    void clear();
     bool connectPins(IPinData in, IPinData out);
     void disconnectPins(IPinData in, IPinData out);
 
