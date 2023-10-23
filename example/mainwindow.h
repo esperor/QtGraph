@@ -31,15 +31,21 @@ private:
     void save_as();
     void internal_save(std::string file);
     void open();
+    void close();
+    void clear();
     std::string getFileName(QFileDialog::FileMode mode);
 
-    std::string _associatedFileName = "";
+    void initMenuBar();
+
+    std::optional<std::string> _associatedFileName = {};
+
+    int _fps;
 
     Ui::MainWindow *ui;
     qtgraph::WCanvas *_canvas;
     QTimer *_timer;
 
-    QAction *_openTypes, *_save, *_saveAs, *_open, *_snapping;
+    QAction *_openTypes, *_save, *_saveAs, *_open, *_close, *_snapping, *_clear;
     QMenu *_menuFile, *_menuOptions;
     QMenuBar *_menuBar;
 };

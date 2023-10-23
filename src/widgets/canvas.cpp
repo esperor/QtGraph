@@ -52,11 +52,7 @@ WCanvas::WCanvas(QWidget *parent)
     _typeBrowser->show();
 
     connect(_typeBrowser, &TypeBrowser::onMove, this, &WCanvas::onTypeBrowserMove);
-    connect(_graph, &LGraph::onNodeRemoved, this, [this](uint32_t id){
-        delete _nodes[id];
-        _nodes.remove(id);
-        onNodeRemoved(id);
-    });
+    connect(_graph, &LGraph::onNodeRemoved, this, &WCanvas::onLNodeRemoved);
 
     _timer = new QTimer(this);
     connect(_timer, &QTimer::timeout, this, &WCanvas::tick);
@@ -107,6 +103,9 @@ bool WCanvas::serialize(std::fstream *output) const
 bool WCanvas::deserialize(std::fstream *input)
 {
     setUpdatesEnabled(false);
+
+    clear();
+
     protocol::Graph graph;
     graph.ParseFromIstream(input);
 
@@ -141,6 +140,12 @@ void WCanvas::visualize()
 
 // ---------------------- GENERAL FUNCTIONS ---------------------------
 
+
+void WCanvas::clear()
+{ 
+    getGraph()->clear(); 
+    _offset = QPointF(0, 0);
+}
 
 void WCanvas::moveCanvasOnPinDragNearEdge(QPointF mousePosition)
 {
@@ -360,6 +365,17 @@ LNode *WCanvas::addNode(QPoint canvasPosition, int typeID)
     return addNode(node);
 }
 
+void WCanvas::onLNodeRemoved(uint32_t id)
+{
+    WANode *ptr = _nodes[id];
+    _nodes.remove(id);
+    if (_selectedNodes.contains(id)) 
+        _selectedNodes.remove(id);
+
+    delete ptr;
+    onNodeRemoved(id);
+}
+
 
 // --------------------------- EVENTS ----------------------------------
 
@@ -367,12 +383,9 @@ LNode *WCanvas::addNode(QPoint canvasPosition, int typeID)
 void WCanvas::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Delete && !_selectedNodes.isEmpty())
-    {
         std::ranges::for_each(_selectedNodes, [&](WANode *ptr){ 
             _graph->removeNode(ptr->ID());
         });
-        _selectedNodes.clear();
-    }
 
     QWidget::keyPressEvent(event);
 }

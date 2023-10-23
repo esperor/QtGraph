@@ -52,6 +52,8 @@ bool LGraph::deserialize(std::fstream *input)
 
 bool LGraph::deprotocolize(protocol::Graph &graph)
 {
+    clear();
+
     protocol::State state = graph.state();
     if (state.has_node_type_manager())
         setNodeTypeManager(NodeTypeManager::fromProtocolTypeManager(state.node_type_manager()));
@@ -140,6 +142,15 @@ bool LGraph::readStructure(const protocol::Structure &structure)
 // ---------------------- GENERAL FUNCTIONS ---------------------------
 
 
+void LGraph::clear()
+{
+    std::ranges::for_each(_nodes, [](LNode *node){
+        delete node;
+    });
+    _nodes.clear();
+    _connectedPins.clear();
+}
+
 QString LGraph::getPinText(uint32_t nodeID, uint32_t pinID) const
 {
     return _nodes[nodeID]->pin(pinID).value()->getText();
@@ -169,7 +180,7 @@ void LGraph::removeNode(uint32_t nodeID)
             });
         });
     }
-    delete _nodes[nodeID];
+    delete ptr;
     _nodes.remove(nodeID);
 }
 
