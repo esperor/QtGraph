@@ -52,7 +52,7 @@ bool LGraph::deserialize(std::fstream *input)
 
 bool LGraph::deprotocolize(protocol::Graph &graph)
 {
-
+    clear();
 
     protocol::State state = graph.state();
     if (state.has_node_type_manager())

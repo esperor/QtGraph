@@ -103,6 +103,9 @@ bool WCanvas::serialize(std::fstream *output) const
 bool WCanvas::deserialize(std::fstream *input)
 {
     setUpdatesEnabled(false);
+
+    clear();
+
     protocol::Graph graph;
     graph.ParseFromIstream(input);
 

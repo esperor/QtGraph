@@ -87,6 +87,11 @@ void TypeBrowser::clear()
         child = _layout->takeAt(0);
         delete child;
     }
+    
+    std::ranges::for_each(_nodeImages, [&](TypedNodeImage *img){
+        delete img;
+    });
+    _nodeImages.clear();
 
     _layout->addSpacing(c_typeBrowserSpacing);
 }
