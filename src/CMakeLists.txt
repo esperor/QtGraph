@@ -5,6 +5,7 @@ add_subdirectory(proto)
 set(SOURCES
     helpers/nodefactory.cpp
     helpers/idgenerator.cpp
+    helpers/focuswatcher.cpp
 
     logics/nodetypemanager.cpp
     logics/typemanager.cpp
