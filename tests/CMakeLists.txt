@@ -1,5 +1,7 @@
 project(QtGraph)
 
+find_package(Qt6 REQUIRED COMPONENTS Test)
+
 include(FetchContent)
 
 FetchContent_Declare(
@@ -24,11 +26,13 @@ qt_add_executable(tests
     main.cpp
     tst_main.cpp
     tst_protobuf.cpp    
+    tst_graph.cpp
 )
 
 target_link_libraries(tests PRIVATE
     gtest_main
     QtGraph
+    Qt6::Test
 )
 
 target_include_directories(tests 
