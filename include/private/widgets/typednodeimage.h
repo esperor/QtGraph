@@ -8,16 +8,16 @@
 
 namespace qtgraph {
 
-class TypedNodeImage : public QWidget
+class WTypedNodeImage : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit TypedNodeImage(QWidget *parent = nullptr);
-    TypedNodeImage(QString type, QWidget *parent = nullptr);
-    ~TypedNodeImage();
+    explicit WTypedNodeImage(QWidget *parent = nullptr);
+    WTypedNodeImage(QString type, QWidget *parent = nullptr);
+    ~WTypedNodeImage();
 
-    ITypedNodeSpawnData getData() const;
+    INodeSpawnData getData() const;
     QSize getDesiredSize() const;
     void initType() { typeID = TypeManager->TypeNames()[typeName]; }
 

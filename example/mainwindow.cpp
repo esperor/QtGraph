@@ -22,10 +22,10 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    initMenuBar();
-
     _canvas = new WCanvas(this);
     setCentralWidget(_canvas);
+
+    initMenuBar();
 
     QPalette palette(c_paletteDefaultColor);
     palette.setColor(QPalette::ColorRole::Window, c_paletteDefaultColor);
@@ -198,11 +198,25 @@ void MainWindow::initMenuBar()
 
     _snapping = new QAction("Toggle snapping", this);
     _menuOptions->addAction(_snapping);
-    connect(_snapping, &QAction::triggered, _canvas, &WCanvas::toggleSnapping);
+    _snapping->setCheckable(true);
+    _snapping->setChecked(_canvas->getSnappingEnabled());
+    connect(_snapping, &QAction::triggered, this, [this](bool checked){
+        _canvas->setSnappingEnabled(checked); 
+    });
 
     _clear = new QAction("Clear canvas", this);
     _menuOptions->addAction(_clear);
     connect(_clear, &QAction::triggered, this, &MainWindow::clear);
+
+    _menuOptions->addSeparator();
+
+    _telemetrics = new QAction("Enable telemetrics", this);
+    _telemetrics->setCheckable(true);
+    _telemetrics->setChecked(_canvas->getTelemetricsEnabled());
+    _menuOptions->addAction(_telemetrics);
+    connect(_telemetrics, &QAction::triggered, this, [this](bool checked){ 
+        _canvas->setTelemetricsEnabled(checked); 
+    });
 
     _menuBar->addMenu(_menuOptions);
 

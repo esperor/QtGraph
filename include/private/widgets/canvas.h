@@ -40,6 +40,7 @@ public:
     bool deserialize(std::fstream *input);
 
     float getZoomMultiplier() const     { return _zoomMultipliers[_zoom]; }
+    bool getTelemetricsEnabled() const  { return _bTelemetricsEnabled; }
     bool getSnappingEnabled() const     { return _bIsSnappingEnabled; }
     int getSnappingInterval() const     { return _snappingInterval; }
     const QPointF &getOffset() const    { return _offset; }
@@ -48,7 +49,8 @@ public:
 
     // Visualizes attached graph. Performance-heavy, don't call in cycle
     void visualize();
-    void setSnappingEnabled(bool enabled) { _bIsSnappingEnabled = enabled; }
+    void setSnappingEnabled(bool enabled = true) { _bIsSnappingEnabled = enabled; }
+    void setTelemetricsEnabled(bool enabled = true) { _bTelemetricsEnabled = enabled; }
     void toggleSnapping() { _bIsSnappingEnabled = !_bIsSnappingEnabled; }
     void setSnappingInterval(int num) { _snappingInterval = num; }
     void clear();
@@ -130,11 +132,12 @@ private:
 
     int _snappingInterval;
     bool _bIsSnappingEnabled;
+    bool _bTelemetricsEnabled;
     std::optional<QRect> _selectionRect;
     QSet<uint32_t> _selectionAreaPreviousNodes;
 
     QTimer *_timer;
-    TypeBrowser *_typeBrowser;
+    WTypeBrowser *_typeBrowser;
     // uint32_t represents node's id 
     QMap<uint32_t, WANode*> _selectedNodes;
     // uint32_t represents node's id

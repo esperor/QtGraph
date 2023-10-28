@@ -19,6 +19,13 @@
 
 #include "widgets/moc_canvas.cpp"
 
+// this is not really a good practice
+#ifdef NDEBUG
+#define DEBUG false
+#else
+#define DEBUG true
+#endif
+
 namespace qtgraph {
 
 WCanvas::WCanvas(QWidget *parent)
@@ -36,9 +43,10 @@ WCanvas::WCanvas(QWidget *parent)
     , _lastResizedSize{ nullptr }
     , _snappingInterval{ 20 }
     , _bIsSnappingEnabled{ true }
+    , _bTelemetricsEnabled{ DEBUG }
     , _selectionRect{ std::nullopt }
     , _selectionAreaPreviousNodes{ QSet<uint32_t>() }
-    , _typeBrowser{ new TypeBrowser(this) }
+    , _typeBrowser{ new WTypeBrowser(this) }
     , _selectedNodes{ QMap<uint32_t, WANode*>() }
 {
     setMouseTracking(true);
@@ -51,7 +59,7 @@ WCanvas::WCanvas(QWidget *parent)
 
     _typeBrowser->show();
 
-    connect(_typeBrowser, &TypeBrowser::onMove, this, &WCanvas::onTypeBrowserMove);
+    connect(_typeBrowser, &WTypeBrowser::onMove, this, &WCanvas::onTypeBrowserMove);
     connect(_graph, &LGraph::onNodeRemoved, this, &WCanvas::onLNodeRemoved);
 
     _timer = new QTimer(this);
@@ -383,8 +391,8 @@ void WCanvas::onLNodeRemoved(uint32_t id)
 void WCanvas::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Delete && !_selectedNodes.isEmpty())
-        std::ranges::for_each(_selectedNodes, [&](WANode *ptr){ 
-            _graph->removeNode(ptr->ID());
+        std::ranges::for_each(_selectedNodes.keys(), [&](uint32_t id) {
+            _graph->removeNode(id);
         });
 
     QWidget::keyPressEvent(event);
@@ -530,9 +538,12 @@ void WCanvas::dropEvent(QDropEvent *event)
         event->setDropAction(Qt::CopyAction);
         event->acceptProposedAction();
         QByteArray byteArray = event->mimeData()->data(c_mimeFormatForNodeFactory);
-        ITypedNodeSpawnData data = ITypedNodeSpawnData::fromByteArray(byteArray);
+        INodeSpawnData data = INodeSpawnData::fromByteArray(byteArray);
 
-        addNode(mapToCanvas(event->position().toPoint()), data.typeID);
+        if (data.typeID)
+            addNode(mapToCanvas(event->position()).toPoint(), *data.typeID);
+        else  
+            addNode(mapToCanvas(event->position()).toPoint(), data.name);
     }
 }
 
@@ -701,7 +712,7 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
 
 
     // telemetrics 
-    {
+    if (_bTelemetricsEnabled) {
         pen.setColor(c_dotsColor);
         painter->setPen(pen);
 

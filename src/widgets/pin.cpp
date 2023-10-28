@@ -25,6 +25,8 @@ WPin::WPin(LPin *lpin, WANode *parent)
     , _painter{ new QPainter(this) }
 {
     setAcceptDrops(true);
+
+    connect(this, &WPin::onConnect, this, [this](){ _fakeConnected = false; });
 }
 
 WPin::~WPin() { delete _painter; }

@@ -80,7 +80,7 @@ const int c_typeBrowserSpacing = 40;
 const QString c_typeBrowserArrowUp = "˄";
 const QString c_typeBrowserArrowDown = "˅";
 const int c_typeBrowserMinimalWidth = 120;
-
+const QString c_customNodeTypeName = "Custom";
 
 
 // ------- COLORS ---------
