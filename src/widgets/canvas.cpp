@@ -19,6 +19,13 @@
 
 #include "widgets/moc_canvas.cpp"
 
+// this is not really a good practice
+#ifdef NDEBUG
+#define DEBUG false
+#else
+#define DEBUG true
+#endif
+
 namespace qtgraph {
 
 WCanvas::WCanvas(QWidget *parent)
@@ -36,6 +43,7 @@ WCanvas::WCanvas(QWidget *parent)
     , _lastResizedSize{ nullptr }
     , _snappingInterval{ 20 }
     , _bIsSnappingEnabled{ true }
+    , _bTelemetricsEnabled{ DEBUG }
     , _selectionRect{ std::nullopt }
     , _selectionAreaPreviousNodes{ QSet<uint32_t>() }
     , _typeBrowser{ new WTypeBrowser(this) }
@@ -704,7 +712,7 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
 
 
     // telemetrics 
-    {
+    if (_bTelemetricsEnabled) {
         pen.setColor(c_dotsColor);
         painter->setPen(pen);
 
