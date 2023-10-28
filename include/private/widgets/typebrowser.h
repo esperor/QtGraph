@@ -13,16 +13,17 @@
 #include "logics/pintypemanager.h"
 #include "widgets/typednodeimage.h"
 #include "widgets/nfbuttonminimize.h"
+#include "widgets/nodeimage.h"
 
 namespace qtgraph {
 
-class TypeBrowser : public QWidget
+class WTypeBrowser : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit TypeBrowser(QWidget *parent = nullptr);
-    ~TypeBrowser();
+    explicit WTypeBrowser(QWidget *parent = nullptr);
+    ~WTypeBrowser();
 
     QSize getDesiredSize() const;
     const QPointF &getPosition() const { return _position; }
@@ -52,6 +53,7 @@ protected:
 
 private:
     void paint(QPainter *painter, QPaintEvent *event);
+    WNodeImage *createDefaultImage() { return new WNodeImage(this); }
 
 signals:
     void onMove(QVector2D offset);
@@ -67,7 +69,9 @@ private:
     QWidget *_layoutHolder;
     QBoxLayout *_layout;
     NFButtonMinimize *_btnMinimize;
-    QVector<TypedNodeImage*> _nodeImages;
+    QVector<WTypedNodeImage*> _nodeImages;
+    
+
 };
 
 }

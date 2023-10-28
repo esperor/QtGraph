@@ -25,6 +25,7 @@ set(SOURCES
     widgets/typednodeimage.cpp
     widgets/typednode.cpp
     widgets/customnode.cpp
+    widgets/nodeimage.cpp
     
     utilities/utility.cpp
 )

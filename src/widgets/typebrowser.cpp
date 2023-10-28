@@ -12,7 +12,7 @@
 
 namespace qtgraph {
 
-TypeBrowser::TypeBrowser(QWidget *parent)
+WTypeBrowser::WTypeBrowser(QWidget *parent)
     : QWidget{ parent }
     , _painter{ new QPainter(this) }
     , _gap{ 20 }
@@ -23,7 +23,7 @@ TypeBrowser::TypeBrowser(QWidget *parent)
     , _layoutHolder{ new QWidget(this) }
     , _layout{ new QBoxLayout(QBoxLayout::TopToBottom, _layoutHolder) }
     , _btnMinimize{ new NFButtonMinimize(this) }
-    , _nodeImages{ QVector<TypedNodeImage*>() }
+    , _nodeImages{ QVector<WTypedNodeImage*>() }
 {
     setMouseTracking(true);
     _layoutHolder->setLayout(_layout);
@@ -31,13 +31,15 @@ TypeBrowser::TypeBrowser(QWidget *parent)
     _btnMinimize->text = c_typeBrowserArrowUp;
     _btnMinimize->color = c_highlightColor;
 
-    connect(_btnMinimize, &NFButtonMinimize::onClick, this, &TypeBrowser::onButtonMinimizeClick);
+    clear();
+
+    connect(_btnMinimize, &NFButtonMinimize::onClick, this, &WTypeBrowser::onButtonMinimizeClick);
 }
 
-TypeBrowser::~TypeBrowser()
+WTypeBrowser::~WTypeBrowser()
 { delete _painter; }
 
-void TypeBrowser::onButtonMinimizeClick()
+void WTypeBrowser::onButtonMinimizeClick()
 {
     _bIsMinimized = !_bIsMinimized;
     _btnMinimize->text = _bIsMinimized ? c_typeBrowserArrowDown : c_typeBrowserArrowUp;
@@ -47,7 +49,7 @@ void TypeBrowser::onButtonMinimizeClick()
         _layoutHolder->show();
 }
 
-QSize TypeBrowser::getDesiredSize() const
+QSize WTypeBrowser::getDesiredSize() const
 {
     if (_bIsMinimized)
         return QSize(c_typeBrowserMinimalWidth, c_typeBrowserSpacing * 1.5f);
@@ -55,11 +57,15 @@ QSize TypeBrowser::getDesiredSize() const
     QSize out;
     int maxMetric = 0;
 
-    int maxImgWidth = 0, maxImgHeight = 0;
-    std::ranges::for_each(_nodeImages, [&](TypedNodeImage *ptr){
+    int maxImgWidth = c_typeBrowserMinimalWidth;
+    int maxImgHeight = 0;
+    int sumImgWidth = 0, sumImgHeight = 0;
+    std::ranges::for_each(_nodeImages, [&](WTypedNodeImage *ptr){
         QSize imgSize = ptr->getDesiredSize();
         maxImgWidth = std::max(maxImgWidth, imgSize.width());
         maxImgHeight = std::max(maxImgHeight, imgSize.height());
+        sumImgWidth += imgSize.width();
+        sumImgHeight += imgSize.height();
     });
 
     if (_layout->direction() == QBoxLayout::LeftToRight ||
@@ -71,15 +77,14 @@ QSize TypeBrowser::getDesiredSize() const
     }
     else
     {
-        maxMetric += _nodeImages.size() * (maxImgHeight + _gap);
-        out = QSize( maxImgWidth, maxMetric);
+        maxMetric += _nodeImages.size() * _gap + sumImgHeight + c_typeBrowserSpacing * 1.5f;
+        out = QSize(maxImgWidth, maxMetric);
     }
-    out.setWidth(std::max(c_typeBrowserMinimalWidth, out.width()));
 
     return out;
 }
 
-void TypeBrowser::clear()
+void WTypeBrowser::clear()
 {
     QLayoutItem* child;
     while(_layout->count() != 0)
@@ -88,15 +93,18 @@ void TypeBrowser::clear()
         delete child;
     }
     
-    std::ranges::for_each(_nodeImages, [&](TypedNodeImage *img){
+    std::ranges::for_each(_nodeImages, [&](WTypedNodeImage *img){
         delete img;
     });
     _nodeImages.clear();
 
     _layout->addSpacing(c_typeBrowserSpacing);
+
+    _nodeImages.append(createDefaultImage());
+    _layout->addWidget(_nodeImages.last());
 }
 
-bool TypeBrowser::initTypes()
+bool WTypeBrowser::initTypes()
 {
     if (_nodeTypeManager->Types().isEmpty())
         return false;
@@ -105,8 +113,8 @@ bool TypeBrowser::initTypes()
 
     try {
         std::ranges::for_each(_nodeTypeManager->TypeNames().keys(), [&](const QString &typeName){
-            _nodeImages.append(new TypedNodeImage(typeName));
-            TypedNodeImage *image = _nodeImages.last();
+            _nodeImages.append(new WTypedNodeImage(typeName));
+            WTypedNodeImage *image = _nodeImages.last();
             image->TypeManager = _nodeTypeManager;
             image->initType();
             _layout->addWidget(image);
@@ -121,7 +129,7 @@ bool TypeBrowser::initTypes()
 // ------------------ EVENTS --------------------
 
 
-void TypeBrowser::mousePressEvent(QMouseEvent *event)
+void WTypeBrowser::mousePressEvent(QMouseEvent *event)
 {
     if (event->buttons() & Qt::MouseButton::LeftButton)
     {
@@ -130,12 +138,12 @@ void TypeBrowser::mousePressEvent(QMouseEvent *event)
     }
 }
 
-void TypeBrowser::mouseReleaseEvent(QMouseEvent *)
+void WTypeBrowser::mouseReleaseEvent(QMouseEvent *)
 {
     this->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
 }
 
-void TypeBrowser::mouseMoveEvent(QMouseEvent *event)
+void WTypeBrowser::mouseMoveEvent(QMouseEvent *event)
 {
     if (!(event->buttons() & Qt::MouseButton::LeftButton))
         return;
@@ -157,7 +165,7 @@ void TypeBrowser::mouseMoveEvent(QMouseEvent *event)
 // ------------------- PAINT ----------------------
 
 
-void TypeBrowser::paintEvent(QPaintEvent *event)
+void WTypeBrowser::paintEvent(QPaintEvent *event)
 {
     _painter->begin(this);
     _painter->setRenderHint(QPainter::Antialiasing, true);
@@ -165,7 +173,7 @@ void TypeBrowser::paintEvent(QPaintEvent *event)
     _painter->end();
 }
 
-void TypeBrowser::paint(QPainter *painter, QPaintEvent *)
+void WTypeBrowser::paint(QPainter *painter, QPaintEvent *)
 {
     // this line avoids flickering between this widget and nodes
     setUpdatesEnabled(false);

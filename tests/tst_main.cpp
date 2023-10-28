@@ -63,9 +63,9 @@ TEST(INodeSpawnData, ByteArrayConversions)
     INodeSpawnData second = INodeSpawnData::fromByteArray(arr1);
     EXPECT_EQ(first, second);
 
-    ITypedNodeSpawnData third(str, 1);
+    INodeSpawnData third(str, 1);
     QByteArray arr2 = third.toByteArray();
-    ITypedNodeSpawnData fourth = ITypedNodeSpawnData::fromByteArray(arr2);
+    INodeSpawnData fourth = INodeSpawnData::fromByteArray(arr2);
     EXPECT_EQ(third, fourth);
 }
 

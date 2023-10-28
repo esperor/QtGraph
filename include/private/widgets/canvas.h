@@ -134,7 +134,7 @@ private:
     QSet<uint32_t> _selectionAreaPreviousNodes;
 
     QTimer *_timer;
-    TypeBrowser *_typeBrowser;
+    WTypeBrowser *_typeBrowser;
     // uint32_t represents node's id 
     QMap<uint32_t, WANode*> _selectedNodes;
     // uint32_t represents node's id

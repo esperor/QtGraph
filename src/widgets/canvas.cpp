@@ -38,7 +38,7 @@ WCanvas::WCanvas(QWidget *parent)
     , _bIsSnappingEnabled{ true }
     , _selectionRect{ std::nullopt }
     , _selectionAreaPreviousNodes{ QSet<uint32_t>() }
-    , _typeBrowser{ new TypeBrowser(this) }
+    , _typeBrowser{ new WTypeBrowser(this) }
     , _selectedNodes{ QMap<uint32_t, WANode*>() }
 {
     setMouseTracking(true);
@@ -51,7 +51,7 @@ WCanvas::WCanvas(QWidget *parent)
 
     _typeBrowser->show();
 
-    connect(_typeBrowser, &TypeBrowser::onMove, this, &WCanvas::onTypeBrowserMove);
+    connect(_typeBrowser, &WTypeBrowser::onMove, this, &WCanvas::onTypeBrowserMove);
     connect(_graph, &LGraph::onNodeRemoved, this, &WCanvas::onLNodeRemoved);
 
     _timer = new QTimer(this);
@@ -530,9 +530,12 @@ void WCanvas::dropEvent(QDropEvent *event)
         event->setDropAction(Qt::CopyAction);
         event->acceptProposedAction();
         QByteArray byteArray = event->mimeData()->data(c_mimeFormatForNodeFactory);
-        ITypedNodeSpawnData data = ITypedNodeSpawnData::fromByteArray(byteArray);
+        INodeSpawnData data = INodeSpawnData::fromByteArray(byteArray);
 
-        addNode(mapToCanvas(event->position().toPoint()), data.typeID);
+        if (data.typeID)
+            addNode(mapToCanvas(event->position()).toPoint(), *data.typeID);
+        else  
+            addNode(mapToCanvas(event->position()).toPoint(), data.name);
     }
 }
 

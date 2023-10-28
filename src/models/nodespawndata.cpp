@@ -5,16 +5,24 @@
 
 namespace qtgraph {
 
-INodeSpawnData::INodeSpawnData(const INodeSpawnData &other) : name{ other.name }
+INodeSpawnData::INodeSpawnData(const INodeSpawnData &other) 
+    : name{ other.name }
+    , typeID{ other.typeID }
 {}
 
-INodeSpawnData::INodeSpawnData(const QString &_name)
-    : name{ _name } {}
+INodeSpawnData::INodeSpawnData(const QString &_name, int _typeID)
+    : name{ _name } 
+{
+    if (_typeID != -1) typeID = _typeID;
+    else typeID = {};
+}
 
 QByteArray INodeSpawnData::toByteArray()
 {
     QByteArray output;
     output.append(name.toStdString());
+    output.append(c_dataSeparator);
+    output.append(QByteArray::number(typeID ? *typeID : -1));
     return output;
 }
 
@@ -26,44 +34,11 @@ INodeSpawnData INodeSpawnData::fromByteArray(const QByteArray &byteArray)
     QList<QByteArray> arrays = byteArray.split(c_dataSeparator);
 
     data.name = QString::fromStdString(arrays[i++].toStdString());
-
-    return data;
-}
-
-
-
-ITypedNodeSpawnData::ITypedNodeSpawnData(const ITypedNodeSpawnData &other)
-    : INodeSpawnData{ other.name }
-    , typeID{ other.typeID }
-{}
-
-ITypedNodeSpawnData::ITypedNodeSpawnData(const QString &_name, int _typeID)
-    : INodeSpawnData{ _name }
-    , typeID{ _typeID }
-{}
-
-QByteArray ITypedNodeSpawnData::toByteArray()
-{
-    QByteArray output;
-    output.append(name.toStdString());
-    output.append(c_dataSeparator);
-    output.append(QByteArray::number(typeID));
-    return output;
-}
-
-ITypedNodeSpawnData ITypedNodeSpawnData::fromByteArray(const QByteArray &byteArray)
-{
-    unsigned short i = 0;
-
-    ITypedNodeSpawnData data;
-    QList<QByteArray> arrays = byteArray.split(c_dataSeparator);
-
-    data.name = QString::fromStdString(arrays[i++].toStdString());
     data.typeID = arrays[i++].toInt();
+    if (data.typeID == -1) data.typeID = {};
 
     return data;
 }
-
 
 QDebug &operator<<(QDebug &debug, const INodeSpawnData &obj)
 {
@@ -82,29 +57,6 @@ QDataStream &operator<<(QDataStream &out, const INodeSpawnData &obj)
     return out;
 }
 
-bool operator==(const INodeSpawnData &first, const INodeSpawnData &second) { return first.name == second.name; }
-
-QDebug &operator<<(QDebug &debug, const ITypedNodeSpawnData &obj)
-{
-    bool temp = debug.autoInsertSpaces();
-    debug.setAutoInsertSpaces(false);
-
-    debug << "ITypedNodeSpawnData(" << obj.name << ", " << obj.typeID << ")";
-
-    debug.setAutoInsertSpaces(temp);
-    return debug;
-}
-
-QDataStream &operator<<(QDataStream &out, const ITypedNodeSpawnData &obj)
-{
-    out << "ITypedNodeSpawnData(" << obj.name << ", " << obj.typeID << ")";
-    return out;
-}
-
-bool operator==(const ITypedNodeSpawnData &first, const ITypedNodeSpawnData &second)
-{
-    return first.name == second.name &&
-           first.typeID == second.typeID;
-}
+bool operator==(const INodeSpawnData &first, const INodeSpawnData &second) { return first.name == second.name && first.typeID == second.typeID; }
 
 }

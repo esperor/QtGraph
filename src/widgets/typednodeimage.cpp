@@ -13,36 +13,36 @@
 
 namespace qtgraph {
 
-TypedNodeImage::TypedNodeImage(QWidget *parent)
+WTypedNodeImage::WTypedNodeImage(QWidget *parent)
     : QWidget{ parent }
     , fontSize{ 11 }
     , _painter{ new QPainter(this) }
 {}
 
-TypedNodeImage::TypedNodeImage(QString type, QWidget *parent)
-    : TypedNodeImage(parent)
+WTypedNodeImage::WTypedNodeImage(QString type, QWidget *parent)
+    : WTypedNodeImage(parent)
 {
     typeName = type;
 }
 
-TypedNodeImage::~TypedNodeImage()
+WTypedNodeImage::~WTypedNodeImage()
 {}
 
 
 
-ITypedNodeSpawnData TypedNodeImage::getData() const
+INodeSpawnData WTypedNodeImage::getData() const
 {
-    return ITypedNodeSpawnData(typeName, typeID);
+    return INodeSpawnData(typeName, typeID);
 }
 
-QSize TypedNodeImage::getDesiredSize() const
+QSize WTypedNodeImage::getDesiredSize() const
 {
     QFont font = standardFont(fontSize);
     QFontMetrics metrics(font);
     return metrics.size(Qt::TextSingleLine, typeName);
 }
 
-void TypedNodeImage::mousePressEvent(QMouseEvent *event)
+void WTypedNodeImage::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
         QDrag *drag = new QDrag(this);
@@ -63,7 +63,7 @@ void TypedNodeImage::mousePressEvent(QMouseEvent *event)
 
 
 
-void TypedNodeImage::paintEvent(QPaintEvent *event)
+void WTypedNodeImage::paintEvent(QPaintEvent *event)
 {
     _painter->begin(this);
     _painter->setRenderHint(QPainter::Antialiasing, true);
@@ -71,7 +71,7 @@ void TypedNodeImage::paintEvent(QPaintEvent *event)
     _painter->end();
 }
 
-void TypedNodeImage::paint(QPainter *painter, QPaintEvent *event)
+void WTypedNodeImage::paint(QPainter *painter, QPaintEvent *event)
 {
     setUpdatesEnabled(false);
 
