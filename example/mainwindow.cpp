@@ -22,10 +22,10 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    initMenuBar();
-
     _canvas = new WCanvas(this);
     setCentralWidget(_canvas);
+
+    initMenuBar();
 
     QPalette palette(c_paletteDefaultColor);
     palette.setColor(QPalette::ColorRole::Window, c_paletteDefaultColor);
