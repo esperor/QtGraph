@@ -383,8 +383,8 @@ void WCanvas::onLNodeRemoved(uint32_t id)
 void WCanvas::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Delete && !_selectedNodes.isEmpty())
-        std::ranges::for_each(_selectedNodes, [&](WANode *ptr){ 
-            _graph->removeNode(ptr->ID());
+        std::ranges::for_each(_selectedNodes.keys(), [&](uint32_t id) {
+            _graph->removeNode(id);
         });
 
     QWidget::keyPressEvent(event);
