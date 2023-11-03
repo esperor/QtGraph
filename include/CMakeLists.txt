@@ -3,6 +3,8 @@ project(QtGraph)
 set(QTGRAPH_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/private/helpers/nodefactory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/helpers/idgenerator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/private/helpers/focuswatcher.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/private/helpers/keywatcher.h
 
     ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/pintypemanager.h 
     ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/nodetypemanager.h

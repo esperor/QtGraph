@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QLineEdit>
+
 #include "widgets/node.h"
 
 namespace qtgraph {
@@ -9,7 +11,18 @@ class WCustomNode : public WANode
     Q_OBJECT
 
 public:
-    WCustomNode(LNode *logical, WCanvas *canvas) : WANode{ logical, canvas } {}
+    WCustomNode(LNode *logical, WCanvas *canvas);
+
+protected slots:
+    void deleteRenameEdit();
+
+protected:
+    virtual void mouseDoubleClickEvent(QMouseEvent *event) override;
+    virtual void paintSimplifiedName(QPainter *painter, int desiredWidth, QPoint textOrigin) override;
+    virtual void paintName(QPainter *painter, int desiredWidth, QPoint textOrigin) override;
+    virtual void processRenameEdit();
+
+    QLineEdit *_renameEdit;
     
 };
 
