@@ -1,4 +1,4 @@
-#include "focuswatcher.h"
+#include "helpers/focuswatcher.h"
 
 #include <QEvent>
 
@@ -6,7 +6,7 @@
 
 namespace qtgraph {
 
-FocusWatcher::FocusWatcher(QObject* parent = nullptr) : QObject(parent)
+FocusWatcher::FocusWatcher(QObject* parent) : QObject(parent)
 {
     if (parent)
         parent->installEventFilter(this);
@@ -17,12 +17,12 @@ bool FocusWatcher::eventFilter(QObject *obj, QEvent *event)
     switch(event->type())
     {
     case QEvent::FocusIn:
-        emit onFocusIn;
-        return true;
+        emit onFocusIn();
+        break;
     case QEvent::FocusOut:
-        emit onFocusOut;
-        return true;
-    default: return false;
+        emit onFocusOut();
+        break;
+    default: ;
     }
     return QObject::eventFilter(obj, event);
 }

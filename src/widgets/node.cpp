@@ -154,13 +154,10 @@ void WANode::mouseMoveEvent(QMouseEvent *event)
 
 void WANode::paintSimplifiedName(QPainter *painter, int desiredWidth, QPoint textOrigin)
 {
-    QSize nameBounding = painter->fontMetrics().size(Qt::TextSingleLine, _lnode->getName());
     float roundingRadiusZoomed = _zoom * c_nodeRoundingRadius;
     float nameRoundedRectRoundingRadius = roundingRadiusZoomed * 0.1f;
 
-
-
-    QRect bounded = painter->boundingRect(QRect(textOrigin.x(), textOrigin.y(), desiredWidth, nameBounding.height() * 2),
+    QRect bounded = painter->boundingRect(QRect(textOrigin.x(), textOrigin.y(), desiredWidth, getNameBounding(painter).height() * 2),
                                           Qt::AlignCenter, _lnode->getName());
 
     int oldWidth = bounded.width(), oldHeight = bounded.height();
@@ -175,17 +172,15 @@ int WANode::calculateRowsOffset(QPainter *painter) const
 {
     QFont font = standardFont(c_nodeNameSize * _zoom);
     painter->setFont(font);
-    QSize nameBounding = painter->fontMetrics().size(Qt::TextSingleLine, _lnode->getName());
-    return nameBounding.height() * 1.5 + c_normalPinD * _zoom;
+    return getNameBounding(painter).height() * 1.5 + c_normalPinD * _zoom;
 }
 
 void WANode::paintName(QPainter *painter, int desiredWidth, QPoint textOrigin)
 {
-    QSize nameBounding = painter->fontMetrics().size(Qt::TextSingleLine, _lnode->getName());
     QFont font = standardFont(c_nodeNameSize * _zoom);
     painter->setFont(font);
 
-    painter->drawText(QRect(textOrigin.x(), textOrigin.y(), desiredWidth, nameBounding.height() * 2),
+    painter->drawText(QRect(textOrigin.x(), textOrigin.y(), desiredWidth, getNameBounding(painter).height() * 2),
                       (Qt::AlignVCenter | Qt::AlignHCenter), _lnode->getName());
 }
 
@@ -207,7 +202,7 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
     bool bShouldSimplifyRender = _zoom <= c_changeRenderZoomMultiplier;
     int normalPinDZoomed = c_normalPinD * _zoom;
 
-    auto calculateWidth = [&](){
+    auto calculateWidth = [&, painter](){
         int maxInWidth = 0, maxOutWidth = 0;
 
         std::ranges::for_each(_pins, [&](WPin* pin){
@@ -223,7 +218,10 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
             }
         });
 
-        return maxInWidth + maxOutWidth + normalPinDZoomed * (bShouldSimplifyRender ? 8 : 4);
+        return std::max(
+            maxInWidth + maxOutWidth + normalPinDZoomed * (bShouldSimplifyRender ? 8 : 4),
+            (int)(getNameBounding(painter).width() * (bShouldSimplifyRender ? 0.5 : 1) + normalPinDZoomed * 2)
+        );
     };
 
     int inPins = std::ranges::count_if(_pins, [](WPin* pin){
@@ -248,7 +246,7 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
 
     float innerRoundingRadius = _zoom * c_nodeRoundingRadius;
 
-    QPoint desiredOrigin = mapFromParent(QPoint(this->pos()));
+    QPoint desiredOrigin = getDesiredOrigin();
 
     QPainterPath path;
 

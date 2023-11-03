@@ -11,12 +11,17 @@ class WCustomNode : public WANode
     Q_OBJECT
 
 public:
-    WCustomNode(LNode *logical, WCanvas *canvas) : WANode{ logical, canvas }, _renameEdit{ nullptr } {}
+    WCustomNode(LNode *logical, WCanvas *canvas);
+
+protected slots:
+    void deleteRenameEdit();
 
 protected:
-    virtual void mouseReleaseEvent(QMouseEvent *event) override;
+    virtual void mouseDoubleClickEvent(QMouseEvent *event) override;
+    virtual void paintSimplifiedName(QPainter *painter, int desiredWidth, QPoint textOrigin) override;
+    virtual void paintName(QPainter *painter, int desiredWidth, QPoint textOrigin) override;
+    virtual void processRenameEdit();
 
-private:
     QLineEdit *_renameEdit;
     
 };

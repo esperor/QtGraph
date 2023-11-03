@@ -36,6 +36,7 @@ public:
     
     QPoint getOutlineCoordinateForPinID(uint32_t pinID) const { return mapToParent(_pinsOutlineCoords[pinID]); }
     QRect getMappedRect() const;
+    QSize getNameBounding(const QPainter *painter) const { return painter->fontMetrics().size(Qt::TextSingleLine, _lnode->getName()); }
     const WCanvas *getParentCanvas() const { return _parentCanvas; }
     const LNode *getLogical() const { return _lnode; }
 
@@ -63,8 +64,6 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
 
-private:
-
 // -------------------- RENDER HELPERS -----------------------
 
     void paint(QPainter *painter, QPaintEvent *event);
@@ -72,9 +71,12 @@ private:
     virtual void paintName(QPainter *painter, int desiredWidth, QPoint textOrigin);
     virtual int calculateRowsOffset(QPainter *painter) const;
 
+    // return desired origin relative to this widget
+    QPoint getDesiredOrigin() const { return mapFromParent(QPoint(this->pos())); }
+
 // -----------------------------------------------------------
 
-protected:
+
     LNode *_lnode;
 
     const WCanvas *_parentCanvas;
