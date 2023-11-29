@@ -14,6 +14,8 @@ set(SOURCES
     logics/pin.cpp
     logics/graph.cpp
     logics/node.cpp
+    logics/stack.cpp
+    logics/stackhandler.cpp
 
     models/nodespawndata.cpp
     models/pindata.cpp

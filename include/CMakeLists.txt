@@ -12,10 +12,14 @@ set(QTGRAPH_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/node.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/pin.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/graph.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/stack.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/stackhandler.h
 
     ${CMAKE_CURRENT_SOURCE_DIR}/private/models/nodespawndata.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/models/pindata.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/models/pindragsignal.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/private/models/action.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/private/models/stackentry.h
     
     ${CMAKE_CURRENT_SOURCE_DIR}/private/widgets/nfbuttonminimize.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/widgets/typebrowser.h
