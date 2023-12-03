@@ -1,4 +1,4 @@
-#include "logics/nodetypemanager.h"
+#include "logics/typemanager.h"
 #include "widgets/typednode.h"
 #include "utilities/constants.h"
 #include "widgets/canvas.h"

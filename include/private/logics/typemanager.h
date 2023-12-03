@@ -11,6 +11,12 @@
 
 namespace qtgraph {
 
+/*
+    Here i use polymorphism instead of templated class for one
+    reason: qobject (and thus qt life-cycle) doesn't mix with templates
+
+*/
+
 class TypeManager : public QObject
 {
     Q_OBJECT

@@ -4,7 +4,7 @@
 #include <QApplication>
 
 #include "utilities/constants.h"
-#include "logics/nodetypemanager.h"
+#include "logics/typemanager.h"
 #include "widgets/typebrowser.h"
 #include "utilities/utility.h"
 

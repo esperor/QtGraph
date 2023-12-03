@@ -6,7 +6,7 @@
 
 #include "widgets/typednodeimage.h"
 #include "utilities/constants.h"
-#include "logics/nodetypemanager.h"
+#include "logics/typemanager.h"
 #include "utilities/utility.h"
 
 #include "widgets/moc_typednodeimage.cpp"
