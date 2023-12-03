@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QObject>
 #include <deque>
 
 #include "qtgraph.h"
@@ -8,7 +7,7 @@
 namespace qtgraph {
 
 template <class T>
-class LStack : public QObject
+class LStack
 {
 public:
     LStack(int length = 50);
