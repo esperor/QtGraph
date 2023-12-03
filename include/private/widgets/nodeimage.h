@@ -4,7 +4,7 @@
 #include <QtWidgets/QWidget>
 
 #include "models/nodespawndata.h"
-#include "logics/nodetypemanager.h"
+#include "logics/typemanager.h"
 #include "widgets/typednodeimage.h"
 
 namespace qtgraph {

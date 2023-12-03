@@ -8,9 +8,7 @@ set(SOURCES
     helpers/focuswatcher.cpp
     helpers/keywatcher.cpp
 
-    logics/nodetypemanager.cpp
     logics/typemanager.cpp
-    logics/pintypemanager.cpp
     logics/pin.cpp
     logics/graph.cpp
     logics/node.cpp

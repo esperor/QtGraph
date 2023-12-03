@@ -3,8 +3,7 @@
 #include <QJsonValue>
 #include <QObject>
 
-#include "logics/nodetypemanager.h"
-#include "logics/pintypemanager.h"
+#include "logics/typemanager.h"
 
 namespace qtgraph {
 

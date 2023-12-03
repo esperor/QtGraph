@@ -9,8 +9,7 @@
 #include <QScrollArea>
 
 #include "qtgraph.h"
-#include "logics/nodetypemanager.h"
-#include "logics/pintypemanager.h"
+#include "logics/typemanager.h"
 #include "widgets/typednodeimage.h"
 #include "widgets/nfbuttonminimize.h"
 #include "widgets/nodeimage.h"
