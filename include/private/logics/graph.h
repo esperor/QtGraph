@@ -8,8 +8,7 @@
 #include "models/pindata.h"
 #include "helpers/idgenerator.h"
 #include "helpers/nodefactory.h"
-#include "logics/nodetypemanager.h"
-#include "logics/pintypemanager.h"
+#include "logics/typemanager.h"
 
 #include <structure.pb.h>
 #include <graph.pb.h>

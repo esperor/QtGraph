@@ -143,9 +143,9 @@ TEST_F(TypeManagers, ParseJSON)
 
 TEST_F(TypeManagers, Properties)
 {
-    EXPECT_EQ("power", _PinTypeManager.Types().at(0).value("name").toString());
+    EXPECT_EQ("power", _PinTypeManager.typeNameByID(0));
     EXPECT_EQ(0, _PinTypeManager.TypeNames()["power"]);
 
-    EXPECT_EQ("Socket", _NodeTypeManager.Types().at(0).value("name").toString());
+    EXPECT_EQ("Socket", _NodeTypeManager.typeNameByID(0));
     EXPECT_EQ(0, _NodeTypeManager.TypeNames()["Socket"]);
 }

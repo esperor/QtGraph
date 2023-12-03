@@ -6,8 +6,6 @@ set(QTGRAPH_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/private/helpers/focuswatcher.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/helpers/keywatcher.h
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/pintypemanager.h 
-    ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/nodetypemanager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/typemanager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/node.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/pin.h
