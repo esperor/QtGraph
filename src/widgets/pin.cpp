@@ -14,7 +14,7 @@
 
 namespace qtgraph {
 
-WPin::WPin(LPin *lpin, WANode *parent)
+WPin::WPin(const LPin *lpin, WANode *parent)
     : QWidget{ parent }
     , _lpin{ lpin }
     , _parentNode{ parent }

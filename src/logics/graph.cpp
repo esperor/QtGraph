@@ -1,14 +1,16 @@
 #include <ranges>
 
 #include "logics/graph.h"
+#include "graph.h"
 
 namespace qtgraph {
 
 LGraph::LGraph(QObject *parent)
     : QObject(parent)
-    , _nodes{ QMap<uint32_t, LNode*>() }
-    , _connectedPins{ QMultiMap<IPinData, IPinData>() }
     , _factory{ new NodeFactory(this) }
+    , _stack{ LStack<IAction>() }
+    , _nodes{ QMap<uint32_t, LNode*>() }
+    , _connectedPins{ QMultiMap<IPinData, IPinData>() }   
 {}
 
 LGraph::~LGraph()
@@ -205,6 +207,33 @@ void LGraph::disconnectPins(IPinData in, IPinData out)
         _nodes[out.nodeID]->removePinConnection(out.pinID, in.pinID);
         _nodes[in.nodeID]->removePinConnection(in.pinID, out.pinID);
     }
+}
+
+void LGraph::executeAction(IAction action)
+{
+    _bIsRecording = false;
+
+    action.executeOn(this);
+    _stack.push(action);
+
+    _bIsRecording = true;
+}
+
+void LGraph::undo(int num)
+{
+    if (num <= 0) return;
+    num = std::min(num, _stack.size());
+
+    _bIsRecording = false;
+
+    while (num > 0)
+    {
+        IAction action = _stack.pop();
+        action.reverseOn(this);
+        num--;
+    }
+
+    _bIsRecording = true;
 }
 
 LNode *LGraph::addNode(QPoint canvasPosition, QString name)

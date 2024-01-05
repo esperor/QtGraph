@@ -18,6 +18,7 @@ public:
 
     void setLength(int l);
     int getLength() const { return _length; }
+    int size() const { return _container.size(); }
 
     void clear() { _container.clear(); }
     

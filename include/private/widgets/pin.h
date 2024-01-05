@@ -32,7 +32,7 @@ class WPin : public QWidget
     Q_OBJECT
 
 public:
-    WPin(LPin *lpin, WANode *parent);
+    WPin(const LPin *lpin, WANode *parent);
     ~WPin();
 
     void setFakeConnected(bool isConnected) { _fakeConnected = isConnected; }
@@ -69,8 +69,8 @@ private:
     void showContextMenu(const QMouseEvent *event);
 
 protected:
-    WANode *_parentNode;
-    LPin *_lpin;
+    const WANode *_parentNode;
+    const LPin *_lpin;
     float _normalD;
     // used to show pin as connected when connection is in progress
     bool _fakeConnected;

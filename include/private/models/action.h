@@ -2,9 +2,14 @@
 
 #include <functional>
 #include <string>
+#include <QVector>
 #include "qtgraph.h"
 
 namespace qtgraph {
+
+class LGraph;
+
+using ActionFn = std::function<void(LGraph*, QVector<void*>*)>;
 
 enum class EAction
 {
@@ -22,12 +27,20 @@ enum class EAction
 struct IAction
 {
 public:
-    IAction(EAction _code, std::string _desc, std::function<void()> _action)
-        : code{ _code }, desc{ _desc }, action{ _action } {}
+    IAction(EAction _code, 
+            std::string _desc, 
+            ActionFn _action, 
+            ActionFn _reverse, 
+            QVector<void*> &&_objects = {});
 
-    std::function<void()> action = [](){};
+    void executeOn(LGraph *g);
+    void reverseOn(LGraph *g);
+
+    ActionFn action = {};
+    ActionFn reverse = {};
     std::string desc = "";
     EAction code = EAction::Unknown;
+    QVector<void*> objects;
 };
 
 }

@@ -8,7 +8,7 @@
 
 namespace qtgraph {
 
-WTypedNode::WTypedNode(int typeID, LNode *lnode, WCanvas *canvas)
+WTypedNode::WTypedNode(int typeID, const LNode *lnode, WCanvas *canvas)
     : WANode(lnode, canvas)
 {}
 

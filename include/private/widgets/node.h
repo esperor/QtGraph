@@ -27,7 +27,7 @@ class WANode : public QWidget
     Q_OBJECT
 
 public:
-    WANode(LNode *logical, WCanvas *canvas);
+    WANode(const LNode *logical, WCanvas *canvas);
     ~WANode();
     
     const QSize &normalSize() const { return _normalSize; }
@@ -77,9 +77,9 @@ protected:
 // -----------------------------------------------------------
 
 
-    LNode *_lnode;
-
     const WCanvas *_parentCanvas;
+    const LNode *_lnode;
+
     float _zoom;
     QSize _normalSize;
     QPainter *_painter;

@@ -11,7 +11,7 @@
 
 namespace qtgraph {
     
-WCustomNode::WCustomNode(LNode *logical, WCanvas *canvas) 
+WCustomNode::WCustomNode(const LNode *logical, WCanvas *canvas) 
     : WANode{ logical, canvas }
     , _renameEdit{ nullptr }
 {}

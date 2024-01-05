@@ -14,7 +14,7 @@
 
 namespace qtgraph {
 
-WANode::WANode(LNode *logical, WCanvas *canvas)
+WANode::WANode(const LNode *logical, WCanvas *canvas)
     : QWidget{ canvas }
     , _lnode{ logical }
     , _parentCanvas{ canvas }

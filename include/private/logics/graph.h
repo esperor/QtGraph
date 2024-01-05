@@ -9,6 +9,8 @@
 #include "helpers/idgenerator.h"
 #include "helpers/nodefactory.h"
 #include "logics/typemanager.h"
+#include "logics/stack.h"
+#include "models/action.h"
 
 #include <structure.pb.h>
 #include <graph.pb.h>
@@ -46,6 +48,13 @@ public:
     bool connectPins(IPinData in, IPinData out);
     void disconnectPins(IPinData in, IPinData out);
 
+    // Executes and records custom action. 
+    // Must NOT be used for deletion of any objects such as nodes and pins.
+    void executeAction(IAction action);
+
+    // Reverses last recorded action.
+    void undo(int num = 1);
+
     NodeTypeManager *getNodeTypeManager() { return _factory->getNodeTypeManager(); }
     PinTypeManager *getPinTypeManager() { return _factory->getPinTypeManager(); }
 
@@ -71,6 +80,11 @@ private:
     IDGenerator _IDgenerator = IDGenerator();
 
     NodeFactory *_factory;
+
+    LStack<IAction> _stack;
+
+    // Whether graph is recording actions into stack
+    bool _bIsRecording; 
 
     QMap<uint32_t, LNode*> _nodes;
 
