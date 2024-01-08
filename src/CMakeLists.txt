@@ -12,8 +12,8 @@ set(SOURCES
     logics/pin.cpp
     logics/graph.cpp
     logics/node.cpp
-    logics/stack.cpp
 
+    models/action.cpp
     models/nodespawndata.cpp
     models/pindata.cpp
     models/pindragsignal.cpp

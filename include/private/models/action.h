@@ -9,7 +9,7 @@ namespace qtgraph {
 
 class LGraph;
 
-using ActionFn = std::function<void(LGraph*, QVector<void*>*)>;
+#define ActionFn std::function<void(LGraph*, QVector<const void*>*)>
 
 enum class EAction
 {
@@ -21,17 +21,22 @@ enum class EAction
     Renaming,
     Moving,
     Conversion,
+    Selection,
     Unknown,
 };
 
 struct IAction
 {
 public:
-    IAction(EAction _code, 
-            std::string _desc, 
-            ActionFn _action, 
-            ActionFn _reverse, 
-            QVector<void*> &&_objects = {});
+    IAction() {}
+    IAction(EAction _code
+        , std::string _desc
+        , ActionFn _action
+        , ActionFn _reverse
+        , QVector<const void*> _objects = {}
+    );
+
+    ~IAction();
 
     void executeOn(LGraph *g);
     void reverseOn(LGraph *g);
@@ -40,7 +45,7 @@ public:
     ActionFn reverse = {};
     std::string desc = "";
     EAction code = EAction::Unknown;
-    QVector<void*> objects;
+    QVector<const void*> objects;
 };
 
 }

@@ -325,6 +325,11 @@ void WCanvas::onPinDrag(IPinDragSignal signal)
     }
 }
 
+void WCanvas::onActionEmitted(IAction action)
+{
+    _graph->executeAction(action);
+}
+
 void WCanvas::onNodeSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID)
 {
     _selectedNodes.insert(nodeID, _nodes[nodeID]);
@@ -348,6 +353,8 @@ LNode *WCanvas::addNode(QPoint canvasPosition, QString name)
     return addNode(node);
 }
 
+
+// main AddNode function where all connections are established
 LNode *WCanvas::addNode(LNode *lnode)
 {   
     if (!_graph->containsNode(lnode->ID()))
@@ -359,6 +366,7 @@ LNode *WCanvas::addNode(LNode *lnode)
 
     _nodes[id]->show();
 
+    connect(_nodes[id], &WANode::onAction, this, &WCanvas::onActionEmitted);
     connect(_nodes[id], &WANode::onPinDrag, this, &WCanvas::onPinDrag);
     connect(_nodes[id], &WANode::onPinConnect, this, &WCanvas::onPinConnect);
     connect(_nodes[id], &WANode::onSelect, this, &WCanvas::onNodeSelect);

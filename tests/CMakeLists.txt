@@ -49,16 +49,16 @@ include(GoogleTest)
 gtest_discover_tests(tests)
 
 add_custom_command(
-    TARGET tests
+    TARGET tests POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_SOURCE_DIR}/tests/test_files
-            ${CMAKE_SOURCE_DIR}/build/tests/test_files              
+            ${CMAKE_SOURCE_DIR}/build/tests/test_files      
+    COMMAND_EXPAND_LISTS        
 )
 
 add_custom_command(
-    TARGET tests
+    TARGET tests POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy -t 
     $<TARGET_FILE_DIR:tests> $<TARGET_RUNTIME_DLLS:tests>
     COMMAND_EXPAND_LISTS
-    DEPENDS tests
 )

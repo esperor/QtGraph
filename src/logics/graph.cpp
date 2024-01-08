@@ -1,7 +1,6 @@
 #include <ranges>
 
 #include "logics/graph.h"
-#include "graph.h"
 
 namespace qtgraph {
 

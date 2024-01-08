@@ -8,6 +8,8 @@
 #include "widgets/moc_customnode.cpp"
 #include "utilities/utility.h"
 #include "utilities/constants.h"
+#include "models/action.h"
+#include "logics/graph.h"
 
 namespace qtgraph {
     
@@ -30,12 +32,42 @@ void WCustomNode::mouseDoubleClickEvent(QMouseEvent *event)
             // idk why, but it works only this way
             if (event->key() + 1 != Qt::Key_Enter) return;
 
-            _lnode->setName(_renameEdit->text());
+            setName(_renameEdit->text());
             deleteRenameEdit();
         });
 
         _renameEdit->show();
     }
+}
+
+void WCustomNode::setName(QString name)
+{
+    QVector<const void*> objects = 
+    { (void*)new uint32_t(_lnode->ID())
+    , (void*)new QString(name)
+    , (void*)new QString(_lnode->getName())
+    };
+
+    IAction action(
+        EAction::Renaming,
+        "Node renaming",
+        [](LGraph *g, QVector<const void*> *o)
+        {
+            uint32_t id = *(uint32_t*)(o->at(0));
+            auto newName = (const QString*)(o->at(1));
+
+            g->nodes()[id]->setName(*newName);
+        },
+        [](LGraph *g, QVector<const void*> *o)
+        {
+            uint32_t id = *(uint32_t*)(o->at(0));
+            auto oldName = (const QString*)(o->at(2));
+
+            g->nodes()[id]->setName(*oldName);
+        },
+        objects
+    );
+    emit onAction(action);
 }
 
 void WCustomNode::deleteRenameEdit()

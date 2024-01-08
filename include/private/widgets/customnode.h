@@ -13,6 +13,8 @@ class WCustomNode : public WANode
 public:
     WCustomNode(const LNode *logical, WCanvas *canvas);
 
+    void setName(QString name); 
+
 protected slots:
     void deleteRenameEdit();
 

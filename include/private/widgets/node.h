@@ -13,8 +13,10 @@
 #include <QMap>
 
 #include "widgets/pin.h"
-#include "qtgraph.h"
 #include "logics/node.h"
+#include "models/action.h"
+
+#include "qtgraph.h"
 
 #include "node.pb.h"
 
@@ -44,6 +46,8 @@ public:
     void setNormalSize(QSize newSize) { _normalSize = newSize; }
     void setSelected(bool b, bool bIsMultiSelectionModifierDown = false);
     void setPinConnected(uint32_t pinID, bool isConnected);
+    inline void moveLNode(QPointF by) { setLNodePosition(_lnode->canvasPosition() + by); }
+    void setLNodePosition(QPointF pos);
 
     void addPin(WPin *pin);
 
@@ -52,6 +56,7 @@ signals:
     void onPinDrag(IPinDragSignal signal);
     void onPinConnect(IPinData outPin, IPinData inPin);
     void onPinConnectionBreak(IPinData outPin, IPinData inPin);
+    void onAction(IAction action);
 
 private slots:
     void slot_onPinDrag(IPinDragSignal signal);

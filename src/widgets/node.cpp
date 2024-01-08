@@ -2,15 +2,20 @@
 #include <QRect>
 #include <QtDebug>
 #include <QApplication>
+#include <QVector>
 #include <algorithm>
+#include <functional>
 
 #include "widgets/node.h"
 #include "widgets/canvas.h"
 #include "utilities/utility.h"
 #include "utilities/constants.h"
 #include "widgets/pin.h"
+#include "logics/node.h"
+#include "logics/graph.h"
 
 #include "widgets/moc_node.cpp"
+
 
 namespace qtgraph {
 
@@ -46,13 +51,68 @@ WANode::~WANode()
 
 void WANode::setSelected(bool b, bool bIsMultiSelectionModifierDown)
 { 
-    _lnode->setSelected(b);
+    QVector<const void*> objects = 
+    { (void*)new uint32_t(_lnode->ID())
+    , (void*)new bool(b) 
+    };
+
+    IAction action(
+        EAction::Selection,
+        "Node selection",
+        [](LGraph *g, QVector<const void*> *o)
+        {
+            uint32_t id = *(uint32_t*)(o->at(0));
+            bool b = *(bool*)(o->at(1));
+
+            g->nodes()[id]->setSelected(b);
+        },
+        [](LGraph *g, QVector<const void*> *o)
+        {
+            uint32_t id = *(uint32_t*)(o->at(0));
+            bool b = *(bool*)(o->at(1));
+
+            g->nodes()[id]->setSelected(!b);
+        },
+        objects
+    );
+    emit onAction(action);
+
     if (b) onSelect(bIsMultiSelectionModifierDown, ID()); 
 }
 
 void WANode::setPinConnected(uint32_t pinID, bool isConnected)
 {
     _pins[pinID]->setFakeConnected(isConnected);
+}
+
+void WANode::setLNodePosition(QPointF pos)
+{
+    QVector<const void*> objects = 
+    { (void*)new uint32_t(_lnode->ID())
+    , (void*)new QPointF(pos)
+    , (void*)new QPointF(_lnode->canvasPosition()) 
+    };
+
+    IAction action(
+        EAction::Moving,
+        "Node position change",
+        [](LGraph *g, QVector<const void*> *o)
+        {
+            uint32_t id = *(uint32_t*)(o->at(0));
+            auto newPos = (const QPointF*)(o->at(1));
+
+            g->nodes()[id]->setCanvasPosition(*newPos);
+        },
+        [](LGraph *g, QVector<const void*> *o)
+        {
+            uint32_t id = *(uint32_t*)(o->at(0));
+            auto oldPos = (const QPointF*)(o->at(2));
+
+            g->nodes()[id]->setCanvasPosition(*oldPos);
+        },
+        objects
+    );
+    emit onAction(action);
 }
 
 float WANode::getParentCanvasZoomMultiplier() const
@@ -119,8 +179,7 @@ void WANode::mousePressEvent(QMouseEvent *event)
 void WANode::mouseReleaseEvent(QMouseEvent *event)
 {
     this->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
-    _lnode->setSelected(true);
-    onSelect(event->modifiers() & c_multiSelectionModifier, _lnode->ID());
+    setSelected(true, event->modifiers() & c_multiSelectionModifier);
 }
 
 void WANode::mouseMoveEvent(QMouseEvent *event)
@@ -139,10 +198,10 @@ void WANode::mouseMoveEvent(QMouseEvent *event)
         if (_parentCanvas->getSnappingEnabled())
         {
             _hiddenPosition += (offset / _zoom);
-            _lnode->setCanvasPosition(snap(_hiddenPosition, _parentCanvas->getSnappingInterval()));
+            setLNodePosition(snap(_hiddenPosition, _parentCanvas->getSnappingInterval()));
         }
         else
-            _lnode->moveCanvasPosition(offset / _zoom);
+            setLNodePosition(_lnode->canvasPosition() + (offset / _zoom));
 
         _lastMouseDownPosition = mapToParent(event->position());
     }
@@ -249,6 +308,9 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
     QPoint desiredOrigin = getDesiredOrigin();
 
     QPainterPath path;
+
+    // painter paints inner and outer at the same time
+    // where the outer is being drawn by the pen
 
     // paint OUTER
     if (_lnode->isSelected())
