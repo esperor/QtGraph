@@ -56,7 +56,7 @@ public:
     void setCanvasPosition(QPointF newCanvasPosition) { _canvasPosition = newCanvasPosition; }
     void setID(uint32_t ID) { _ID = ID; }
     void setName(QString name) { _name = name; }
-    void setSelected(bool b) { _bIsSelected = b; }
+    void setSelected(bool b);
     void removePinConnection(uint32_t pinID, uint32_t connectedPinID);
     void setPinConnection(uint32_t pinID, IPinData connectedPin);
 
@@ -64,6 +64,9 @@ public:
     uint32_t addPin(LPin *pin);
     // Returns pin id
     uint32_t addPin(QString text, EPinDirection direction, QColor color = QColor(Qt::GlobalColor::black));
+
+signals:
+    void onIsSelectedChanged(bool selected, uint32_t id);
 
 private slots:
     void onPinDestroyed(QObject *obj);
