@@ -162,6 +162,8 @@ void MainWindow::clear()
 
 void MainWindow::initMenuBar()
 {
+    _menuBar = new QMenuBar(this);
+
     _menuFile = new QMenu("Menu", this);
 
     _open = new QAction("Open saved", this);
@@ -191,8 +193,15 @@ void MainWindow::initMenuBar()
     _menuFile->addAction(_openTypes);
     connect(_openTypes, &QAction::triggered, this, &MainWindow::openTypes);
 
-    _menuBar = new QMenuBar(this);
     _menuBar->addMenu(_menuFile);
+
+    _menuEdit = new QMenu("Edit", this);
+
+    _undo = new QAction("Undo", this);
+    _menuEdit->addAction(_undo);
+    connect(_snapping, &QAction::triggered, this, [this](){
+        _canvas->undo(); 
+    });
 
     _menuOptions = new QMenu("Options", this);
 
