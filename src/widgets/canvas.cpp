@@ -142,6 +142,8 @@ void WCanvas::visualize()
 {
     std::ranges::for_each(_graph->nodes(), [this](LNode *lnode){
         addNode(lnode);
+        if (lnode->isSelected())
+            _selectedNodes.insert(lnode->ID(), _nodes[lnode->ID()]);
     });
 }
 
@@ -325,6 +327,17 @@ void WCanvas::onPinDrag(IPinDragSignal signal)
     }
 }
 
+void WCanvas::onIsSelectedChanged(bool selected, uint32_t nodeID)
+{
+    switch (selected)
+    {
+    case true: _selectedNodes.insert(nodeID, _nodes[nodeID]); 
+        return;
+    case false: _selectedNodes.remove(nodeID); 
+        return;
+    }
+}
+
 void WCanvas::onActionEmitted(IAction action)
 {
     _graph->executeAction(action);
@@ -369,10 +382,6 @@ void WCanvas::onNodeSelect(INodeSelectSignal signal)
             return;
         ptr->setSelected(false);
     });
-
-    _selectedNodes.removeIf([&](QMap<uint32_t, WANode*>::iterator &it){
-        return it.value()->ID() != nodeID;
-    });
 }
 
 LNode *WCanvas::addNode(QPoint canvasPosition, QString name)
@@ -393,6 +402,8 @@ LNode *WCanvas::addNode(LNode *lnode)
         ).key();
 
     _nodes[id]->show();
+
+    connect(lnode, &LNode::onIsSelectedChanged, this, &WCanvas::onIsSelectedChanged);
 
     connect(_nodes[id], &WANode::onAction, this, &WCanvas::onActionEmitted);
     connect(_nodes[id], &WANode::onPinDrag, this, &WCanvas::onPinDrag);

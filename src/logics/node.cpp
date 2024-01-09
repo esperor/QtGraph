@@ -96,6 +96,11 @@ void LNode::removePinConnection(uint32_t pinID, uint32_t connectedPinID)
     _pins[pinID]->removeConnectedPinByID(connectedPinID);
 }
 
+void LNode::setSelected(bool b)
+{
+    _bIsSelected = b;
+    emit onIsSelectedChanged(b, ID());
+}
 
 void LNode::onPinDestroyed(QObject *obj)
 {

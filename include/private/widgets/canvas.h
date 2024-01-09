@@ -103,6 +103,7 @@ protected:
 
 private slots:
     void onActionEmitted(IAction action);
+    void onIsSelectedChanged(bool selected, uint32_t nodeID);
     void onLNodeRemoved(uint32_t id);
     void onNodeSelect(INodeSelectSignal signal);
     void onPinDrag(IPinDragSignal signal);
