@@ -330,8 +330,36 @@ void WCanvas::onActionEmitted(IAction action)
     _graph->executeAction(action);
 }
 
-void WCanvas::onNodeSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID)
+void WCanvas::onNodeSelect(INodeSelectSignal signal)
 {
+    QVector<const void*> objects = 
+    { (void*)new uint32_t(signal.nodeID)
+    , (void*)new bool(signal.selected)
+    , (void*)new bool(signal.bIsMultiSelectionModifierDown) 
+    };
+
+    IAction action(
+        EAction::Selection,
+        "Node selection",
+        [](LGraph *g, QVector<const void*> *o)
+        {
+            uint32_t id = *(uint32_t*)(o->at(0));
+            bool b = *(bool*)(o->at(1));
+
+            g->nodes()[id]->setSelected(b);
+        },
+        [](LGraph *g, QVector<const void*> *o)
+        {
+            uint32_t id = *(uint32_t*)(o->at(0));
+            bool b = *(bool*)(o->at(1));
+
+            g->nodes()[id]->setSelected(!b);
+        },
+        objects
+    );
+
+
+
     _selectedNodes.insert(nodeID, _nodes[nodeID]);
 
     if (bIsMultiSelectionModifierDown) return;

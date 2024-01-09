@@ -20,6 +20,7 @@
 #include "widgets/typebrowser.h"
 #include "widgets/node.h"
 #include "models/pindragsignal.h"
+#include "nodeselectsignal.h"
 
 #include "structure.pb.h"
 
@@ -54,6 +55,7 @@ public:
     void toggleSnapping() { _bIsSnappingEnabled = !_bIsSnappingEnabled; }
     void setSnappingInterval(int num) { _snappingInterval = num; }
     void clear();
+    void undo(int num = 1) { _graph->undo(num); }
     inline void moveView(QVector2D vector) { moveCanvas(QPointF(-vector.x(), -vector.y())); }
     inline void moveViewUp(float by) { moveCanvas(QPointF(0, by)); }
     inline void moveViewDown(float by) { moveCanvas(QPointF(0, -by)); }
@@ -102,7 +104,7 @@ protected:
 private slots:
     void onActionEmitted(IAction action);
     void onLNodeRemoved(uint32_t id);
-    void onNodeSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID);
+    void onNodeSelect(INodeSelectSignal signal);
     void onPinDrag(IPinDragSignal signal);
     void onPinConnect(IPinData outPin, IPinData inPin);
     void onPinConnectionBreak(IPinData outPin, IPinData inPin);

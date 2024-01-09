@@ -18,8 +18,9 @@ enum class EPinDragSignalType
 struct IPinDragSignal
 {
 public:
-    IPinDragSignal();
-    IPinDragSignal(IPinData source, EPinDragSignalType type);
+    IPinDragSignal() {}
+    IPinDragSignal(IPinData source, EPinDragSignalType type)
+        : _source{ source }, _type{ type } {}
 
     IPinData &source() { return _source; }
     EPinDragSignalType &type() { return _type; }
@@ -32,8 +33,9 @@ private:
 struct IPinDragMoveSignal : public IPinDragSignal
 {
 public:
-    IPinDragMoveSignal();
-    IPinDragMoveSignal(IPinData source, EPinDragSignalType type, QPointF mousePosition);
+    IPinDragMoveSignal() {}
+    IPinDragMoveSignal(IPinData source, EPinDragSignalType type, QPointF mousePosition)
+        : IPinDragSignal{ source, type }, _mousePosition{ mousePosition } {}
 
     QPointF &mousePosition() { return _mousePosition; }
 

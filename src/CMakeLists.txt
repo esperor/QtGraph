@@ -16,7 +16,6 @@ set(SOURCES
     models/action.cpp
     models/nodespawndata.cpp
     models/pindata.cpp
-    models/pindragsignal.cpp
 
     widgets/pin.cpp
     widgets/node.cpp

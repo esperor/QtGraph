@@ -52,7 +52,7 @@ public:
     void addPin(WPin *pin);
 
 signals:
-    void onSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID);
+    void onSelect(INodeSelectSignal signal);
     void onPinDrag(IPinDragSignal signal);
     void onPinConnect(IPinData outPin, IPinData inPin);
     void onPinConnectionBreak(IPinData outPin, IPinData inPin);

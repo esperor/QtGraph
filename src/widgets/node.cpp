@@ -49,37 +49,6 @@ WANode::~WANode()
 // ------------------- GENERAL --------------------
 
 
-void WANode::setSelected(bool b, bool bIsMultiSelectionModifierDown)
-{ 
-    QVector<const void*> objects = 
-    { (void*)new uint32_t(_lnode->ID())
-    , (void*)new bool(b) 
-    };
-
-    IAction action(
-        EAction::Selection,
-        "Node selection",
-        [](LGraph *g, QVector<const void*> *o)
-        {
-            uint32_t id = *(uint32_t*)(o->at(0));
-            bool b = *(bool*)(o->at(1));
-
-            g->nodes()[id]->setSelected(b);
-        },
-        [](LGraph *g, QVector<const void*> *o)
-        {
-            uint32_t id = *(uint32_t*)(o->at(0));
-            bool b = *(bool*)(o->at(1));
-
-            g->nodes()[id]->setSelected(!b);
-        },
-        objects
-    );
-    emit onAction(action);
-
-    if (b) onSelect(bIsMultiSelectionModifierDown, ID()); 
-}
-
 void WANode::setPinConnected(uint32_t pinID, bool isConnected)
 {
     _pins[pinID]->setFakeConnected(isConnected);
@@ -179,7 +148,11 @@ void WANode::mousePressEvent(QMouseEvent *event)
 void WANode::mouseReleaseEvent(QMouseEvent *event)
 {
     this->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
-    setSelected(true, event->modifiers() & c_multiSelectionModifier);
+    onSelect(
+    { !_lnode->isSelected()
+    , event->modifiers() & c_multiSelectionModifier
+    , _lnode->ID() 
+    });
 }
 
 void WANode::mouseMoveEvent(QMouseEvent *event)
@@ -191,7 +164,7 @@ void WANode::mouseMoveEvent(QMouseEvent *event)
         {
             this->setCursor(QCursor(Qt::CursorShape::OpenHandCursor));
             if (!_lnode->isSelected())
-                onSelect(event->modifiers() & c_multiSelectionModifier, _lnode->ID());
+                onSelect({ true, event->modifiers() & c_multiSelectionModifier, _lnode->ID() });
         }
 
         QPointF offset = mapToParent(event->position()) - _lastMouseDownPosition;
