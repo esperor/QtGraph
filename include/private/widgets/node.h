@@ -40,6 +40,7 @@ public:
     QPoint getOutlineCoordinateForPinID(uint32_t pinID) const { return mapToParent(_pinsOutlineCoords[pinID]); }
     QRect getMappedRect() const;
     QSize getNameBounding(const QPainter *painter) const { return painter->fontMetrics().size(Qt::TextSingleLine, _lnode->getName()); }
+    QPointF getCanvasPosition() const;
     const WCanvas *getParentCanvas() const { return _parentCanvas; }
     const LNode *getLogical() const { return _lnode; }
 
@@ -92,6 +93,7 @@ protected:
     QPointF _hiddenPosition;
     QPointF _lastMouseDownPosition;
     QPointF _mousePressPosition;
+    QPointF _positionDelta;
     
     QMap<uint32_t, QPoint> _pinsOutlineCoords;
 

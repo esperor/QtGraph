@@ -28,6 +28,7 @@ WANode::WANode(const LNode *logical, WCanvas *canvas)
     , _hiddenPosition{ QPointF() }
     , _lastMouseDownPosition{ QPointF(0, 0) }
     , _mousePressPosition{ QPointF(0, 0) }
+    , _positionDelta{ QPointF(0, 0) }
     , _pinsOutlineCoords{ QMap<uint32_t, QPoint>() }
     , _pins{ QMap<uint32_t, WPin*>() }
 {
@@ -97,6 +98,11 @@ QRect WANode::getMappedRect() const
     return mapped;
 }
 
+QPointF WANode::getCanvasPosition() const
+{
+    return _lnode->canvasPosition() + _positionDelta;
+}
+
 void WANode::addPin(WPin *pin)
 {
     _pins.insert(pin->getLogical()->ID(), pin);
@@ -147,6 +153,11 @@ void WANode::mousePressEvent(QMouseEvent *event)
         
         if (isMultiSelectionModifierDown && _lnode->isSelected())
             onSelect({ false, true, _lnode->ID() });
+        else if (_lnode->isSelected())
+        
+            // this means that selection state shouldn't change neither 
+            // on action execution nor inversion
+            onSelect({ {}, isMultiSelectionModifierDown, _lnode->ID() });
         else
             onSelect({ true, isMultiSelectionModifierDown, _lnode->ID() });
     }
@@ -155,6 +166,8 @@ void WANode::mousePressEvent(QMouseEvent *event)
 void WANode::mouseReleaseEvent(QMouseEvent *event)
 {
     this->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
+    setLNodePosition(_lnode->canvasPosition() + _positionDelta);
+    _positionDelta = { 0, 0 };
 }
 
 void WANode::mouseMoveEvent(QMouseEvent *event)
@@ -169,10 +182,10 @@ void WANode::mouseMoveEvent(QMouseEvent *event)
         if (_parentCanvas->getSnappingEnabled())
         {
             _hiddenPosition += (offset / _zoom);
-            setLNodePosition(snap(_hiddenPosition, _parentCanvas->getSnappingInterval()));
+            _positionDelta = snap(_hiddenPosition, _parentCanvas->getSnappingInterval()) - _lnode->canvasPosition();
         }
         else
-            setLNodePosition(_lnode->canvasPosition() + (offset / _zoom));
+            _positionDelta += offset / _zoom;
 
         _lastMouseDownPosition = mapToParent(event->position());
     }

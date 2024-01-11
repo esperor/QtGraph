@@ -345,9 +345,11 @@ void WCanvas::onActionEmitted(IAction *action)
 
 void WCanvas::onNodeSelect(INodeSelectSignal signal)
 {
+    if (!signal.selected.has_value() && _selectedNodes.size() == 1) return;
+
     QVector<const void*> objects = 
     { (void*)new uint32_t(signal.nodeID)
-    , (void*)new bool(signal.selected)
+    , (void*)new std::optional<bool>(signal.selected)
     , (void*)new bool(signal.bIsMultiSelectionModifierDown)
     , (void*)new QSet(_selectedNodes)
     };
@@ -358,11 +360,12 @@ void WCanvas::onNodeSelect(INodeSelectSignal signal)
         [](LGraph *g, QVector<const void*> *o)
         {
             uint32_t nodeID = *(uint32_t*)(o->at(0));
-            bool selected = *(bool*)(o->at(1));
+            std::optional<bool> selected = *(std::optional<bool>*)(o->at(1));
             bool isMultiSelectionModifierDown = *(bool*)(o->at(2));
             QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)(o->at(3));
 
-            g->nodes()[nodeID]->setSelected(selected);
+            if (selected.has_value())
+                g->nodes()[nodeID]->setSelected(*selected);
 
             if (isMultiSelectionModifierDown) return;
             std::ranges::for_each(*selectedNodes, [&](uint32_t id){
@@ -373,11 +376,12 @@ void WCanvas::onNodeSelect(INodeSelectSignal signal)
         [](LGraph *g, QVector<const void*> *o)
         {
             uint32_t nodeID = *(uint32_t*)(o->at(0));
-            bool selected = *(bool*)(o->at(1));
+            std::optional<bool> selected = *(std::optional<bool>*)(o->at(1));
             bool isMultiSelectionModifierDown = *(bool*)(o->at(2));
             QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)(o->at(3));
 
-            g->nodes()[nodeID]->setSelected(!selected);
+            if (selected.has_value())
+                g->nodes()[nodeID]->setSelected(!(*selected));
 
             if (isMultiSelectionModifierDown) return;
             std::ranges::for_each(*selectedNodes, [&](uint32_t id){
@@ -680,7 +684,7 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
         // this->rect()->center() is used instead of center purposefully
         // in order to fix flicking and lagging of the nodes (dk why it fixes the problem)
         const QPointF offset = 
-            zoomMult * (node->getLogical()->canvasPosition() - _offset) 
+            zoomMult * (node->getCanvasPosition() - _offset) 
             + this->rect().center();
 
         node->move(offset.toPoint());
