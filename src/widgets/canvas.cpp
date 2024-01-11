@@ -364,7 +364,7 @@ void WCanvas::onNodeSelect(INodeSelectSignal signal)
 
             g->nodes()[nodeID]->setSelected(selected);
 
-            if (isMultiSelectionModifierDown && selected) return;
+            if (isMultiSelectionModifierDown) return;
             std::ranges::for_each(*selectedNodes, [&](uint32_t id){
                 if (id == nodeID) return;
                 g->nodes()[id]->setSelected(false);
@@ -379,7 +379,7 @@ void WCanvas::onNodeSelect(INodeSelectSignal signal)
 
             g->nodes()[nodeID]->setSelected(!selected);
 
-            if (isMultiSelectionModifierDown && selected) return;
+            if (isMultiSelectionModifierDown) return;
             std::ranges::for_each(*selectedNodes, [&](uint32_t id){
                 if (id == nodeID) return;
                 g->nodes()[id]->setSelected(true);

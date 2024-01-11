@@ -142,17 +142,19 @@ void WANode::mousePressEvent(QMouseEvent *event)
         _lastMouseDownPosition = mapToParent(event->position());
         _mousePressPosition = event->position();
         _hiddenPosition = _lnode->canvasPosition();
+
+        bool isMultiSelectionModifierDown = event->modifiers() & c_multiSelectionModifier;
+        
+        if (isMultiSelectionModifierDown && _lnode->isSelected())
+            onSelect({ false, true, _lnode->ID() });
+        else
+            onSelect({ true, isMultiSelectionModifierDown, _lnode->ID() });
     }
 }
 
 void WANode::mouseReleaseEvent(QMouseEvent *event)
 {
     this->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
-    onSelect(
-    { !_lnode->isSelected()
-    , static_cast<bool>(event->modifiers() & c_multiSelectionModifier)
-    , _lnode->ID() 
-    });
 }
 
 void WANode::mouseMoveEvent(QMouseEvent *event)
@@ -161,11 +163,7 @@ void WANode::mouseMoveEvent(QMouseEvent *event)
     {
         if ((event->position() - _mousePressPosition).manhattanLength()
             > QApplication::startDragDistance())
-        {
             this->setCursor(QCursor(Qt::CursorShape::OpenHandCursor));
-            if (!_lnode->isSelected())
-                onSelect({ true, static_cast<bool>(event->modifiers() & c_multiSelectionModifier), _lnode->ID() });
-        }
 
         QPointF offset = mapToParent(event->position()) - _lastMouseDownPosition;
         if (_parentCanvas->getSnappingEnabled())
