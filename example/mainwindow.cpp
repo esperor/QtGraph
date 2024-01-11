@@ -183,7 +183,7 @@ void MainWindow::initMenuBar()
 
     _close = new QAction("Close file", this);
     _close->setShortcut(QKeySequence::Close);
-    _close->setToolTip("Clears related file and canvas. Doesn't save the file.");
+    _close->setToolTip("Closes related file and canvas. Doesn't save the file.");
     _menuFile->addAction(_close);
     connect(_close, &QAction::triggered, this, &MainWindow::close);
 
@@ -198,10 +198,13 @@ void MainWindow::initMenuBar()
     _menuEdit = new QMenu("Edit", this);
 
     _undo = new QAction("Undo", this);
+    _undo->setShortcut(QKeySequence::Undo);
     _menuEdit->addAction(_undo);
-    connect(_snapping, &QAction::triggered, this, [this](){
+    connect(_undo, &QAction::triggered, this, [this](){
         _canvas->undo(); 
     });
+
+    _menuBar->addMenu(_menuEdit);
 
     _menuOptions = new QMenu("Options", this);
 

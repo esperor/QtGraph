@@ -7,7 +7,7 @@ namespace qtgraph {
 LGraph::LGraph(QObject *parent)
     : QObject(parent)
     , _factory{ new NodeFactory(this) }
-    , _stack{ LStack<IAction>() }
+    , _stack{ LStack<IAction*>() }
     , _nodes{ QMap<uint32_t, LNode*>() }
     , _connectedPins{ QMultiMap<IPinData, IPinData>() }   
 {}
@@ -208,11 +208,11 @@ void LGraph::disconnectPins(IPinData in, IPinData out)
     }
 }
 
-void LGraph::executeAction(IAction action)
+void LGraph::executeAction(IAction *action)
 {
     _bIsRecording = false;
 
-    action.executeOn(this);
+    action->executeOn(this);
     _stack.push(action);
 
     _bIsRecording = true;
@@ -227,8 +227,9 @@ void LGraph::undo(int num)
 
     while (num > 0)
     {
-        IAction action = _stack.pop();
-        action.reverseOn(this);
+        IAction *action = _stack.pop();
+        action->reverseOn(this);
+        delete action;
         num--;
     }
 

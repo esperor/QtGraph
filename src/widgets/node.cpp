@@ -62,7 +62,7 @@ void WANode::setLNodePosition(QPointF pos)
     , (void*)new QPointF(_lnode->canvasPosition()) 
     };
 
-    IAction action(
+    IAction *action = new IAction(
         EAction::Moving,
         "Node position change",
         [](LGraph *g, QVector<const void*> *o)
@@ -150,7 +150,7 @@ void WANode::mouseReleaseEvent(QMouseEvent *event)
     this->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
     onSelect(
     { !_lnode->isSelected()
-    , event->modifiers() & c_multiSelectionModifier
+    , static_cast<bool>(event->modifiers() & c_multiSelectionModifier)
     , _lnode->ID() 
     });
 }
@@ -164,7 +164,7 @@ void WANode::mouseMoveEvent(QMouseEvent *event)
         {
             this->setCursor(QCursor(Qt::CursorShape::OpenHandCursor));
             if (!_lnode->isSelected())
-                onSelect({ true, event->modifiers() & c_multiSelectionModifier, _lnode->ID() });
+                onSelect({ true, static_cast<bool>(event->modifiers() & c_multiSelectionModifier), _lnode->ID() });
         }
 
         QPointF offset = mapToParent(event->position()) - _lastMouseDownPosition;

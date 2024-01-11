@@ -52,7 +52,7 @@ public:
 
     // Executes and records custom action. 
     // Must NOT be used for deletion of any objects such as nodes and pins.
-    void executeAction(IAction action);
+    void executeAction(IAction *action);
 
     // Reverses last recorded action.
     void undo(int num = 1);
@@ -83,7 +83,7 @@ private:
 
     NodeFactory *_factory;
 
-    LStack<IAction> _stack;
+    LStack<IAction*> _stack;
 
     // Whether graph is recording actions into stack
     bool _bIsRecording; 

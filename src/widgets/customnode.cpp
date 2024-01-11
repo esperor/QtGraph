@@ -48,7 +48,7 @@ void WCustomNode::setName(QString name)
     , (void*)new QString(_lnode->getName())
     };
 
-    IAction action(
+    IAction *action = new IAction(
         EAction::Renaming,
         "Node renaming",
         [](LGraph *g, QVector<const void*> *o)

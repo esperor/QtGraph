@@ -20,7 +20,7 @@
 #include "widgets/typebrowser.h"
 #include "widgets/node.h"
 #include "models/pindragsignal.h"
-#include "nodeselectsignal.h"
+#include "models/nodeselectsignal.h"
 
 #include "structure.pb.h"
 
@@ -102,7 +102,7 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
-    void onActionEmitted(IAction action);
+    void onActionEmitted(IAction *action);
     void onIsSelectedChanged(bool selected, uint32_t nodeID);
     void onLNodeRemoved(uint32_t id);
     void onNodeSelect(INodeSelectSignal signal);
@@ -143,7 +143,7 @@ private:
     QTimer *_timer;
     WTypeBrowser *_typeBrowser;
     // uint32_t represents node's id 
-    QMap<uint32_t, WANode*> _selectedNodes;
+    QSet<uint32_t> _selectedNodes;
     // uint32_t represents node's id
     QMap<uint32_t, WANode*> _nodes;
 

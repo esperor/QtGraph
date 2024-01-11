@@ -15,6 +15,7 @@
 #include "widgets/pin.h"
 #include "logics/node.h"
 #include "models/action.h"
+#include "models/nodeselectsignal.h"
 
 #include "qtgraph.h"
 
@@ -44,7 +45,6 @@ public:
 
     void setLogical(LNode *logical) { _lnode = logical; }
     void setNormalSize(QSize newSize) { _normalSize = newSize; }
-    void setSelected(bool b, bool bIsMultiSelectionModifierDown = false);
     void setPinConnected(uint32_t pinID, bool isConnected);
     inline void moveLNode(QPointF by) { setLNodePosition(_lnode->canvasPosition() + by); }
     void setLNodePosition(QPointF pos);
@@ -56,7 +56,7 @@ signals:
     void onPinDrag(IPinDragSignal signal);
     void onPinConnect(IPinData outPin, IPinData inPin);
     void onPinConnectionBreak(IPinData outPin, IPinData inPin);
-    void onAction(IAction action);
+    void onAction(IAction *action);
 
 private slots:
     void slot_onPinDrag(IPinDragSignal signal);

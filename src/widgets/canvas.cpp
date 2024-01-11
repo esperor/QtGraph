@@ -47,7 +47,7 @@ WCanvas::WCanvas(QWidget *parent)
     , _selectionRect{ std::nullopt }
     , _selectionAreaPreviousNodes{ QSet<uint32_t>() }
     , _typeBrowser{ new WTypeBrowser(this) }
-    , _selectedNodes{ QMap<uint32_t, WANode*>() }
+    , _selectedNodes{ QSet<uint32_t>() }
 {
     setMouseTracking(true);
     setAutoFillBackground(true);
@@ -143,7 +143,7 @@ void WCanvas::visualize()
     std::ranges::for_each(_graph->nodes(), [this](LNode *lnode){
         addNode(lnode);
         if (lnode->isSelected())
-            _selectedNodes.insert(lnode->ID(), _nodes[lnode->ID()]);
+            _selectedNodes.insert(lnode->ID());
     });
 }
 
@@ -230,13 +230,13 @@ void WCanvas::processSelectionArea(const QMouseEvent *event)
         {
             if (!node->getMappedRect().intersects(*_selectionRect))
             {
-                node->setSelected(false);
+                //node->setSelected(false);
                 _selectionAreaPreviousNodes.remove(node->ID());
             }
         }
         if (node->getMappedRect().intersects(*_selectionRect))
         {
-            node->setSelected(true, true);
+            //node->setSelected(true, true);
             _selectionAreaPreviousNodes.insert(node->ID());
         }
     });
@@ -331,14 +331,14 @@ void WCanvas::onIsSelectedChanged(bool selected, uint32_t nodeID)
 {
     switch (selected)
     {
-    case true: _selectedNodes.insert(nodeID, _nodes[nodeID]); 
+    case true: _selectedNodes.insert(nodeID); 
         return;
     case false: _selectedNodes.remove(nodeID); 
         return;
     }
 }
 
-void WCanvas::onActionEmitted(IAction action)
+void WCanvas::onActionEmitted(IAction *action)
 {
     _graph->executeAction(action);
 }
@@ -348,40 +348,47 @@ void WCanvas::onNodeSelect(INodeSelectSignal signal)
     QVector<const void*> objects = 
     { (void*)new uint32_t(signal.nodeID)
     , (void*)new bool(signal.selected)
-    , (void*)new bool(signal.bIsMultiSelectionModifierDown) 
+    , (void*)new bool(signal.bIsMultiSelectionModifierDown)
+    , (void*)new QSet(_selectedNodes)
     };
 
-    IAction action(
+    IAction *action = new IAction(
         EAction::Selection,
         "Node selection",
         [](LGraph *g, QVector<const void*> *o)
         {
-            uint32_t id = *(uint32_t*)(o->at(0));
-            bool b = *(bool*)(o->at(1));
+            uint32_t nodeID = *(uint32_t*)(o->at(0));
+            bool selected = *(bool*)(o->at(1));
+            bool isMultiSelectionModifierDown = *(bool*)(o->at(2));
+            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)(o->at(3));
 
-            g->nodes()[id]->setSelected(b);
+            g->nodes()[nodeID]->setSelected(selected);
+
+            if (isMultiSelectionModifierDown && selected) return;
+            std::ranges::for_each(*selectedNodes, [&](uint32_t id){
+                if (id == nodeID) return;
+                g->nodes()[id]->setSelected(false);
+            });
         },
         [](LGraph *g, QVector<const void*> *o)
         {
-            uint32_t id = *(uint32_t*)(o->at(0));
-            bool b = *(bool*)(o->at(1));
+            uint32_t nodeID = *(uint32_t*)(o->at(0));
+            bool selected = *(bool*)(o->at(1));
+            bool isMultiSelectionModifierDown = *(bool*)(o->at(2));
+            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)(o->at(3));
 
-            g->nodes()[id]->setSelected(!b);
+            g->nodes()[nodeID]->setSelected(!selected);
+
+            if (isMultiSelectionModifierDown && selected) return;
+            std::ranges::for_each(*selectedNodes, [&](uint32_t id){
+                if (id == nodeID) return;
+                g->nodes()[id]->setSelected(true);
+            });
         },
         objects
     );
 
-
-
-    _selectedNodes.insert(nodeID, _nodes[nodeID]);
-
-    if (bIsMultiSelectionModifierDown) return;
-
-    std::ranges::for_each(_selectedNodes.values(), [&](WANode *ptr){
-        if (ptr->ID() == nodeID)
-            return;
-        ptr->setSelected(false);
-    });
+    _graph->executeAction(action);
 }
 
 LNode *WCanvas::addNode(QPoint canvasPosition, QString name)
@@ -438,7 +445,7 @@ void WCanvas::onLNodeRemoved(uint32_t id)
 void WCanvas::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Delete && !_selectedNodes.isEmpty())
-        std::ranges::for_each(_selectedNodes.keys(), [&](uint32_t id) {
+        std::ranges::for_each(_selectedNodes, [&](uint32_t id) {
             _graph->removeNode(id);
         });
 
@@ -458,8 +465,8 @@ void WCanvas::mousePressEvent(QMouseEvent *event)
         if (event->modifiers() & c_multiSelectionModifier)
             break;
 
-        std::ranges::for_each(_selectedNodes.values(), [&](WANode *ptr){
-            ptr->setSelected(false);
+        std::ranges::for_each(_selectedNodes, [this](uint32_t id){
+            _graph->nodes()[id]->setSelected(false);
         });
 
         _selectedNodes.clear();
