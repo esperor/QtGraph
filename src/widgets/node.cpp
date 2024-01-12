@@ -11,15 +11,15 @@
 #include "utilities/utility.h"
 #include "utilities/constants.h"
 #include "widgets/pin.h"
-#include "logics/node.h"
-#include "logics/graph.h"
+#include "data/node.h"
+#include "data/graph.h"
 
 #include "widgets/moc_node.cpp"
 
 
 namespace qtgraph {
 
-WANode::WANode(const LNode *logical, WCanvas *canvas)
+WANode::WANode(const DNode *logical, WCanvas *canvas)
     : QWidget{ canvas }
     , _lnode{ logical }
     , _parentCanvas{ canvas }
@@ -50,12 +50,12 @@ WANode::~WANode()
 // ------------------- GENERAL --------------------
 
 
-void WANode::setPinConnected(uint32_t pinID, bool isConnected)
+void WANode::setPinFakeConnected(uint32_t pinID, bool isConnected)
 {
     _pins[pinID]->setFakeConnected(isConnected);
 }
 
-void WANode::setLNodePosition(QPointF pos)
+void WANode::setNodePosition(QPointF pos)
 {
     QVector<const void*> objects = 
     { (void*)new uint32_t(_lnode->ID())
@@ -63,17 +63,17 @@ void WANode::setLNodePosition(QPointF pos)
     , (void*)new QPointF(_lnode->canvasPosition()) 
     };
 
-    IAction *action = new IAction(
+    IAction *_action = new IAction(
         EAction::Moving,
         "Node position change",
-        [](LGraph *g, QVector<const void*> *o)
+        [](DGraph *g, QVector<const void*> *o)
         {
             uint32_t id = *(uint32_t*)(o->at(0));
             auto newPos = (const QPointF*)(o->at(1));
 
             g->nodes()[id]->setCanvasPosition(*newPos);
         },
-        [](LGraph *g, QVector<const void*> *o)
+        [](DGraph *g, QVector<const void*> *o)
         {
             uint32_t id = *(uint32_t*)(o->at(0));
             auto oldPos = (const QPointF*)(o->at(2));
@@ -82,7 +82,7 @@ void WANode::setLNodePosition(QPointF pos)
         },
         objects
     );
-    emit onAction(action);
+    emit action(_action);
 }
 
 float WANode::getParentCanvasZoomMultiplier() const
@@ -106,9 +106,9 @@ QPointF WANode::getCanvasPosition() const
 void WANode::addPin(WPin *pin)
 {
     _pins.insert(pin->getLogical()->ID(), pin);
-    connect(pin, &WPin::onDrag, this, &WANode::slot_onPinDrag);
-    connect(pin, &WPin::onConnect, this, &WANode::slot_onPinConnect);
-    connect(pin, &WPin::onConnectionBreak, this, &WANode::slot_onPinConnectionBreak);
+    connect(pin, &WPin::onDrag, this, &WANode::onPinDrag);
+    connect(pin, &WPin::onConnect, this, &WANode::onPinConnect);
+    connect(pin, &WPin::onConnectionBreak, this, &WANode::onPinConnectionBreak);
     pin->show();
     _pinsOutlineCoords.insert(pin->getLogical()->ID(), QPoint(0, 0));
 }
@@ -116,7 +116,7 @@ void WANode::addPin(WPin *pin)
 // -------------------- SLOTS ---------------------
 
 
-void WANode::slot_onPinDrag(IPinDragSignal signal)
+void WANode::onPinDrag(IPinDragSignal signal)
 {
     switch (signal.type())
     {
@@ -128,15 +128,15 @@ void WANode::slot_onPinDrag(IPinDragSignal signal)
         break;
     default:;
     }
-    onPinDrag(signal);
+    emit pinDrag(signal);
 }
 
-void WANode::slot_onPinConnect(IPinData outPin, IPinData inPin)
-{ onPinConnect(outPin, inPin); }
 
-void WANode::slot_onPinConnectionBreak(IPinData outPin, IPinData inPin)
-{ onPinConnectionBreak(outPin, inPin); }
+void WANode::onPinConnect(IPinData outPin, IPinData inPin)
+{ emit pinConnect(outPin, inPin); }
 
+void WANode::onPinConnectionBreak(IPinData outPin, IPinData inPin)
+{ emit pinConnectionBreak(outPin, inPin); }
 
 // -------------------- EVENTS ---------------------
 
@@ -152,21 +152,21 @@ void WANode::mousePressEvent(QMouseEvent *event)
         bool isMultiSelectionModifierDown = event->modifiers() & c_multiSelectionModifier;
         
         if (isMultiSelectionModifierDown && _lnode->isSelected())
-            onSelect({ false, true, _lnode->ID() });
+            selectSignal({ false, true, _lnode->ID() });
         else if (_lnode->isSelected())
         
             // this means that selection state shouldn't change neither 
             // on action execution nor inversion
-            onSelect({ {}, isMultiSelectionModifierDown, _lnode->ID() });
+            selectSignal({ {}, isMultiSelectionModifierDown, _lnode->ID() });
         else
-            onSelect({ true, isMultiSelectionModifierDown, _lnode->ID() });
+            selectSignal({ true, isMultiSelectionModifierDown, _lnode->ID() });
     }
 }
 
 void WANode::mouseReleaseEvent(QMouseEvent *event)
 {
     this->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
-    setLNodePosition(_lnode->canvasPosition() + _positionDelta);
+    setNodePosition(_lnode->canvasPosition() + _positionDelta);
     _positionDelta = { 0, 0 };
 }
 
@@ -353,7 +353,7 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
             default:;
             }
 
-            const LPin *logicalPin = pin->getLogical();
+            const DPin *logicalPin = pin->getLogical();
 
             pin->setFixedSize(pin->getDesiredWidth(_zoom), pin->getNormalD() * _zoom);
             _pinsOutlineCoords[logicalPin->ID()] = QPoint(pin->isInPin() ? 0 : desiredWidth, pin->getCenter().y());

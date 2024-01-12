@@ -11,7 +11,7 @@ class WCustomNode : public WANode
     Q_OBJECT
 
 public:
-    WCustomNode(const LNode *logical, WCanvas *canvas);
+    WCustomNode(const DNode *logical, WCanvas *canvas);
 
     void setName(QString name); 
 

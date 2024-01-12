@@ -1,8 +1,8 @@
 #include <QJsonArray>
 
-#include "logics/node.h"
-#include "logics/graph.h"
-#include "logics/pin.h"
+#include "data/node.h"
+#include "data/graph.h"
+#include "data/pin.h"
 #include "logics/typemanager.h"
 #include "widgets/node.h"
 #include "widgets/customnode.h"
@@ -20,9 +20,9 @@ NodeFactory::NodeFactory(QObject *parent)
     , _pinTypeManager{ nullptr }
 {}
 
-LNode *NodeFactory::makeNodeOfType(int typeID, LGraph *graph) const
+DNode *NodeFactory::makeNodeOfType(int typeID, DGraph *graph) const
 {
-    LNode *node = new LNode(graph);
+    DNode *node = new DNode(graph);
 
     node->setName(_nodeTypeManager->Types()[typeID].value("name").toString());
     node->setNodeTypeManager(_nodeTypeManager);
@@ -32,9 +32,9 @@ LNode *NodeFactory::makeNodeOfType(int typeID, LGraph *graph) const
     return node;
 }
 
-LNode *NodeFactory::makeNodeAndPinsOfType(int typeID, LGraph *graph) const
+DNode *NodeFactory::makeNodeAndPinsOfType(int typeID, DGraph *graph) const
 {
-    LNode *node = makeNodeOfType(typeID, graph);
+    DNode *node = makeNodeOfType(typeID, graph);
 
     const QJsonObject &type = _nodeTypeManager->Types()[typeID];
     QJsonValue inPins = type.value("in-pins");
@@ -49,7 +49,7 @@ LNode *NodeFactory::makeNodeAndPinsOfType(int typeID, LGraph *graph) const
     return node;
 }
 
-WANode *NodeFactory::makeSuitableWNode(LNode *lnode, WCanvas *canvas) const
+WANode *NodeFactory::makeSuitableWNode(DNode *lnode, WCanvas *canvas) const
 {
     WANode *node;
     if (lnode->getTypeID())
@@ -63,13 +63,13 @@ WANode *NodeFactory::makeSuitableWNode(LNode *lnode, WCanvas *canvas) const
     return node;
 }
 
-LPin *NodeFactory::makePinOfType(int typeID, LNode *node) const
+DPin *NodeFactory::makePinOfType(int typeID, DNode *node) const
 {
     auto type = _pinTypeManager->Types()[typeID];
     QColor color = parseToColor(type.value("color").toString());
     QString typeName = _pinTypeManager->typeNameByID(typeID);
 
-    LPin *pin = new LPin(node);
+    DPin *pin = new DPin(node);
     pin->setColor(color);
     pin->setText(typeName);
     pin->setTypeID(typeID);
@@ -77,7 +77,7 @@ LPin *NodeFactory::makePinOfType(int typeID, LNode *node) const
     return pin;
 }
 
-void NodeFactory::addPinsToNodeByJsonValue(const QJsonValue &val, LNode *node, EPinDirection direction) const
+void NodeFactory::addPinsToNodeByJsonValue(const QJsonValue &val, DNode *node, EPinDirection direction) const
 {
     const QVector<QJsonObject> &pinTypes = _pinTypeManager->Types();
     QJsonArray pins = val.toArray();
@@ -89,7 +89,7 @@ void NodeFactory::addPinsToNodeByJsonValue(const QJsonValue &val, LNode *node, E
         QString typeName = pinObject.value("type").toString();
         int id = _pinTypeManager->TypeNames()[typeName];
 
-        LPin *pin = makePinOfType(id, node);
+        DPin *pin = makePinOfType(id, node);
         pin->setDirection(direction);
 
         node->addPin(pin);

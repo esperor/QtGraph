@@ -42,6 +42,7 @@ private:
     int _fps;
 
     Ui::MainWindow *ui;
+    qtgraph::Controller *_controller;
     qtgraph::WCanvas *_canvas;
     QTimer *_timer;
 

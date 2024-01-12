@@ -16,7 +16,7 @@ enum class EPinDirection
     Out = 2,
 };
 
-class LPin;
+class DPin;
 
 struct IPinData
 {
@@ -24,7 +24,7 @@ public:
     IPinData() {}
     IPinData(const IPinData &other);
     IPinData(EPinDirection _direction, uint32_t _nodeID, uint32_t _pinID, uint32_t _typeID = -1);
-    IPinData(const LPin *pin);
+    IPinData(const DPin *pin);
     virtual ~IPinData();
 
     QByteArray toByteArray() const;

@@ -8,13 +8,13 @@
 #include "utilities/constants.h"
 #include "utilities/utility.h"
 #include "widgets/canvas.h"
-#include "logics/pin.h"
+#include "data/pin.h"
 
 #include "widgets/moc_pin.cpp"
 
 namespace qtgraph {
 
-WPin::WPin(const LPin *lpin, WANode *parent)
+WPin::WPin(const DPin *lpin, WANode *parent)
     : QWidget{ parent }
     , _lpin{ lpin }
     , _parentNode{ parent }

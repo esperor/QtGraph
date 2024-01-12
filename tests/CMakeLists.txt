@@ -26,7 +26,8 @@ qt_add_executable(tests
     main.cpp
     tst_main.cpp
     tst_protobuf.cpp    
-    tst_graph.cpp
+    tst_controller.cpp
+    tst_actions.cpp
 )
 
 target_link_libraries(tests PRIVATE
@@ -45,11 +46,8 @@ target_compile_options(tests PRIVATE
     "/permissive-"
 )
 
-include(GoogleTest)
-gtest_discover_tests(tests)
-
 add_custom_command(
-    TARGET tests POST_BUILD
+    TARGET tests
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_SOURCE_DIR}/tests/test_files
             ${CMAKE_SOURCE_DIR}/build/tests/test_files      
@@ -57,8 +55,12 @@ add_custom_command(
 )
 
 add_custom_command(
-    TARGET tests POST_BUILD
+    TARGET tests
     COMMAND ${CMAKE_COMMAND} -E copy -t 
     $<TARGET_FILE_DIR:tests> $<TARGET_RUNTIME_DLLS:tests>
     COMMAND_EXPAND_LISTS
 )
+
+# include(GoogleTest)
+# gtest_discover_tests(tests)
+

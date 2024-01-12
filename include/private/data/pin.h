@@ -4,29 +4,32 @@
 #include <QMap>
 
 #include "models/pindata.h"
+#include "logics/object.h"
 
 #include "pin.pb.h"
 
 namespace qtgraph {
 
-class LNode;
+class DNode;
 
-class LPin : public QObject
+class DPin : public Object
 {
     Q_OBJECT
 
 public:
-    LPin(LNode *parent);
-    ~LPin() {}
+    DPin(DNode *parent, std::optional<uint32_t> id = {});
+    ~DPin();
 
     void protocolize(protocol::Pin *pPin) const;
     void deprotocolize(const protocol::Pin &pPin);
+
+    inline uint32_t ID() const { return getData().pinID; }
+    Controller* controller();
 
     IPinData getData() const { return _data; }
     bool isConnected() const { return !_connectedPins.empty(); }
     const QColor &getColor() const { return _color; }
     QString getText() const { return _text; }
-    inline uint32_t ID() const { return getData().pinID; }
     inline uint32_t getNodeID() const { return getData().nodeID; }
     QVector<IPinData> getConnectedPins() const { return _connectedPins.values(); }
 

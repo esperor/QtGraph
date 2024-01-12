@@ -9,11 +9,11 @@
 #include "utilities/utility.h"
 #include "utilities/constants.h"
 #include "models/action.h"
-#include "logics/graph.h"
+#include "data/graph.h"
 
 namespace qtgraph {
     
-WCustomNode::WCustomNode(const LNode *logical, WCanvas *canvas) 
+WCustomNode::WCustomNode(const DNode *logical, WCanvas *canvas) 
     : WANode{ logical, canvas }
     , _renameEdit{ nullptr }
 {}
@@ -48,17 +48,17 @@ void WCustomNode::setName(QString name)
     , (void*)new QString(_lnode->getName())
     };
 
-    IAction *action = new IAction(
+    IAction *_action = new IAction(
         EAction::Renaming,
         "Node renaming",
-        [](LGraph *g, QVector<const void*> *o)
+        [](DGraph *g, QVector<const void*> *o)
         {
             uint32_t id = *(uint32_t*)(o->at(0));
             auto newName = (const QString*)(o->at(1));
 
             g->nodes()[id]->setName(*newName);
         },
-        [](LGraph *g, QVector<const void*> *o)
+        [](DGraph *g, QVector<const void*> *o)
         {
             uint32_t id = *(uint32_t*)(o->at(0));
             auto oldName = (const QString*)(o->at(2));
@@ -67,7 +67,7 @@ void WCustomNode::setName(QString name)
         },
         objects
     );
-    emit onAction(action);
+    emit action(_action);
 }
 
 void WCustomNode::deleteRenameEdit()

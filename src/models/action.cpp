@@ -1,5 +1,5 @@
 #include "models/action.h"
-#include "logics/graph.h"
+#include "data/graph.h"
 
 namespace qtgraph 
 {
@@ -23,12 +23,12 @@ IAction::~IAction()
     });
 }
 
-void IAction::executeOn(LGraph *g) 
+void IAction::executeOn(DGraph *g) 
 { 
     action(g, &objects);
 }
 
-void IAction::reverseOn(LGraph *g) 
+void IAction::reverseOn(DGraph *g) 
 { 
     reverse(g, &objects);
 }

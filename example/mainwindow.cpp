@@ -4,6 +4,7 @@
 #include "private/utilities/constants.h"
 #include <QtGraph/TypeManagers>
 #include "private/utilities/utility.h"
+#include "private/logics/controller.h"
 
 #include <fstream>
 #include <iostream>
@@ -22,7 +23,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    _canvas = new WCanvas(this);
+    _controller = new Controller(this);
+    _canvas = _controller->createCanvas(this);
     setCentralWidget(_canvas);
 
     initMenuBar();
@@ -72,7 +74,7 @@ void MainWindow::openTypes()
     PinTypeManager *pinManager = new PinTypeManager();
     nodeManager->readTypes(fileName);
     pinManager->readTypes(fileName);
-    _canvas->setTypeManagers(pinManager, nodeManager);
+    _controller->setTypeManagers(pinManager, nodeManager);
 }
 
 std::string MainWindow::getFileName(QFileDialog::FileMode mode)
@@ -118,7 +120,7 @@ void MainWindow::internal_save(std::string file)
     }
     else
     {
-        if (!_canvas->serialize(&out))
+        if (!_controller->serialize(&out))
             // TODO: ui friendly error
             qDebug() << "[Example] error serializing";
     }
@@ -140,7 +142,7 @@ void MainWindow::open()
     }
     else
     {
-        if (!_canvas->deserialize(&in))
+        if (!_controller->deserialize(&in))
             // TODO: ui friendly error
             qDebug() << "[Example] error deserializing";
     }
@@ -201,7 +203,7 @@ void MainWindow::initMenuBar()
     _undo->setShortcut(QKeySequence::Undo);
     _menuEdit->addAction(_undo);
     connect(_undo, &QAction::triggered, this, [this](){
-        _canvas->undo(); 
+        _controller->undo(); 
     });
 
     _menuBar->addMenu(_menuEdit);

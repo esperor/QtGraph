@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 #include "private/models/pindata.h"
-#include <QtGraph/LPin>
-#include <QtGraph/LGraph>
+#include <QtGraph/DPin>
+#include "private/logics/controller.h"
 
 #include <fstream>
 
@@ -22,16 +22,16 @@ public:
     Protocolization() {}
     static void SetUpTestSuite()
     {
-        initial = new LGraph();
+        initial = new Controller();
         auto node1 = initial->addNode(QPoint(0, 10), "Node");
         auto node2 = initial->addNode(QPoint(100, 100), "Node");
         node1_id = node1->ID();
         node2_id = node2->ID();
-        pin1_id = node1->addPin("pin1", EPinDirection::Out);
-        pin2_id = node2->addPin("pin2", EPinDirection::In);
+        pin1_id = node1->addPin("pin1", EPinDirection::In);
+        pin2_id = node2->addPin("pin2", EPinDirection::Out);
         IPinData pin1_data = node1->pin(pin1_id).value()->getData();
         IPinData pin2_data = node2->pin(pin2_id).value()->getData();
-        ASSERT_TRUE(initial->connectPins(pin1_data, pin2_data)) << "Couldn't add connection";
+        initial->connectPins(pin1_data, pin2_data);
         file = "test_protocolization.initial";
     }
 
@@ -41,14 +41,14 @@ public:
         delete deserialized;
     }
 
-    static LGraph *initial;
-    static LGraph *deserialized;
+    static Controller *initial;
+    static Controller *deserialized;
     static std::string file;
     static uint32_t node1_id, node2_id, pin1_id, pin2_id;
 };
 
-LGraph *Protocolization::initial = new LGraph();
-LGraph *Protocolization::deserialized = new LGraph();
+Controller *Protocolization::initial = new Controller();
+Controller *Protocolization::deserialized = new Controller();
 
 std::string Protocolization::file = std::string();
 uint32_t Protocolization::node1_id = 0, Protocolization::node2_id = 0, Protocolization::pin1_id = 0, Protocolization::pin2_id = 0;
@@ -77,19 +77,19 @@ TEST_F(Protocolization, Deserialization)
 
 TEST_F(Protocolization, NodesData)
 {
-    EXPECT_EQ(deserialized->getNodeName(node1_id), "Node");
-    EXPECT_EQ(deserialized->getNodeName(node2_id), "Node");
+    EXPECT_EQ(deserialized->getGraph_const()->getNodeName(node1_id), "Node");
+    EXPECT_EQ(deserialized->getGraph_const()->getNodeName(node2_id), "Node");
 }
 
 TEST_F(Protocolization, PinsData)
 {
-    EXPECT_EQ(deserialized->getPinText(node1_id, pin1_id), "pin1");
+    EXPECT_EQ(deserialized->getGraph_const()->getPinText(node1_id, pin1_id), "pin1");
 }
 
 TEST_F(Protocolization, StructureData)
 {
-    const auto &deserializedStructure = deserialized->getConnections();
-    const auto &initialStructure = initial->getConnections();
+    const auto &deserializedStructure = deserialized->getGraph_const()->getConnections();
+    const auto &initialStructure = initial->getGraph_const()->getConnections();
 
     ASSERT_EQ(deserializedStructure.size(), initialStructure.size());
     

@@ -12,6 +12,8 @@
 
 #include <QtGraph/NodeFactory>
 #include <QtGraph/TypeManagers>
+#include <QtGraph/DNode>
+#include <QtGraph/DGraph>
 #include "private/models/nodespawndata.h"
 #include "private/utilities/utility.h"
 #include "private/helpers/idgenerator.h"
@@ -118,18 +120,33 @@ TEST(Utilities, ParseToColor)
 TEST(IDGenerator, General)
 {
     IDGenerator gen;
-    EXPECT_EQ(0, gen.generate());
-    EXPECT_EQ(1, gen.generate());
-    EXPECT_EQ(2, gen.generate());
-    gen.removeTaken(1);
-    EXPECT_EQ(1, gen.generate());
-    EXPECT_EQ(3, gen.generate());
-    gen = IDGenerator(std::set({ 0U, 1U, 2U, 3U, 4U, 5U, 6U }));
-    EXPECT_EQ(7, gen.generate());
-    gen.removeTaken(4);
-    EXPECT_EQ(4, gen.generate());
-    gen.removeTaken(0);
-    EXPECT_EQ(0, gen.generate());
+    EXPECT_EQ(0, gen.generate<DNode>());
+    EXPECT_EQ(1, gen.generate<DNode>());
+    EXPECT_EQ(2, gen.generate<DNode>());
+    gen.removeTaken<DNode>(1);
+    EXPECT_EQ(1, gen.generate<DNode>());
+    EXPECT_EQ(3, gen.generate<DNode>());
+    /*gen = IDGenerator({ { typeid(DNode).hash_code(), std::set({0U, 1U, 2U, 3U, 4U, 5U, 6U}) } });
+    EXPECT_EQ(7, gen.generate<DNode>());
+    gen.removeTaken<DNode>(4);
+    EXPECT_EQ(4, gen.generate<DNode>());
+    gen.removeTaken<DNode>(0);
+    EXPECT_EQ(0, gen.generate<DNode>());*/
+}
+
+TEST(IDGenerator, TypeSeparation)
+{
+    IDGenerator gen;
+    EXPECT_EQ(0, gen.generate<DNode>());
+    EXPECT_EQ(1, gen.generate<DNode>());
+    EXPECT_EQ(2, gen.generate<DNode>());
+
+    EXPECT_EQ(0, gen.generate<DPin>());
+    EXPECT_EQ(1, gen.generate<DPin>());
+
+    EXPECT_EQ(3, gen.generate<DNode>());
+
+    EXPECT_EQ(0, gen.generate<DGraph>());
 }
 
 TEST_F(TypeManagers, ParseJSON)

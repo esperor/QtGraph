@@ -3,19 +3,22 @@ project(QtGraph)
 add_subdirectory(proto)
 
 set(SOURCES
+    data/pin.cpp
+    data/graph.cpp
+    data/node.cpp
+
     helpers/nodefactory.cpp
-    helpers/idgenerator.cpp
     helpers/focuswatcher.cpp
     helpers/keywatcher.cpp
 
     logics/typemanager.cpp
-    logics/pin.cpp
-    logics/graph.cpp
-    logics/node.cpp
+    logics/controller.cpp
+    logics/object.cpp
 
     models/action.cpp
     models/nodespawndata.cpp
     models/pindata.cpp
+    models/selectionrectprocess.cpp
 
     widgets/pin.cpp
     widgets/node.cpp

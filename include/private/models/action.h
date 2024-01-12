@@ -7,9 +7,9 @@
 
 namespace qtgraph {
 
-class LGraph;
+class DGraph;
 
-#define ActionFn std::function<void(LGraph*, QVector<const void*>*)>
+#define ActionFn std::function<void(DGraph*, QVector<const void*>*)>
 
 enum class EAction
 {
@@ -38,8 +38,8 @@ public:
 
     ~IAction();
 
-    void executeOn(LGraph *g);
-    void reverseOn(LGraph *g);
+    void executeOn(DGraph *g);
+    void reverseOn(DGraph *g);
 
     ActionFn action = {};
     ActionFn reverse = {};
