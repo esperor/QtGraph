@@ -1,25 +1,21 @@
 #include <gtest/gtest.h>
 
-#include "private/models/pindata.h"
+#include <QtGraph/IPinData>
 #include <QtGraph/DPin>
-#include "private/logics/controller.h"
+#include <QtGraph/Controller>
 
 #include <fstream>
 
 #include "pin.pb.h"
 #include "structure.pb.h"
 
-#include <google/protobuf/util/message_differencer.h>
-
 using namespace testing;
 using namespace qtgraph;
 
-using google::protobuf::util::MessageDifferencer;
-
-class Protocolization : public ::testing::Test
+class TestProtocolization : public ::testing::Test
 {
 public:
-    Protocolization() {}
+    TestProtocolization() {}
     static void SetUpTestSuite()
     {
         initial = new Controller();
@@ -47,46 +43,46 @@ public:
     static uint32_t node1_id, node2_id, pin1_id, pin2_id;
 };
 
-Controller *Protocolization::initial = new Controller();
-Controller *Protocolization::deserialized = new Controller();
+Controller *TestProtocolization::initial = new Controller();
+Controller *TestProtocolization::deserialized = new Controller();
 
-std::string Protocolization::file = std::string();
-uint32_t Protocolization::node1_id = 0, Protocolization::node2_id = 0, Protocolization::pin1_id = 0, Protocolization::pin2_id = 0;
+std::string TestProtocolization::file = std::string();
+uint32_t TestProtocolization::node1_id = 0, TestProtocolization::node2_id = 0, TestProtocolization::pin1_id = 0, TestProtocolization::pin2_id = 0;
 
 
-TEST_F(Protocolization, PinDirectionCompatibility)
+TEST_F(TestProtocolization, PinDirectionCompatibility)
 {
     EPinDirection dir = EPinDirection::In;
 
     EXPECT_EQ((protocol::EPinDirection)dir, protocol::EPinDirection::IN);
 }
 
-TEST_F(Protocolization, Serialization)
+TEST_F(TestProtocolization, Serialization)
 {
     std::fstream out(file, std::ios::out | std::ios::trunc | std::ios::binary);
     ASSERT_TRUE(out.is_open());
     EXPECT_TRUE(initial->serialize(&out));
 }
 
-TEST_F(Protocolization, Deserialization)
+TEST_F(TestProtocolization, Deserialization)
 {
     std::fstream in(file, std::ios::in | std::ios::binary);
     ASSERT_TRUE(in.is_open());
     EXPECT_TRUE(deserialized->deserialize(&in));
 }
 
-TEST_F(Protocolization, NodesData)
+TEST_F(TestProtocolization, NodesData)
 {
     EXPECT_EQ(deserialized->getGraph_const()->getNodeName(node1_id), "Node");
     EXPECT_EQ(deserialized->getGraph_const()->getNodeName(node2_id), "Node");
 }
 
-TEST_F(Protocolization, PinsData)
+TEST_F(TestProtocolization, PinsData)
 {
     EXPECT_EQ(deserialized->getGraph_const()->getPinText(node1_id, pin1_id), "pin1");
 }
 
-TEST_F(Protocolization, StructureData)
+TEST_F(TestProtocolization, StructureData)
 {
     const auto &deserializedStructure = deserialized->getGraph_const()->getConnections();
     const auto &initialStructure = initial->getGraph_const()->getConnections();

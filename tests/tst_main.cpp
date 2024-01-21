@@ -22,10 +22,10 @@
 using namespace testing;
 using namespace qtgraph;
 
-class TypeManagers : public ::testing::Test
+class TestTypeManagers : public ::testing::Test
 {
 protected:
-    TypeManagers() {}
+    TestTypeManagers() {}
 
     void SetUp() override
     {
@@ -44,7 +44,7 @@ protected:
 
 
 
-TEST(IPinData, ByteArrayConversions)
+TEST(TestIPinData, ByteArrayConversions)
 {
     IPinData first(EPinDirection::In, 5, 6);
     QByteArray arr = first.toByteArray();
@@ -57,7 +57,7 @@ TEST(IPinData, ByteArrayConversions)
     EXPECT_EQ(first, second);
 }
 
-TEST(INodeSpawnData, ByteArrayConversions)
+TEST(TestINodeSpawnData, ByteArrayConversions)
 {
     QString str("Text");
     INodeSpawnData first(str);
@@ -71,7 +71,7 @@ TEST(INodeSpawnData, ByteArrayConversions)
     EXPECT_EQ(third, fourth);
 }
 
-TEST(Utilities, Snapping)
+TEST(TestUtilities, Snapping)
 {
     auto pointToString = [](QPoint point) {
         return std::to_string(point.x()) + ", " + std::to_string(point.y());
@@ -97,7 +97,7 @@ TEST(Utilities, Snapping)
     });
 }
 
-TEST(Utilities, ParseToColor)
+TEST(TestUtilities, ParseToColor)
 {
     auto check = [](QString str, int r, int g, int b) {
         QColor clr = parseToColor(str);
@@ -117,7 +117,7 @@ TEST(Utilities, ParseToColor)
     check(str3, 0xFF, 0xFF, 0xFF);
 }
 
-TEST(IDGenerator, General)
+TEST(TestIDGenerator, General)
 {
     IDGenerator gen;
     EXPECT_EQ(0, gen.generate<DNode>());
@@ -134,7 +134,7 @@ TEST(IDGenerator, General)
     EXPECT_EQ(0, gen.generate<DNode>());*/
 }
 
-TEST(IDGenerator, TypeSeparation)
+TEST(TestIDGenerator, TypeSeparation)
 {
     IDGenerator gen;
     EXPECT_EQ(0, gen.generate<DNode>());
@@ -149,7 +149,7 @@ TEST(IDGenerator, TypeSeparation)
     EXPECT_EQ(0, gen.generate<DGraph>());
 }
 
-TEST_F(TypeManagers, ParseJSON)
+TEST_F(TestTypeManagers, ParseJSON)
 {
     int node_types = 6;
     int pin_types = 5;
@@ -158,7 +158,7 @@ TEST_F(TypeManagers, ParseJSON)
     EXPECT_EQ(pin_types, _PinTypeManager.Types().size()) << "Expected " << pin_types << " and got " << _PinTypeManager.Types().size() << " pin types.";
 }
 
-TEST_F(TypeManagers, Properties)
+TEST_F(TestTypeManagers, Properties)
 {
     EXPECT_EQ("power", _PinTypeManager.typeNameByID(0));
     EXPECT_EQ(0, _PinTypeManager.TypeNames()["power"]);
