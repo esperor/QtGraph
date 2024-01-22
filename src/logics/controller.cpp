@@ -115,7 +115,7 @@ WTypeBrowser *Controller::exportTypeBrowser()
 
 void Controller::connectPins(IPinData in, IPinData out)
 {   
-    if (_graph->_connectedPins.contains(out, in)) return;
+    if (_graph->_connectedPins.contains(in, out)) return;
 
     QVector<const void*> objects = 
     { (void*)new IPinData(in) 
@@ -130,7 +130,7 @@ void Controller::connectPins(IPinData in, IPinData out)
             IPinData in = *(IPinData*)o->at(0);
             IPinData out = *(IPinData*)o->at(1);
 
-            g->_connectedPins.insert(out, in);
+            g->_connectedPins.insert(in, out);
             g->_nodes[out.nodeID]->setPinConnection(out.pinID, in);
             g->_nodes[in.nodeID]->setPinConnection(in.pinID, out);
         },
@@ -149,7 +149,7 @@ void Controller::connectPins(IPinData in, IPinData out)
 
 void Controller::disconnectPins(IPinData in, IPinData out)
 {
-    if (_graph->_connectedPins.find(out, in) == _graph->_connectedPins.end()) 
+    if (_graph->_connectedPins.find(in, out) == _graph->_connectedPins.end()) 
         return;
 
     QVector<const void*> objects = 
@@ -165,7 +165,7 @@ void Controller::disconnectPins(IPinData in, IPinData out)
             IPinData in = *(IPinData*)o->at(0);
             IPinData out = *(IPinData*)o->at(1);
 
-            g->_connectedPins.remove(out);
+            g->_connectedPins.remove(in);
 
             g->_nodes[out.nodeID]->removePinConnection(out.pinID, in.pinID);
             g->_nodes[in.nodeID]->removePinConnection(in.pinID, out.pinID);
@@ -250,19 +250,16 @@ void Controller::removeNodes(QSet<uint32_t> &&ids)
 
     // that is the map of nodes with their pin connections
     auto *map = new QMap< node_id, const QMap<pin_id, QVector<IPinData>>* >();
+    auto *nodes = new QVector<DNode*>();
     for (auto nodeId : *nodeIds)
     {
         DNode *node = _graph->nodes()[nodeId];
+        nodes->append(node);
         map->insert(nodeId, node->getPinConnections());
     }
 
-    // Here i have pointer to pointer to removed objects map
-    // so that when IAction destructor works, it won't delete the 
-    // _removedObjects but only the pointer
-    auto removedObjectsPtr = &_removedObjects;
-
     QVector<const void*> objects = 
-    { (void*)&removedObjectsPtr // ptr to ptr
+    { (void*)nodes
     , (void*)map
     };
 
@@ -271,8 +268,10 @@ void Controller::removeNodes(QSet<uint32_t> &&ids)
         "Node deletion",
         [](DGraph *g, QVector<const void*> *o)
         {
-            auto removedObjects = *(QMap<QString, void*>**)o->at(0);
+            auto nodes = (QVector<DNode*>*)o->at(0);
             auto map = (QMap< node_id, const QMap<pin_id, QVector<IPinData>>* >*)o->at(1);
+
+            bool nodesEmpty = nodes->empty();
 
             for (auto pair : map->asKeyValueRange())
             {   
@@ -280,7 +279,8 @@ void Controller::removeNodes(QSet<uint32_t> &&ids)
                 const QMap<pin_id, QVector<IPinData> >* connections = pair.second;
 
                 DNode *node = g->nodes()[nodeId];
-                removedObjects->insert("node_" + QString::number(nodeId), (void*)node);
+
+                if (nodesEmpty) nodes->append(node);
                 
                 if (!connections->empty())
                 {
@@ -301,17 +301,17 @@ void Controller::removeNodes(QSet<uint32_t> &&ids)
         },
         [](DGraph *g, QVector<const void*> *o)
         {
-            auto removedObjects = *(QMap<QString, void*>**)o->at(0);
+            auto nodes = (QVector<DNode*>*)o->at(0);
             auto map = (QMap< node_id, const QMap<pin_id, QVector<IPinData>>* >*)o->at(1);
 
-            for (auto pair : map->asKeyValueRange())
+            for (auto it_node = nodes->begin(); it_node != nodes->end(); )
             {   
-                node_id nodeId = pair.first;
-                const QMap<pin_id, QVector<IPinData> >* connections = pair.second;
+                DNode *node = *it_node;
+                node_id nodeId = node->ID();
+                const QMap<pin_id, QVector<IPinData> >* connections = map->value(nodeId);
 
-                DNode *node = (DNode*)removedObjects->value("node_" + QString::number(nodeId));
-                removedObjects->remove("node_" + QString::number(nodeId));
                 g->nodes().insert(nodeId, node);
+                it_node = nodes->erase(it_node);
                 
                 if (!connections->empty())
                 {

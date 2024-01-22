@@ -102,13 +102,7 @@ private:
     bool _bIsRecording; 
     Stack<IAction*> _stack;
 
-    NodeFactory *_factory; 
-
-    QMap<QString, void*> _removedObjects;
-    
-    
-
-    
+    NodeFactory *_factory;     
 };
 
 }
