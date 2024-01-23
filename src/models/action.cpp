@@ -25,14 +25,14 @@ IAction::~IAction()
 
 void IAction::executeOn(DGraph *g) 
 { 
-    g->registerAction(code);
     action(g, &objects);
+    g->registerAction(code);
 }
 
 void IAction::reverseOn(DGraph *g) 
 { 
-    g->registerAction(code);
     reverse(g, &objects);
+    g->registerAction(code);
 }
 
 }

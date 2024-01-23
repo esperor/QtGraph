@@ -68,13 +68,7 @@ public:
     PinTypeManager *getPinTypeManager() { return _factory->getPinTypeManager(); }
     WTypeBrowser *getTypeBrowser() { return _typeBrowser; }
 
-    void setNodeTypeManager(NodeTypeManager *manager) { _factory->setNodeTypeManager(manager); }
-    void setPinTypeManager(PinTypeManager *manager) { _factory->setPinTypeManager(manager); }
-    inline void setTypeManagers(PinTypeManager *pins, NodeTypeManager *nodes)
-    {
-        setNodeTypeManager(nodes);
-        setPinTypeManager(pins);
-    }
+    void setTypeManagers(PinTypeManager *pins, NodeTypeManager *nodes);
 
     DNode *addNode(QPoint canvasPosition, QString name);
     DNode *addNode(QPoint canvasPosition, int typeID);

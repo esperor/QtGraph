@@ -104,8 +104,10 @@ void WCanvas::visualize()
 void WCanvas::clear()
 { 
     _selectedNodes.clear();
+    std::ranges::for_each(_nodes, [this](WANode *node) {
+        delete node;
+    });
     _nodes.clear();
-    _offset = QPointF(0, 0);
 }
 
 const DGraph *WCanvas::getGraph_const() const

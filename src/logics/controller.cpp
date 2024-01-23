@@ -23,8 +23,9 @@ Controller::~Controller()
 }
 
 
+///////////////////////////////////////////
 // ------------ SERIALIZATION -------------
-
+///////////////////////////////////////////
 
 
 bool Controller::serialize(std::fstream *output) const
@@ -55,10 +56,11 @@ bool Controller::deserialize(std::fstream *input)
     pGraph.ParseFromIstream(input);
 
     protocol::State state = pGraph.state();
-    if (state.has_node_type_manager())
-        setNodeTypeManager(NodeTypeManager::fromProtocolTypeManager(state.node_type_manager()));
-    if (state.has_pin_type_manager())
-        setPinTypeManager(PinTypeManager::fromProtocolTypeManager(state.pin_type_manager()));
+    if (state.has_node_type_manager() && state.has_pin_type_manager())
+        setTypeManagers(
+            PinTypeManager::fromProtocolTypeManager(state.pin_type_manager()), 
+            NodeTypeManager::fromProtocolTypeManager(state.node_type_manager())
+        );
 
     clear();
     _graph->deprotocolize(pGraph);
@@ -77,15 +79,83 @@ bool Controller::deserialize(std::fstream *input)
 }
 
 
+//////////////////////////////////////////////
+// ----------- ACTION MANAGEMENT -------------
+//////////////////////////////////////////////
 
-// ------------- GENERAL -------------
 
+void Controller::addAction(IAction *action, bool execute)
+{
+    if (execute) executeAction(action);
+    // if action isn't to execute, we assume it's already completed
+    else onActionExecuted(action->code); 
+    _stack.push(action);
+}
+
+void Controller::executeAction(IAction *action)
+{
+    if (_bIsRecording)
+    {
+        _bIsRecording = false;
+        action->executeOn(_graph);
+        _bIsRecording = true;
+    }
+    else action->executeOn(_graph);
+}
+
+void Controller::processAction(IAction *action)
+{
+    if (_bIsRecording)
+        addAction(action);
+    else
+    {
+        executeAction(action);
+        delete action;
+    }  
+}
+
+void Controller::undo(int num)
+{
+    if (num <= 0) return;
+    num = std::min(num, _stack.size());
+
+    _bIsRecording = false;
+
+    while (num > 0)
+    {
+        IAction *action = _stack.pop();
+        action->reverseOn(_graph);
+        delete action;
+        num--;
+    }
+
+    _bIsRecording = true;
+}
+
+
+///////////////////////////////////////
+// ------------- SLOTS ----------------
+///////////////////////////////////////
 
 
 void Controller::onActionExecuted(EAction e)
 {
-    if (_canvas) _canvas->visualize();
+    switch (e)
+    {
+    case EAction::Addition:
+    case EAction::Deletion:
+    case EAction::Conversion:
+        if (_canvas) _canvas->visualize();
+        break;
+    default:;
+    }
 }
+
+
+//////////////////////////////////////
+// ------------- GENERAL -------------
+//////////////////////////////////////
+
 
 WCanvas *Controller::createCanvas(QWidget *parent)
 {
@@ -186,52 +256,6 @@ void Controller::disconnectPins(IPinData in, IPinData out)
     );
 
     processAction(action);  
-}
-
-void Controller::addAction(IAction *action, bool execute)
-{
-    if (execute) executeAction(action);
-    _stack.push(action);
-}
-
-void Controller::executeAction(IAction *action)
-{
-    if (_bIsRecording)
-    {
-        _bIsRecording = false;
-        action->executeOn(_graph);
-        _bIsRecording = true;
-    }
-    else action->executeOn(_graph);
-}
-
-void Controller::processAction(IAction *action)
-{
-    if (_bIsRecording)
-        addAction(action);
-    else
-    {
-        executeAction(action);
-        delete action;
-    }  
-}
-
-void Controller::undo(int num)
-{
-    if (num <= 0) return;
-    num = std::min(num, _stack.size());
-
-    _bIsRecording = false;
-
-    while (num > 0)
-    {
-        IAction *action = _stack.pop();
-        action->reverseOn(_graph);
-        delete action;
-        num--;
-    }
-
-    _bIsRecording = true;
 }
 
 void Controller::removeNode(uint32_t id)
@@ -390,6 +414,17 @@ void Controller::clear()
 {
     QList<uint32_t> l = _graph->_nodes.keys();
     removeNodes(QSet(l.begin(), l.end()));
+}
+
+void Controller::setTypeManagers(PinTypeManager* pins, NodeTypeManager* nodes)
+{
+    _factory->setPinTypeManager(pins);
+    _factory->setNodeTypeManager(nodes);
+
+    if (!_typeBrowser) return;
+    _typeBrowser->_nodeTypeManager = nodes;
+    _typeBrowser->_pinTypeManager = pins;
+    _typeBrowser->initTypes();
 }
 
 DNode *Controller::addNode(QPoint canvasPosition, int typeID)
