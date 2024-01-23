@@ -45,10 +45,11 @@ WCanvas::WCanvas(QWidget *parent)
     , _bIsSnappingEnabled{ true }
     , _lastResizedSize{ nullptr }
     , _bTelemetricsEnabled{ DEBUG }
-    , _selectedNodes{ QSet<uint32_t>() }
     , _selectionRectProcess{ nullptr }
     , _selectionRect{ std::nullopt }
     , _selectionAreaPreviousNodes{ QSet<uint32_t>() }
+    , _nodes{ QMap<uint32_t, WANode*>() }
+    , _selectedNodes{ QSet<uint32_t>() }
 {
     setMouseTracking(true);
     setAutoFillBackground(true);
@@ -90,6 +91,7 @@ const QMap<short, float> WCanvas::_zoomMultipliers =
 
 void WCanvas::visualize()
 {
+    clear();
     std::ranges::for_each(controller()->nodes(), [this](DNode *dnode){
         addNode(dnode);
     });
@@ -101,6 +103,8 @@ void WCanvas::visualize()
 
 void WCanvas::clear()
 { 
+    _selectedNodes.clear();
+    _nodes.clear();
     _offset = QPointF(0, 0);
 }
 
@@ -283,6 +287,9 @@ DNode *WCanvas::addNode(DNode *dnode)
     uint32_t id = _nodes.insert(dnode->ID(), 
             controller()->getFactory()->makeSuitableWNode(dnode, this)
         ).key();
+
+    if (dnode->isSelected())
+        _selectedNodes.insert(id);
 
     _nodes[id]->show();
 

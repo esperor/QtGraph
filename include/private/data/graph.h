@@ -44,11 +44,15 @@ public:
     QMultiMap<IPinData, IPinData> &connectedPins() { return _connectedPins; }
     QString getPinText(uint32_t nodeID, uint32_t pinID) const;
     QString getNodeName(uint32_t nodeID) const;
+    void registerAction(EAction e) { emit actionExecuted(e); }
     
     // Key is an in-pin and the value is an out-pin
     const QMultiMap<IPinData, IPinData> &getConnections() const { return _connectedPins; }
 
     DNode *addNode(DNode *node);
+
+signals:
+    void actionExecuted(EAction e);
 
 private:
     QMap<uint32_t, DNode*> _nodes;

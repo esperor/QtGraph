@@ -57,6 +57,7 @@ public:
 
     const DGraph *getGraph_const() const { return _graph; }
     const QMap<uint32_t, DNode*> &nodes() const { return _graph->nodes(); }
+    const Stack<IAction*> *getStack() const { return &_stack; }
 
     template <class T>
     const std::set<uint32_t> &getTakenIDs() const { return _IDgenerator->getTakenIDs<T>(); }
@@ -86,9 +87,11 @@ public slots:
     void onIsSelectedChanged(bool selected, uint32_t nodeID);
 
 private slots: 
-    void onNodeRemoved(uint32_t nodeID);
+    void onActionExecuted(EAction e);
 
 private:
+    IAction *createActionRemoveNodes(QSet<uint32_t> &&ids);
+
     IDGenerator *_IDgenerator;
 
     DGraph *_graph;

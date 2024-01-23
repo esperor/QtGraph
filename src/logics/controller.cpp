@@ -13,7 +13,7 @@ Controller::Controller(QObject *parent)
     , _factory{ new NodeFactory(this) }
     , _stack{ Stack<IAction*>() }
 {
-    connect(this, &Controller::nodeRemoved, this, &Controller::onNodeRemoved);
+    connect(_graph, &DGraph::actionExecuted, this, &Controller::onActionExecuted);
 }
 
 Controller::~Controller()
@@ -81,6 +81,11 @@ bool Controller::deserialize(std::fstream *input)
 // ------------- GENERAL -------------
 
 
+
+void Controller::onActionExecuted(EAction e)
+{
+    if (_canvas) _canvas->visualize();
+}
 
 WCanvas *Controller::createCanvas(QWidget *parent)
 {
@@ -236,6 +241,11 @@ void Controller::removeNode(uint32_t id)
 
 void Controller::removeNodes(QSet<uint32_t> &&ids)
 {
+    processAction(createActionRemoveNodes(std::move(ids)));   
+}
+
+IAction *Controller::createActionRemoveNodes(QSet<uint32_t> &&ids)
+{
     using node_id = uint32_t;
     using pin_id = uint32_t;
 
@@ -246,20 +256,27 @@ void Controller::removeNodes(QSet<uint32_t> &&ids)
     for (auto it = values.begin(); it != values.end(); it++)
         if (!_graph->containsNode(*it)) nodeIds->remove(*it);
 
-    if (nodeIds->empty()) return;
+    if (nodeIds->empty()) return 
+    new IAction(
+        EAction::None,
+        "",
+        [](DGraph *g, QVector<const void*> *o){}, 
+        [](DGraph *g, QVector<const void*> *o){},
+        {}
+    );
 
     // that is the map of nodes with their pin connections
     auto *map = new QMap< node_id, const QMap<pin_id, QVector<IPinData>>* >();
-    auto *nodes = new QVector<DNode*>();
+    auto *nodesToRemove = new QVector<DNode*>();
     for (auto nodeId : *nodeIds)
     {
         DNode *node = _graph->nodes()[nodeId];
-        nodes->append(node);
+        nodesToRemove->append(node);
         map->insert(nodeId, node->getPinConnections());
     }
 
     QVector<const void*> objects = 
-    { (void*)nodes
+    { (void*)nodesToRemove
     , (void*)map
     };
 
@@ -268,10 +285,10 @@ void Controller::removeNodes(QSet<uint32_t> &&ids)
         "Node deletion",
         [](DGraph *g, QVector<const void*> *o)
         {
-            auto nodes = (QVector<DNode*>*)o->at(0);
+            auto nodesToRemove = (QVector<DNode*>*)o->at(0);
             auto map = (QMap< node_id, const QMap<pin_id, QVector<IPinData>>* >*)o->at(1);
 
-            bool nodesEmpty = nodes->empty();
+            bool nodesEmpty = nodesToRemove->empty();
 
             for (auto pair : map->asKeyValueRange())
             {   
@@ -280,7 +297,7 @@ void Controller::removeNodes(QSet<uint32_t> &&ids)
 
                 DNode *node = g->nodes()[nodeId];
 
-                if (nodesEmpty) nodes->append(node);
+                if (nodesEmpty) nodesToRemove->append(node);
                 
                 if (!connections->empty())
                 {
@@ -301,17 +318,17 @@ void Controller::removeNodes(QSet<uint32_t> &&ids)
         },
         [](DGraph *g, QVector<const void*> *o)
         {
-            auto nodes = (QVector<DNode*>*)o->at(0);
+            auto nodesToRemove = (QVector<DNode*>*)o->at(0);
             auto map = (QMap< node_id, const QMap<pin_id, QVector<IPinData>>* >*)o->at(1);
 
-            for (auto it_node = nodes->begin(); it_node != nodes->end(); )
+            for (auto it_node = nodesToRemove->begin(); it_node != nodesToRemove->end(); )
             {   
                 DNode *node = *it_node;
                 node_id nodeId = node->ID();
                 const QMap<pin_id, QVector<IPinData> >* connections = map->value(nodeId);
 
                 g->nodes().insert(nodeId, node);
-                it_node = nodes->erase(it_node);
+                it_node = nodesToRemove->erase(it_node);
                 
                 if (!connections->empty())
                 {
@@ -332,8 +349,9 @@ void Controller::removeNodes(QSet<uint32_t> &&ids)
         objects
     );
 
-    processAction(action);   
+    return action;
 }
+
 
 void Controller::deselectAll()
 {
@@ -394,6 +412,35 @@ DNode *Controller::addNode(DNode *node)
     connect(node, &DNode::isSelectedChanged, this, &Controller::onIsSelectedChanged);
     DNode *nd = _graph->addNode(node);
     if (_canvas) _canvas->visualize();
+
+    if (!_bIsRecording) return nd;
+
+    // What is happening here is that for the reverse version
+    // of addNode we use removeNode function. Accordingly,
+    // for potential redo of addNode the reversed removeNode
+    // is going to be used.
+
+    IAction *aRemoveNode = createActionRemoveNodes({ node->ID() });
+    QVector<const void*> objects = { (void*)aRemoveNode };
+
+    IAction *action = new IAction(
+        EAction::Addition,
+        "Node addition",
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            auto aRemoveNode = (IAction*)(o->at(0));
+            aRemoveNode->reverseOn(g);
+        },
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            auto aRemoveNode = (IAction*)(o->at(0));
+            aRemoveNode->executeOn(g);
+        },
+        objects
+    );
+
+    addAction(action, false);
+
     return nd;
 }
 
@@ -458,16 +505,6 @@ void Controller::onIsSelectedChanged(bool selected, uint32_t nodeID)
     case false: _selectedNodes->remove(nodeID); 
         return;
     }
-}
-
-void Controller::onNodeRemoved(uint32_t id)
-{
-    WANode *ptr = _wNodes->value(id);
-    _wNodes->remove(id);
-    if (_selectedNodes->contains(id)) 
-        _selectedNodes->remove(id);
-
-    delete ptr;
 }
 
 }

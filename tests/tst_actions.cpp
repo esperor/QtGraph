@@ -45,6 +45,11 @@ DNode* TestActions::node1 = nullptr, * TestActions::node2 = nullptr;
 
 uint32_t TestActions::node1_id = 0, TestActions::node2_id = 0, TestActions::pin1_id = 0, TestActions::pin2_id = 0;
 
+TEST_F(TestActions, Count)
+{
+    EXPECT_EQ(controller->getStack()->size(), 4);
+}
+
 TEST_F(TestActions, PinConnection)
 {
     IPinData pin1_data = node1->pin(pin1_id).value()->getData();
