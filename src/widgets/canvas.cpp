@@ -617,15 +617,19 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
 
         // draw all existing pins connections
         std::ranges::for_each(_graph->getConnections().asKeyValueRange(), [&](std::pair<IPinData, IPinData> pair) {
-            // connections are being drawed from out- to in-pins only
-            if (pair.first.pinDirection == EPinDirection::In) return;
+            IPinData pdOrigin = pair.second;
+            IPinData pdTarget = pair.first;
 
-            QPoint origin = _nodes[pair.first.nodeID]->getOutlineCoordinateForPinID(pair.first.pinID);
-            QPoint target = _nodes[pair.second.nodeID]->getOutlineCoordinateForPinID(pair.second.pinID);
+            // connections are being drawed from out- to in-pins only
+            if (pair.second.pinDirection == EPinDirection::In)
+                std::swap(pdOrigin, pdTarget);
+
+            QPoint origin = _nodes[pdOrigin.nodeID]->getOutlineCoordinateForPinID(pdOrigin.pinID);
+            QPoint target = _nodes[pdTarget.nodeID]->getOutlineCoordinateForPinID(pdTarget.pinID);
 
             QLinearGradient gradient(origin, target);
-            gradient.setColorAt(0, getColorOfPinByPinData(pair.first));
-            gradient.setColorAt(1, getColorOfPinByPinData(pair.second));
+            gradient.setColorAt(0, getColorOfPinByPinData(pdOrigin));
+            gradient.setColorAt(1, getColorOfPinByPinData(pdTarget));
             pen.setBrush(QBrush(gradient));
             painter->setPen(pen);
 
