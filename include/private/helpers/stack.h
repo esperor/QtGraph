@@ -18,6 +18,7 @@ public:
 
     void setLength(int l);
     int getLength() const { return _length; }
+    const std::deque<T> &getContainer() const { return _container; }
     int size() const { return _container.size(); }
 
     void clear() { _container.clear(); }

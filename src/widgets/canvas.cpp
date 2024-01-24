@@ -654,22 +654,35 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
         pen.setColor(c_dotsColor);
         painter->setPen(pen);
 
-        auto pointToString = [](QPoint point) {
+        auto pointToString = [](QPoint point) -> QString {
             return QString::number(point.x()) + ", " + QString::number(point.y());
         };
 
-        auto pointfToString = [](QPointF point) {
+        auto pointfToString = [](QPointF point) -> QString {
             return QString::number(point.x()) + ", " + QString::number(point.y());
         };
 
-        auto parseSet = [](std::set<uint32_t> set) {
+        auto parseSet = [](std::set<uint32_t> set) -> QString {
             QString str = "[";
             std::ranges::for_each(set, [&str](uint32_t num) {
-                str += " ";
-                str += QString::number(num);
-                str += ",";
+                str += " " + QString::number(num) + ",";
             });
             return str.size() == 1 ? str.append("]") : str.removeLast().append(" ]");
+        };
+
+        auto parseStack = [](const Stack<IAction*>* stack) -> QString {
+            auto& c = stack->getContainer();
+            QString str = QString::number(stack->size()) + ": [";
+            for (IAction* a : c)
+            {
+                QString aStr = QString::fromStdString(a->desc)
+                    .split(' ')
+                    .replaceInStrings(QRegularExpression("^([A-z])([a-z]*)$"), "\\1")
+                    .join("")
+                    .toUpper();
+                str += " " + aStr + ",";
+            }
+            return str.size() == 4 ? str.append("]") : str.removeLast().append(" ]");
         };
 
         QPoint mouseCanvasPosition = mapToCanvas(_mousePosition.toPoint());
@@ -681,6 +694,7 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
         painter->drawText(QPoint(20, 120), QString( "Drag pos: " + pointToString(_draggedPinTarget) ));
         painter->drawText(QPoint(20, 140), QString( "Node IDs: " + parseSet(controller()->getTakenIDs<DNode>()) ));
         painter->drawText(QPoint(20, 160), QString( "Pin IDs: " + parseSet(controller()->getTakenIDs<DPin>()) ));
+        painter->drawText(QRect(QPoint(20, 180), QPoint(220, 220)), QString( "Stack: " + parseStack(controller()->getStack()) ));
     }
 
     setUpdatesEnabled(true);

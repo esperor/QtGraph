@@ -68,6 +68,8 @@ const float c_nodeNameRoundedRectSizeY = 0.2f;
 const float c_nodeNameRoundedRectSizeX = 0.5f;
 const float c_nodeMaxOutlineWidth = 3.0f;
 
+// NODES GENERAL CONSTANTS
+const float c_nodeMoveMinimalDistance = 2.0f;
 
 
 // ----- NODEFACTORY ---------

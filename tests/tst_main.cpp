@@ -117,6 +117,29 @@ TEST(TestUtilities, ParseToColor)
     check(str3, 0xFF, 0xFF, 0xFF);
 }
 
+//TEST(TestUtilities, ParseStack)
+//{
+//    auto stack = Stack<IAction*>();
+//
+//    stack.push(new IAction(
+//        EAction::Disconnection,
+//        "Pin disconnection",
+//        [](DGraph*, QVector<const void *>*){},
+//        [](DGraph*, QVector<const void *>*){},
+//        {}
+//    ));
+//
+//    stack.push(new IAction(
+//        EAction::Addition,
+//        "Node addition",
+//        [](DGraph*, QVector<const void *>*){},
+//        [](DGraph*, QVector<const void *>*){},
+//        {}
+//    ));
+//
+//    EXPECT_EQ("[ PD, NA ]", parseStack(&stack));
+//}
+
 TEST(TestIDGenerator, General)
 {
     IDGenerator gen;
@@ -126,12 +149,6 @@ TEST(TestIDGenerator, General)
     gen.removeTaken<DNode>(1);
     EXPECT_EQ(1, gen.generate<DNode>());
     EXPECT_EQ(3, gen.generate<DNode>());
-    /*gen = IDGenerator({ { typeid(DNode).hash_code(), std::set({0U, 1U, 2U, 3U, 4U, 5U, 6U}) } });
-    EXPECT_EQ(7, gen.generate<DNode>());
-    gen.removeTaken<DNode>(4);
-    EXPECT_EQ(4, gen.generate<DNode>());
-    gen.removeTaken<DNode>(0);
-    EXPECT_EQ(0, gen.generate<DNode>());*/
 }
 
 TEST(TestIDGenerator, TypeSeparation)

@@ -65,7 +65,7 @@ void WANode::setNodePosition(QPointF pos)
 
     IAction *_action = new IAction(
         EAction::Moving,
-        "Node position change",
+        "Node movement",
         [](DGraph *g, QVector<const void*> *o)
         {
             uint32_t id = *(uint32_t*)(o->at(0));
@@ -100,7 +100,7 @@ QRect WANode::getMappedRect() const
 
 QPointF WANode::getCanvasPosition() const
 {
-    return _lnode->canvasPosition() + _positionDelta;
+    return _lnode->canvasPosition() + _positionDelta.toPointF();
 }
 
 void WANode::addPin(WPin *pin)
@@ -166,7 +166,9 @@ void WANode::mousePressEvent(QMouseEvent *event)
 void WANode::mouseReleaseEvent(QMouseEvent *event)
 {
     this->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
-    setNodePosition(_lnode->canvasPosition() + _positionDelta);
+
+    if (_positionDelta.length() >= c_nodeMoveMinimalDistance) 
+        setNodePosition(_lnode->canvasPosition() + _positionDelta.toPointF());
     _positionDelta = { 0, 0 };
 }
 
@@ -182,10 +184,10 @@ void WANode::mouseMoveEvent(QMouseEvent *event)
         if (_parentCanvas->getSnappingEnabled())
         {
             _hiddenPosition += (offset / _zoom);
-            _positionDelta = snap(_hiddenPosition, _parentCanvas->getSnappingInterval()) - _lnode->canvasPosition();
+            _positionDelta = QVector2D(snap(_hiddenPosition, _parentCanvas->getSnappingInterval()) - _lnode->canvasPosition());
         }
         else
-            _positionDelta += offset / _zoom;
+            _positionDelta += QVector2D(offset / _zoom);
 
         _lastMouseDownPosition = mapToParent(event->position());
     }

@@ -47,7 +47,7 @@ uint32_t TestActions::node1_id = 0, TestActions::node2_id = 0, TestActions::pin1
 
 TEST_F(TestActions, Count)
 {
-    EXPECT_EQ(controller->getStack()->size(), 4);
+    EXPECT_EQ(controller->getStack()->size(), 2);
 }
 
 TEST_F(TestActions, PinConnection)

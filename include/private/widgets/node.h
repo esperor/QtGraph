@@ -93,7 +93,7 @@ protected:
     QPointF _hiddenPosition;
     QPointF _lastMouseDownPosition;
     QPointF _mousePressPosition;
-    QPointF _positionDelta;
+    QVector2D _positionDelta;
     
     QMap<uint32_t, QPoint> _pinsOutlineCoords;
 

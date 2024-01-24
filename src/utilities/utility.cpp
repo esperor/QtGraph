@@ -135,7 +135,7 @@ QColor parseToColor(const QString &str)
     int nums[rgbNums];
     int i = 0;
 
-    for (auto elem : list)
+    for (auto &elem : list)
     {
         bool ok;
         int num = elem.toInt(&ok, 16);
