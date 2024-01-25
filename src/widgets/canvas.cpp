@@ -675,6 +675,7 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
             QString str = QString::number(stack->size()) + ": [";
             for (IAction* a : c)
             {
+                // making acronym
                 QString aStr = QString::fromStdString(a->desc)
                     .split(' ')
                     .replaceInStrings(QRegularExpression("^([A-z])([a-z]*)$"), "\\1")

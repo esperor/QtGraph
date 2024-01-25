@@ -10,6 +10,7 @@ Controller::Controller(QObject *parent)
     : QObject{ parent }
     , _IDgenerator{ new IDGenerator() }
     , _graph{ new DGraph(this) }
+    , _bIsRecording{ true }
     , _factory{ new NodeFactory(this) }
     , _stack{ Stack<IAction*>() }
 {
@@ -119,6 +120,7 @@ void Controller::undo(int num)
     if (num <= 0) return;
     num = std::min(num, _stack.size());
 
+    bool wasRecording = _bIsRecording;
     _bIsRecording = false;
 
     while (num > 0)
@@ -129,7 +131,7 @@ void Controller::undo(int num)
         num--;
     }
 
-    _bIsRecording = true;
+    if (wasRecording) _bIsRecording = true;
 }
 
 

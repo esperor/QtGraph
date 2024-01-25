@@ -159,7 +159,7 @@ void MainWindow::close()
 
 void MainWindow::clear()
 {
-    _canvas->clear();
+    _controller->clear();
 }
 
 void MainWindow::initMenuBar()
@@ -216,6 +216,14 @@ void MainWindow::initMenuBar()
     _snapping->setChecked(_canvas->getSnappingEnabled());
     connect(_snapping, &QAction::triggered, this, [this](bool checked){
         _canvas->setSnappingEnabled(checked); 
+    });
+
+    _recordActions = new QAction("Record actions", this);
+    _menuOptions->addAction(_recordActions);
+    _recordActions->setCheckable(true);
+    _recordActions->setChecked(_controller->getRecordingActions());
+    connect(_recordActions, &QAction::triggered, this, [this](bool checked){
+        _controller->setRecordingActions(checked); 
     });
 
     _clear = new QAction("Clear canvas", this);

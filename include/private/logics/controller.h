@@ -44,6 +44,8 @@ public:
     // Reverses last recorded action.
     void undo(int num = 1);
 
+    void setRecordingActions(bool b) { _bIsRecording = b; }
+    bool getRecordingActions() const { return _bIsRecording; }
 
     void removeNode(uint32_t id);
     void removeNodes(QSet<uint32_t> &&ids);

@@ -46,7 +46,7 @@ private:
     qtgraph::WCanvas *_canvas;
     QTimer *_timer;
 
-    QAction *_openTypes, *_save, *_saveAs, *_open, *_close, *_snapping, *_clear, *_telemetrics, *_undo;
+    QAction *_openTypes, *_save, *_saveAs, *_open, *_close, *_snapping, *_clear, *_telemetrics, *_recordActions, *_undo;
     QMenu *_menuFile, *_menuOptions, *_menuEdit;
     QMenuBar *_menuBar;
 };
