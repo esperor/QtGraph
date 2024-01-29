@@ -108,5 +108,15 @@ void NodeFactory::setPinTypeManager(PinTypeManager *manager)
     _pinTypeManager->setParent(this); 
 }
 
+void NodeFactory::clear()
+{
+    delete _nodeTypeManager;
+    _nodeTypeManager = nullptr;
+    delete _pinTypeManager;
+    _pinTypeManager = nullptr;
+
+    emit cleared();
+}
+
 }
 

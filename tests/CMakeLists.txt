@@ -28,6 +28,7 @@ qt_add_executable(tests
     tst_protobuf.cpp    
     tst_controller.cpp
     tst_actions.cpp
+    tst_integration.cpp
 )
 
 target_link_libraries(tests PRIVATE

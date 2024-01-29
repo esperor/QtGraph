@@ -8,7 +8,6 @@ namespace qtgraph {
 
 Controller::Controller(QObject *parent)
     : QObject{ parent }
-    , _IDgenerator{ new IDGenerator() }
     , _graph{ new DGraph(this) }
     , _bIsRecording{ true }
     , _factory{ new NodeFactory(this) }
@@ -20,7 +19,6 @@ Controller::Controller(QObject *parent)
 Controller::~Controller()
 {
     delete _graph;
-    delete _IDgenerator;
 }
 
 
@@ -44,7 +42,7 @@ bool Controller::serialize(std::fstream *output) const
     if (_canvas)
     {
         *(pGraph.mutable_offset()) = convertTo_protocolPointF(_canvas->getOffset());
-        pGraph.set_zoom(_canvas->getZoomMultiplier());
+        pGraph.set_zoom(_canvas->getZoom());
     }
 
     pGraph.SerializeToOstream(output);
@@ -53,6 +51,8 @@ bool Controller::serialize(std::fstream *output) const
 
 bool Controller::deserialize(std::fstream *input)
 {
+    reset();
+
     protocol::Graph pGraph;
     pGraph.ParseFromIstream(input);
 
@@ -63,13 +63,11 @@ bool Controller::deserialize(std::fstream *input)
             NodeTypeManager::fromProtocolTypeManager(state.node_type_manager())
         );
 
-    clear();
     _graph->deprotocolize(pGraph);
 
     if (_canvas)
     {
         _canvas->setUpdatesEnabled(false);
-        _canvas->clear();
         _canvas->setZoom(pGraph.zoom());
         _canvas->setOffset(convertFrom_protocolPointF(pGraph.offset()));
         _canvas->visualize();
@@ -130,8 +128,8 @@ void Controller::undo(int num)
         delete action;
         num--;
     }
-
-    if (wasRecording) _bIsRecording = true;
+    
+    _bIsRecording = wasRecording;
 }
 
 
@@ -158,6 +156,15 @@ void Controller::onActionExecuted(EAction e)
 // ------------- GENERAL -------------
 //////////////////////////////////////
 
+
+void Controller::reset()
+{
+    clear();
+    if (_canvas) _canvas->clear();
+    _factory->clear();
+    // typeBrowser is automatically cleared after the factory
+    _stack.clear();
+}
 
 WCanvas *Controller::createCanvas(QWidget *parent)
 {
@@ -427,6 +434,7 @@ void Controller::setTypeManagers(PinTypeManager* pins, NodeTypeManager* nodes)
     _typeBrowser->_nodeTypeManager = nodes;
     _typeBrowser->_pinTypeManager = pins;
     _typeBrowser->initTypes();
+    connect(_factory, &NodeFactory::clear, _typeBrowser, &WTypeBrowser::onNodeFactoryCleared);
 }
 
 DNode *Controller::addNode(QPoint canvasPosition, int typeID)

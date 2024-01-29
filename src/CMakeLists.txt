@@ -7,6 +7,7 @@ set(SOURCES
     data/graph.cpp
     data/node.cpp
 
+    helpers/idgenerator.cpp
     helpers/nodefactory.cpp
     helpers/focuswatcher.cpp
     helpers/keywatcher.cpp

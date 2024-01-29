@@ -39,6 +39,7 @@ const float c_diffCoeffForPinConnectionCurves = 0.4f;
 const short c_xDiffFunctionBlendPoint = 100;
 const short c_maxYDiff = 50;
 const short c_maxDiffsSum = 150;
+const short c_standartZoomLevel = -4;
 
 
 

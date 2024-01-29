@@ -55,17 +55,15 @@ public:
     void disconnectPins(IPinData in, IPinData out);
     void processNodeSelectSignal(INodeSelectSignal signal);
 
+    void reset();
+
     SelectionRectProcess *startSelectionRectProcess() { return new SelectionRectProcess(this); }
 
     const DGraph *getGraph_const() const { return _graph; }
     const QMap<uint32_t, DNode*> &nodes() const { return _graph->nodes(); }
     const Stack<IAction*> *getStack() const { return &_stack; }
 
-    template <class T>
-    const std::set<uint32_t> &getTakenIDs() const { return _IDgenerator->getTakenIDs<T>(); }
-
     const NodeFactory *getFactory() const { return _factory; }
-    IDGenerator *getIDGenerator() { return _IDgenerator; }
     NodeTypeManager *getNodeTypeManager() { return _factory->getNodeTypeManager(); }
     PinTypeManager *getPinTypeManager() { return _factory->getPinTypeManager(); }
     WTypeBrowser *getTypeBrowser() { return _typeBrowser; }
@@ -87,8 +85,6 @@ private slots:
 
 private:
     IAction *createActionRemoveNodes(QSet<uint32_t> &&ids);
-
-    IDGenerator *_IDgenerator;
 
     DGraph *_graph;
 

@@ -14,19 +14,18 @@ DNode::DNode(DGraph *graph, std::optional<uint32_t> id)
     , _name{ QString("") }
     , _pins{ QMap<uint32_t, DPin*>() }
 {
-    _idGen = controller()->getIDGenerator();
     if (!id.has_value())
-        _ID = _idGen->generate<DNode>();
+        _ID = ID::generate<DNode>();
     else
     {
         _ID = *id;
-        _idGen->addTaken<DNode>(_ID);
+        ID::addTaken<DNode>(_ID);
     }  
 }
 
 DNode::~DNode() 
 {
-    _idGen->removeTaken<DNode>(ID());
+    ID::removeTaken<DNode>(ID());
 }
 
 void DNode::protocolize(protocol::Node *pNode) const

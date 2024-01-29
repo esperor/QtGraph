@@ -16,14 +16,13 @@ DPin::DPin(DNode *parent, std::optional<uint32_t> id)
     , _color{ QColor(0, 0, 0) }
     , _connectedPins{ QMap<uint32_t, IPinData>() }
 {
-    _idGen = controller()->getIDGenerator();
     uint32_t _id;
     if (!id.has_value())
-        _id = _idGen->generate<DPin>();
+        _id = ID::generate<DPin>();
     else
     {
         _id = *id;
-        _idGen->addTaken<DPin>(_id);
+        ID::addTaken<DPin>(_id);
     }  
 
     _data = IPinData(EPinDirection::In, parent->ID(), _id);
@@ -31,7 +30,7 @@ DPin::DPin(DNode *parent, std::optional<uint32_t> id)
 
 DPin::~DPin()
 {
-    _idGen->removeTaken<DPin>(ID());
+    ID::removeTaken<DPin>(ID());
 }
 
 void DPin::protocolize(protocol::Pin *pPin) const

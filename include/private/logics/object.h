@@ -19,9 +19,6 @@ public:
     virtual uint32_t ID() const = 0;
 
     virtual Controller *controller() = 0;
-
-protected:
-    IDGenerator *_idGen = nullptr;
 };
 
 }

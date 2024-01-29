@@ -29,7 +29,6 @@ class NodeFactory : public QObject
 
 public:
     NodeFactory(QObject *parent = nullptr);
-
     
     DNode *makeNodeOfType(int typeID, DGraph *graph) const;
     DNode *makeNodeAndPinsOfType(int typeID, DGraph *graph) const;
@@ -45,6 +44,11 @@ public:
 
     void setNodeTypeManager(NodeTypeManager *manager);
     void setPinTypeManager(PinTypeManager *manager);
+
+    void clear();
+
+signals:
+    void cleared();
 
 private:
     void addPinsToNodeByJsonValue(const QJsonValue &val, DNode *node, EPinDirection direction) const;

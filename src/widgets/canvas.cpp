@@ -39,7 +39,7 @@ WCanvas::WCanvas(QWidget *parent)
     , _offset{ QPointF(0, 0) }
     , _lastMouseDownPosition{ QPointF() }
     , _mousePosition{ QPointF(0, 0) }
-    , _zoom{ -4 }
+    , _zoom{ c_standartZoomLevel }
     , _bIsTypeBrowserBound{ false }
     , _snappingInterval{ 20 }
     , _bIsSnappingEnabled{ true }
@@ -198,6 +198,18 @@ void WCanvas::processSelectionArea(const QMouseEvent *event)
             _selectionAreaPreviousNodes.insert(node->ID());
         }
     });
+}
+
+void WCanvas::setZoom(int level) 
+{
+    if (_zoomMultipliers.contains(level))
+        _zoom = level; 
+    else 
+    {
+        _zoom = c_standartZoomLevel;
+        qDebug() << "Incorrect zoom level passed to WCanvas::setZoom()";
+    }
+        
 }
 
 
@@ -662,7 +674,7 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
             return QString::number(point.x()) + ", " + QString::number(point.y());
         };
 
-        auto parseSet = [](std::set<uint32_t> set) -> QString {
+        auto parseSet = [](QSet<uint32_t> set) -> QString {
             QString str = "[";
             std::ranges::for_each(set, [&str](uint32_t num) {
                 str += " " + QString::number(num) + ",";
@@ -682,7 +694,7 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
                     .join("")
                     .toUpper();
                 str += " " + aStr + ",";
-            }
+            }   
             return str.size() == 4 ? str.append("]") : str.removeLast().append(" ]");
         };
 
@@ -693,9 +705,10 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
         painter->drawText(QPoint(20, 80), QString( "Center: " + pointfToString(_offset) ));
         painter->drawText(QPoint(20, 100), QString( "Zoom: " + QString::number(_zoom) ));
         painter->drawText(QPoint(20, 120), QString( "Drag pos: " + pointToString(_draggedPinTarget) ));
-        painter->drawText(QPoint(20, 140), QString( "Node IDs: " + parseSet(controller()->getTakenIDs<DNode>()) ));
-        painter->drawText(QPoint(20, 160), QString( "Pin IDs: " + parseSet(controller()->getTakenIDs<DPin>()) ));
-        painter->drawText(QRect(QPoint(20, 180), QPoint(220, 220)), QString( "Stack: " + parseStack(controller()->getStack()) ));
+        painter->drawText(QPoint(20, 140), QString( "Node IDs: " + parseSet(QSet(ID::getTakenIDs<DNode>().begin(), ID::getTakenIDs<DNode>().end())) ));
+        painter->drawText(QPoint(20, 160), QString( "Pin IDs: " + parseSet(QSet(ID::getTakenIDs<DPin>().begin(), ID::getTakenIDs<DPin>().end())) ));
+        painter->drawText(QPoint(20, 160), QString( "Pin IDs: " + parseSet(_selectedNodes) ));
+        painter->drawText(QRect(QPoint(20, 180), QPoint(220, 260)), QString( "Stack: " + parseStack(controller()->getStack()) ));
     }
 
     setUpdatesEnabled(true);

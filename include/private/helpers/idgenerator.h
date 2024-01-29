@@ -6,47 +6,46 @@
 
 namespace qtgraph {
 
-class IDGenerator {
+class ID {
 public:
-    IDGenerator() : _takenIDs{ new QMap<size_t, std::set<uint32_t>>() } {}
-    IDGenerator(QMap<size_t, std::set<uint32_t>> alreadyTakenIDs)
-    {
-        _takenIDs = new QMap(alreadyTakenIDs);
-    }
+    template <class T>
+    static const std::set<uint32_t> &getTakenIDs();
 
-    ~IDGenerator() { delete _takenIDs; }
+    static const QMap<size_t, std::set<uint32_t>> &getTakenIDs() { return *_takenIDs; }
 
     template <class T>
-    const std::set<uint32_t> &getTakenIDs() const;
-
-    template <class T>
-    uint32_t generate();
+    static uint32_t generate();
 
     // returns false if nothing was removed
     template <class T>
-    bool removeTaken(uint32_t id);
+    static bool removeTaken(uint32_t id);
 
     // returns false if given id is already taken
     template <class T>
-    bool addTaken(uint32_t id);
+    static bool addTaken(uint32_t id);
+
+    template <class T>
+    static void clear();
+
+    static void clear() { _takenIDs->clear(); }
 
 private:
     template <class T>
-    std::set<uint32_t>& takenIDs();
+    static std::set<uint32_t>& takenIDs();
 
-    QMap<size_t, std::set<uint32_t>> *_takenIDs;
+    static QMap<size_t, std::set<uint32_t>> *_takenIDs;
 };
 
 template <class T>
-const std::set<uint32_t> &IDGenerator::getTakenIDs() const
+const std::set<uint32_t> &ID::getTakenIDs()
 { return _takenIDs->operator[](typeid(T).hash_code()); }
 
 template <class T>
-std::set<uint32_t> &IDGenerator::takenIDs()
+std::set<uint32_t> &ID::takenIDs()
 { return _takenIDs->operator[](typeid(T).hash_code()); }
 
 template <class T>
-uint32_t IDGenerator::generate()
+uint32_t ID::generate()
 {   
     if (!_takenIDs->contains(typeid(T).hash_code()))
     {
@@ -68,18 +67,24 @@ uint32_t IDGenerator::generate()
 }
 
 template <class T>
-bool IDGenerator::removeTaken(uint32_t id)
+bool ID::removeTaken(uint32_t id)
 {
     if (!_takenIDs->contains(typeid(T).hash_code())) return false;
     return takenIDs<T>().erase(id);
 }
 
 template <class T>
-bool IDGenerator::addTaken(uint32_t id)
+bool ID::addTaken(uint32_t id)
 {
     if (takenIDs<T>().contains(id)) return false;
     takenIDs<T>().insert(id);
     return true;
+}
+
+template <class T>
+void ID::clear()
+{
+    takenIDs<T>().clear();
 }
 
 }

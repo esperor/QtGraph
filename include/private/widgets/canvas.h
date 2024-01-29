@@ -53,7 +53,7 @@ public:
     // Visualizes attached graph. Performance-heavy, don't call in cycle
     void visualize();
     void setOffset(QPointF offset) { _offset = offset; }
-    void setZoom(int level) { _zoom = level; }
+    void setZoom(int level);
     void setSnappingEnabled(bool enabled = true) { _bIsSnappingEnabled = enabled; }
     void setTelemetricsEnabled(bool enabled = true) { _bTelemetricsEnabled = enabled; }
     void toggleSnapping() { _bIsSnappingEnabled = !_bIsSnappingEnabled; }

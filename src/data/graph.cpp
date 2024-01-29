@@ -10,15 +10,14 @@ DGraph::DGraph(QObject *parent)
     , _nodes{ QMap<uint32_t, DNode*>() }
     , _connectedPins{ QMultiMap<IPinData, IPinData>() }   
 {
-    _idGen = controller()->getIDGenerator();
-
-    _ID = _idGen->generate<DGraph>();
+    _ID = ID::generate<DGraph>();
 
 }
 
 DGraph::~DGraph()
 {
-    _idGen->removeTaken<DGraph>(ID());
+    ID::removeTaken<DGraph>(ID());
+    
 }
 
 

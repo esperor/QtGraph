@@ -42,6 +42,15 @@ protected:
     PinTypeManager _PinTypeManager;
 };
 
+class TestIdGenerator : public ::testing::Test
+{
+protected:
+    TestIdGenerator() {}
+
+    void SetUp() override { ASSERT_TRUE(ID::getTakenIDs().empty()); }
+    void TearDown() override { ID::clear(); }
+};
+
 
 
 TEST(TestIPinData, ByteArrayConversions)
@@ -140,30 +149,28 @@ TEST(TestUtilities, ParseToColor)
 //    EXPECT_EQ("[ PD, NA ]", parseStack(&stack));
 //}
 
-TEST(TestIDGenerator, General)
+TEST_F(TestIdGenerator, General)
 {
-    IDGenerator gen;
-    EXPECT_EQ(0, gen.generate<DNode>());
-    EXPECT_EQ(1, gen.generate<DNode>());
-    EXPECT_EQ(2, gen.generate<DNode>());
-    gen.removeTaken<DNode>(1);
-    EXPECT_EQ(1, gen.generate<DNode>());
-    EXPECT_EQ(3, gen.generate<DNode>());
+    EXPECT_EQ(0, ID::generate<DNode>());
+    EXPECT_EQ(1, ID::generate<DNode>());
+    EXPECT_EQ(2, ID::generate<DNode>());
+    ID::removeTaken<DNode>(1);
+    EXPECT_EQ(1, ID::generate<DNode>());
+    EXPECT_EQ(3, ID::generate<DNode>());
 }
 
-TEST(TestIDGenerator, TypeSeparation)
+TEST_F(TestIdGenerator, TypeSeparation)
 {
-    IDGenerator gen;
-    EXPECT_EQ(0, gen.generate<DNode>());
-    EXPECT_EQ(1, gen.generate<DNode>());
-    EXPECT_EQ(2, gen.generate<DNode>());
+    EXPECT_EQ(0, ID::generate<DNode>());
+    EXPECT_EQ(1, ID::generate<DNode>());
+    EXPECT_EQ(2, ID::generate<DNode>());
 
-    EXPECT_EQ(0, gen.generate<DPin>());
-    EXPECT_EQ(1, gen.generate<DPin>());
+    EXPECT_EQ(0, ID::generate<DPin>());
+    EXPECT_EQ(1, ID::generate<DPin>());
 
-    EXPECT_EQ(3, gen.generate<DNode>());
+    EXPECT_EQ(3, ID::generate<DNode>());
 
-    EXPECT_EQ(0, gen.generate<DGraph>());
+    EXPECT_EQ(0, ID::generate<DGraph>());
 }
 
 TEST_F(TestTypeManagers, ParseJSON)
