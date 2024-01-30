@@ -79,6 +79,7 @@ signals:
 
 public slots:
     void onIsSelectedChanged(bool selected, uint32_t nodeID);
+    void onNodeAdded(DNode *node);
 
 private slots: 
     void onActionExecuted(EAction e);

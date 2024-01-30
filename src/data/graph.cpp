@@ -131,6 +131,7 @@ DNode *DGraph::addNode(DNode *node)
     node->setParent(this);
     uint32_t id = node->ID();
     _nodes.insert(id, node);
+    emit nodeAdded(node);
     return _nodes[id];
 }
     

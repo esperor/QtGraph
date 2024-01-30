@@ -14,6 +14,7 @@ Controller::Controller(QObject *parent)
     , _stack{ Stack<IAction*>() }
 {
     connect(_graph, &DGraph::actionExecuted, this, &Controller::onActionExecuted);
+    connect(_graph, &DGraph::nodeAdded, this, &Controller::onNodeAdded);
 }
 
 Controller::~Controller()
@@ -149,6 +150,11 @@ void Controller::onActionExecuted(EAction e)
         break;
     default:;
     }
+}
+
+void Controller::onNodeAdded(DNode* node)
+{
+    connect(node, &DNode::isSelectedChanged, this, &Controller::onIsSelectedChanged);
 }
 
 
@@ -454,7 +460,6 @@ DNode *Controller::addNode(QPoint canvasPosition, QString name)
 
 DNode *Controller::addNode(DNode *node)
 {
-    connect(node, &DNode::isSelectedChanged, this, &Controller::onIsSelectedChanged);
     DNode *nd = _graph->addNode(node);
     if (_canvas) _canvas->visualize();
 

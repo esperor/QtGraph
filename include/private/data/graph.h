@@ -53,6 +53,7 @@ public:
 
 signals:
     void actionExecuted(EAction e);
+    void nodeAdded(DNode *node);
 
 private:
     QMap<uint32_t, DNode*> _nodes;
