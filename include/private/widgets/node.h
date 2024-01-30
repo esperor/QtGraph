@@ -16,6 +16,7 @@
 #include "data/node.h"
 #include "models/action.h"
 #include "models/nodeselectsignal.h"
+#include "models/nodemovesignal.h"
 
 #include "qtgraph.h"
 
@@ -53,10 +54,11 @@ public:
     void addPin(WPin *pin);
 
 signals:
-    void selectSignal(INodeSelectSignal signal);
+    void select(INodeSelectSignal signal);
     void pinDrag(IPinDragSignal signal);
     void pinConnect(IPinData outPin, IPinData inPin);
     void pinConnectionBreak(IPinData outPin, IPinData inPin);
+    void moved(INodeMoveSignal signal);
     void action(IAction *action);
 
 private slots:

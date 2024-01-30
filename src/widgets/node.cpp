@@ -57,38 +57,7 @@ void WANode::setPinFakeConnected(uint32_t pinID, bool isConnected)
 
 void WANode::setNodePosition(QPointF pos)
 {
-    QVector<const void*> objects = 
-    { (void*)new uint32_t(_lnode->ID())
-    , (void*)new QPointF(pos)
-    , (void*)new QPointF(_lnode->canvasPosition()) 
-    };
-
-    IAction *_action = new IAction(
-        EAction::Moving,
-        "Node movement",
-        [](DGraph *g, QVector<const void*> *o)
-        {
-            uint32_t id = *(uint32_t*)o->at(0);
-            auto newPos = (const QPointF*)o->at(1);
-
-            g->nodes()[id]->setCanvasPosition(*newPos);
-        },
-        [](DGraph *g, QVector<const void*> *o)
-        {
-            uint32_t id = *(uint32_t*)o->at(0);
-            auto oldPos = (const QPointF*)o->at(2);
-
-            g->nodes()[id]->setCanvasPosition(*oldPos);
-        },
-        [](QVector<const void*> *o)
-        {
-            delete (uint32_t*)o->at(0);
-            delete (const QPointF*)o->at(1);
-            delete (const QPointF*)o->at(2);
-        },
-        objects
-    );
-    emit action(_action);
+    emit moved({ pos, ID() });
 }
 
 float WANode::getParentCanvasZoomMultiplier() const
@@ -158,14 +127,14 @@ void WANode::mousePressEvent(QMouseEvent *event)
         bool isMultiSelectionModifierDown = event->modifiers() & c_multiSelectionModifier;
         
         if (isMultiSelectionModifierDown && _lnode->isSelected())
-            selectSignal({ false, true, _lnode->ID() });
+            emit select({ false, true, _lnode->ID() });
         else if (_lnode->isSelected())
         
             // this means that selection state shouldn't change neither 
             // on action execution nor inversion
-            selectSignal({ {}, isMultiSelectionModifierDown, _lnode->ID() });
+            emit select({ {}, isMultiSelectionModifierDown, _lnode->ID() });
         else
-            selectSignal({ true, isMultiSelectionModifierDown, _lnode->ID() });
+            emit select({ true, isMultiSelectionModifierDown, _lnode->ID() });
     }
 }
 

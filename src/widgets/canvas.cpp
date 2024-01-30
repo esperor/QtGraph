@@ -216,9 +216,14 @@ void WCanvas::setZoom(int level)
 // ---------------------------- SLOTS --------------------------------
 
 
-void WCanvas::onNodeSelectSignal(INodeSelectSignal signal)
+void WCanvas::onNodeSelected(INodeSelectSignal signal)
 {
-    controller()->processNodeSelectSignal(signal);
+    emit nodeSelected(signal);
+}
+
+void WCanvas::onNodeMoved(INodeMoveSignal signal)
+{
+    emit nodeMoved(signal);
 }
 
 void WCanvas::onPinConnect(IPinData outPin, IPinData inPin)
@@ -308,9 +313,10 @@ DNode *WCanvas::addNode(DNode *dnode)
     _nodes[id]->show();
 
     connect(_nodes[id], &WANode::pinDrag, this, &WCanvas::onPinDrag);
-    connect(_nodes[id], &WANode::selectSignal, this, &WCanvas::onNodeSelectSignal);
+    connect(_nodes[id], &WANode::select, this, &WCanvas::onNodeSelected);
     connect(_nodes[id], &WANode::pinConnect, this, &WCanvas::onPinConnect);
     connect(_nodes[id], &WANode::pinConnectionBreak, this, &WCanvas::onPinConnectionBreak);
+    connect(_nodes[id], &WANode::moved, this, &WCanvas::onNodeMoved);
     connect(_nodes[id], &WANode::action, this, &WCanvas::onAction);
 
     return dnode;
@@ -349,7 +355,7 @@ void WCanvas::mousePressEvent(QMouseEvent *event)
         if (event->modifiers() & c_multiSelectionModifier)
             break;
 
-        controller()->deselectAll();
+        emit selectionRemoved();
         break;
     default:;
     }

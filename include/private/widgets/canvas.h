@@ -22,6 +22,7 @@
 #include "models/pindragsignal.h"
 #include "models/nodeselectsignal.h"
 #include "models/selectionrectprocess.h"
+#include "models/nodemovesignal.h"
 
 #include "structure.pb.h"
 
@@ -79,6 +80,11 @@ public:
 
     DNode* addNode(DNode *lnode); 
 
+signals:
+    void selectionRemoved();
+    void nodeSelected(INodeSelectSignal signal);
+    void nodeMoved(INodeMoveSignal signal);
+
 protected:
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
@@ -92,7 +98,8 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
-    void onNodeSelectSignal(INodeSelectSignal signal);
+    void onNodeMoved(INodeMoveSignal signal);
+    void onNodeSelected(INodeSelectSignal signal);
     void onPinDrag(IPinDragSignal signal);
     void onPinConnect(IPinData outPin, IPinData inPin);
     void onPinConnectionBreak(IPinData outPin, IPinData inPin);

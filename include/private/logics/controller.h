@@ -9,6 +9,8 @@
 #include "helpers/stack.h"
 #include "widgets/canvas.h"
 #include "models/selectionrectprocess.h"
+#include "models/nodemovesignal.h"
+#include "models/nodeselectsignal.h"
 
 namespace qtgraph {
 
@@ -49,11 +51,9 @@ public:
 
     void removeNode(uint32_t id);
     void removeNodes(QSet<uint32_t> &&ids);
-    void deselectAll();
     void clear();
     void connectPins(IPinData in, IPinData out);
     void disconnectPins(IPinData in, IPinData out);
-    void processNodeSelectSignal(INodeSelectSignal signal);
 
     void reset();
 
@@ -77,12 +77,13 @@ public:
 signals:
     void nodeRemoved(uint32_t id);    
 
-public slots:
-    void onIsSelectedChanged(bool selected, uint32_t nodeID);
-    void onNodeAdded(DNode *node);
-
 private slots: 
     void onActionExecuted(EAction e);
+    void onIsSelectedChanged(bool selected, uint32_t nodeID);
+    void onNodeAdded(DNode *node);
+    void onSelectionRemoved();
+    void onNodeMoved(INodeMoveSignal signal);
+    void onNodeSelected(INodeSelectSignal signal);
 
 private:
     IAction *createActionRemoveNodes(QSet<uint32_t> &&ids);

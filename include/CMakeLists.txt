@@ -15,6 +15,7 @@ set(QTGRAPH_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/controller.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/logics/object.h
 
+    ${CMAKE_CURRENT_SOURCE_DIR}/private/models/nodemovesignal.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/models/nodeselectsignal.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/models/nodespawndata.h
     ${CMAKE_CURRENT_SOURCE_DIR}/private/models/pindata.h

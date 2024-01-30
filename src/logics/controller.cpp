@@ -14,7 +14,7 @@ Controller::Controller(QObject *parent)
     , _stack{ Stack<IAction*>() }
 {
     _stack.setElementDestructor([](IAction* a){ 
-            delete a; 
+        delete a; 
     });
 
     connect(_graph, &DGraph::actionExecuted, this, &Controller::onActionExecuted);
@@ -190,7 +190,12 @@ WCanvas *Controller::createCanvas(QWidget *parent)
     _typeBrowser = new WTypeBrowser(_canvas);
     _typeBrowser->show();
 
-    connect(_canvas, &Controller::destroyed, this, [this](QObject *obj){
+    connect(_canvas, &WCanvas::selectionRemoved, this, &Controller::onSelectionRemoved);
+    connect(_canvas, &WCanvas::nodeSelected, this, &Controller::onNodeSelected);
+    connect(_canvas, &WCanvas::nodeMoved, this, &Controller::onNodeMoved);
+    
+
+    connect(_canvas, &WCanvas::destroyed, this, [this](QObject *obj){
         delete _typeBrowser;
     });
     connect(_typeBrowser, &WTypeBrowser::onMove, _canvas, &WCanvas::onTypeBrowserMove);
@@ -315,6 +320,7 @@ IAction *Controller::createActionRemoveNodes(QSet<uint32_t> &&ids)
         "",
         [](DGraph *g, QVector<const void*> *o){}, 
         [](DGraph *g, QVector<const void*> *o){},
+        [](QVector<const void*>* o){},
         {}
     );
 
@@ -325,6 +331,8 @@ IAction *Controller::createActionRemoveNodes(QSet<uint32_t> &&ids)
         DNode *node = _graph->nodes()[nodeId];
         map->insert(nodeId, node->getPinConnections());
     }
+
+    delete nodeIds;
 
     QVector<const void*> objects = 
     { (void*)new QVector<DNode*>() // storage for deleted nodes
@@ -414,7 +422,7 @@ IAction *Controller::createActionRemoveNodes(QSet<uint32_t> &&ids)
 }
 
 
-void Controller::deselectAll()
+void Controller::onSelectionRemoved()
 {
     if (_selectedNodes->empty()) return;
 
@@ -524,7 +532,7 @@ DNode *Controller::addNode(DNode *node)
     return nd;
 }
 
-void Controller::processNodeSelectSignal(INodeSelectSignal signal)
+void Controller::onNodeSelected(INodeSelectSignal signal)
 {
     if (!signal.selected.has_value() && _selectedNodes->size() == 1) return;
 
@@ -576,6 +584,43 @@ void Controller::processNodeSelectSignal(INodeSelectSignal signal)
             delete (std::optional<bool>*)o->at(1);
             delete (bool*)o->at(2);
             delete (QSet<uint32_t>*)o->at(3);
+        },
+        objects
+    );
+
+    processAction(action);
+}
+
+void Controller::onNodeMoved(INodeMoveSignal signal)
+{
+    QVector<const void*> objects = 
+    { (void*)new uint32_t(signal.nodeID)
+    , (void*)new QPointF(signal.newPosition)
+    , (void*)new QPointF(nodes()[signal.nodeID]->canvasPosition()) 
+    };
+
+    IAction *action = new IAction(
+        EAction::Moving,
+        "Node movement",
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            uint32_t id = *(uint32_t*)o->at(0);
+            auto newPos = (const QPointF*)o->at(1);
+
+            g->nodes()[id]->setCanvasPosition(*newPos);
+        },
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            uint32_t id = *(uint32_t*)o->at(0);
+            auto oldPos = (const QPointF*)o->at(2);
+
+            g->nodes()[id]->setCanvasPosition(*oldPos);
+        },
+        [](QVector<const void*> *o)
+        {
+            delete (uint32_t*)o->at(0);
+            delete (const QPointF*)o->at(1);
+            delete (const QPointF*)o->at(2);
         },
         objects
     );

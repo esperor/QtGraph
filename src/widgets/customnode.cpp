@@ -5,11 +5,12 @@
 #include "helpers/focuswatcher.h"
 #include "helpers/keywatcher.h"
 
-#include "widgets/moc_customnode.cpp"
 #include "utilities/utility.h"
 #include "utilities/constants.h"
 #include "models/action.h"
 #include "data/graph.h"
+
+#include "widgets/moc_customnode.cpp"
 
 namespace qtgraph {
     
