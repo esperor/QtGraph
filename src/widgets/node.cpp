@@ -68,17 +68,23 @@ void WANode::setNodePosition(QPointF pos)
         "Node movement",
         [](DGraph *g, QVector<const void*> *o)
         {
-            uint32_t id = *(uint32_t*)(o->at(0));
-            auto newPos = (const QPointF*)(o->at(1));
+            uint32_t id = *(uint32_t*)o->at(0);
+            auto newPos = (const QPointF*)o->at(1);
 
             g->nodes()[id]->setCanvasPosition(*newPos);
         },
         [](DGraph *g, QVector<const void*> *o)
         {
-            uint32_t id = *(uint32_t*)(o->at(0));
-            auto oldPos = (const QPointF*)(o->at(2));
+            uint32_t id = *(uint32_t*)o->at(0);
+            auto oldPos = (const QPointF*)o->at(2);
 
             g->nodes()[id]->setCanvasPosition(*oldPos);
+        },
+        [](QVector<const void*> *o)
+        {
+            delete (uint32_t*)o->at(0);
+            delete (const QPointF*)o->at(1);
+            delete (const QPointF*)o->at(2);
         },
         objects
     );

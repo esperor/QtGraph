@@ -708,7 +708,7 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
         painter->drawText(QPoint(20, 140), QString( "Node IDs: " + parseSet(QSet(ID::getTakenIDs<DNode>().begin(), ID::getTakenIDs<DNode>().end())) ));
         painter->drawText(QPoint(20, 160), QString( "Pin IDs: " + parseSet(QSet(ID::getTakenIDs<DPin>().begin(), ID::getTakenIDs<DPin>().end())) ));
         painter->drawText(QPoint(20, 180), QString( "Selected nodes: " + parseSet(_selectedNodes) ));
-        painter->drawText(QRect(QPoint(20, 200), QPoint(220, 260)), QString( "Stack: " + parseStack(controller()->getStack()) ));
+        painter->drawText(QRect(QPoint(20, 200), QPoint(300, 280)), QString( "Stack: " + parseStack(controller()->getStack()) ));
     }
 
     setUpdatesEnabled(true);

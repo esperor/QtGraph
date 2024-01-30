@@ -10,6 +10,7 @@ namespace qtgraph {
 class DGraph;
 
 #define ActionFn std::function<void(DGraph*, QVector<const void*>*)>
+#define DestructorFn std::function<void(QVector<const void*>*)>
 
 enum class EAction
 {
@@ -33,6 +34,7 @@ public:
         , std::string _desc
         , ActionFn _action
         , ActionFn _reverse
+        , DestructorFn _destructor
         , QVector<const void*> _objects = {}
     );
 
@@ -43,6 +45,7 @@ public:
 
     ActionFn action = {};
     ActionFn reverse = {};
+    DestructorFn destructor = {};
     std::string desc = "";
     EAction code = EAction::Unknown;
     QVector<const void*> objects;

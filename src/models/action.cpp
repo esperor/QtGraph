@@ -8,19 +8,19 @@ IAction::IAction(EAction _code,
     std::string _desc, 
     ActionFn _action,
     ActionFn _reverse,
+    DestructorFn _destructor,
     QVector<const void*> _objects)
         : code{ _code }
         , desc{ _desc }
         , action{ std::move(_action) }
         , reverse{ std::move(_reverse) }
+        , destructor{ std::move(_destructor) }
         , objects{ std::move(_objects) }
 {}
 
 IAction::~IAction()
 {
-    std::ranges::for_each(objects, [](const void* ptr){
-        delete ptr;
-    });
+    destructor(&objects);
 }
 
 void IAction::executeOn(DGraph *g) 

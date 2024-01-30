@@ -13,6 +13,10 @@ Controller::Controller(QObject *parent)
     , _factory{ new NodeFactory(this) }
     , _stack{ Stack<IAction*>() }
 {
+    _stack.setElementDestructor([](IAction* a){ 
+            delete a; 
+    });
+
     connect(_graph, &DGraph::actionExecuted, this, &Controller::onActionExecuted);
     connect(_graph, &DGraph::nodeAdded, this, &Controller::onNodeAdded);
 }
@@ -231,6 +235,11 @@ void Controller::connectPins(IPinData in, IPinData out)
 
             g->controller()->disconnectPins(in, out);
         },
+        [](QVector<const void*> *o)
+        {
+            delete (IPinData*)o->at(0);
+            delete (IPinData*)o->at(1);
+        },
         objects
     );
 
@@ -266,6 +275,11 @@ void Controller::disconnectPins(IPinData in, IPinData out)
             IPinData out = *(IPinData*)o->at(1);
 
             g->controller()->connectPins(in, out);
+        },
+        [](QVector<const void*> *o)
+        {
+            delete (IPinData*)o->at(0);
+            delete (IPinData*)o->at(1);
         },
         objects
     );
@@ -306,16 +320,14 @@ IAction *Controller::createActionRemoveNodes(QSet<uint32_t> &&ids)
 
     // that is the map of nodes with their pin connections
     auto *map = new QMap< node_id, const QMap<pin_id, QVector<IPinData>>* >();
-    auto *nodesToRemove = new QVector<DNode*>();
     for (auto nodeId : *nodeIds)
     {
         DNode *node = _graph->nodes()[nodeId];
-        nodesToRemove->append(node);
         map->insert(nodeId, node->getPinConnections());
     }
 
     QVector<const void*> objects = 
-    { (void*)nodesToRemove
+    { (void*)new QVector<DNode*>() // storage for deleted nodes
     , (void*)map
     };
 
@@ -324,10 +336,8 @@ IAction *Controller::createActionRemoveNodes(QSet<uint32_t> &&ids)
         "Node deletion",
         [](DGraph *g, QVector<const void*> *o)
         {
-            auto nodesToRemove = (QVector<DNode*>*)o->at(0);
+            auto removedNodes = (QVector<DNode*>*)o->at(0);
             auto map = (QMap< node_id, const QMap<pin_id, QVector<IPinData>>* >*)o->at(1);
-
-            bool nodesEmpty = nodesToRemove->empty();
 
             for (auto pair : map->asKeyValueRange())
             {   
@@ -336,7 +346,7 @@ IAction *Controller::createActionRemoveNodes(QSet<uint32_t> &&ids)
 
                 DNode *node = g->nodes()[nodeId];
 
-                if (nodesEmpty) nodesToRemove->append(node);
+                removedNodes->append(node);
                 
                 if (!connections->empty())
                 {
@@ -357,17 +367,17 @@ IAction *Controller::createActionRemoveNodes(QSet<uint32_t> &&ids)
         },
         [](DGraph *g, QVector<const void*> *o)
         {
-            auto nodesToRemove = (QVector<DNode*>*)o->at(0);
+            auto removedNodes = (QVector<DNode*>*)o->at(0);
             auto map = (QMap< node_id, const QMap<pin_id, QVector<IPinData>>* >*)o->at(1);
 
-            for (auto it_node = nodesToRemove->begin(); it_node != nodesToRemove->end(); )
+            for (auto it_node = removedNodes->begin(); it_node != removedNodes->end(); )
             {   
                 DNode *node = *it_node;
                 node_id nodeId = node->ID();
                 const QMap<pin_id, QVector<IPinData> >* connections = map->value(nodeId);
 
                 g->nodes().insert(nodeId, node);
-                it_node = nodesToRemove->erase(it_node);
+                it_node = removedNodes->erase(it_node);
                 
                 if (!connections->empty())
                 {
@@ -384,6 +394,18 @@ IAction *Controller::createActionRemoveNodes(QSet<uint32_t> &&ids)
                     });
                 }
             }
+        },
+        [](QVector<const void*> *o)
+        {
+            auto nodes = (QVector<DNode*>*)o->at(0);
+            for (DNode *node : *nodes)
+                delete node;
+            delete nodes;
+
+            auto map = (QMap< node_id, const QMap<pin_id, QVector<IPinData>>* >*)o->at(1);
+            for (const QMap<pin_id, QVector<IPinData>>* innerMap : map->values())
+                delete innerMap;
+            delete map;
         },
         objects
     );
@@ -405,7 +427,7 @@ void Controller::deselectAll()
         "Node selection",
         [](DGraph *g, QVector<const void*> *o)
         {
-            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)(o->at(0));
+            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)o->at(0);
 
             std::ranges::for_each(*selectedNodes, [&](uint32_t id){
                 g->nodes()[id]->setSelected(false);
@@ -413,11 +435,15 @@ void Controller::deselectAll()
         },
         [](DGraph *g, QVector<const void*> *o)
         {
-            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)(o->at(0));
+            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)o->at(0);
 
             std::ranges::for_each(*selectedNodes, [&](uint32_t id){
                 g->nodes()[id]->setSelected(true);
             });
+        },
+        [](QVector<const void*> *o)
+        {
+            delete (QSet<uint32_t>*)o->at(0);
         },
         objects
     );
@@ -486,6 +512,10 @@ DNode *Controller::addNode(DNode *node)
             auto aRemoveNode = (IAction*)(o->at(0));
             aRemoveNode->executeOn(g);
         },
+        [](QVector<const void*> *o)
+        {
+            delete (IAction*)(o->at(0));
+        },
         objects
     );
 
@@ -510,10 +540,10 @@ void Controller::processNodeSelectSignal(INodeSelectSignal signal)
         "Node selection",
         [](DGraph *g, QVector<const void*> *o)
         {
-            uint32_t nodeID = *(uint32_t*)(o->at(0));
-            std::optional<bool> selected = *(std::optional<bool>*)(o->at(1));
-            bool isMultiSelectionModifierDown = *(bool*)(o->at(2));
-            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)(o->at(3));
+            uint32_t nodeID = *(uint32_t*)o->at(0);
+            std::optional<bool> selected = *(std::optional<bool>*)o->at(1);
+            bool isMultiSelectionModifierDown = *(bool*)o->at(2);
+            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)o->at(3);
 
             if (selected.has_value())
                 g->nodes()[nodeID]->setSelected(*selected);
@@ -526,10 +556,10 @@ void Controller::processNodeSelectSignal(INodeSelectSignal signal)
         },
         [](DGraph *g, QVector<const void*> *o)
         {
-            uint32_t nodeID = *(uint32_t*)(o->at(0));
-            std::optional<bool> selected = *(std::optional<bool>*)(o->at(1));
-            bool isMultiSelectionModifierDown = *(bool*)(o->at(2));
-            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)(o->at(3));
+            uint32_t nodeID = *(uint32_t*)o->at(0);
+            std::optional<bool> selected = *(std::optional<bool>*)o->at(1);
+            bool isMultiSelectionModifierDown = *(bool*)o->at(2);
+            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)o->at(3);
 
             if (selected.has_value())
                 g->nodes()[nodeID]->setSelected(!(*selected));
@@ -539,6 +569,13 @@ void Controller::processNodeSelectSignal(INodeSelectSignal signal)
                 if (id == nodeID) return;
                 g->nodes()[id]->setSelected(true);
             });
+        },
+        [](QVector<const void*> *o)
+        {
+            delete (uint32_t*)o->at(0);
+            delete (std::optional<bool>*)o->at(1);
+            delete (bool*)o->at(2);
+            delete (QSet<uint32_t>*)o->at(3);
         },
         objects
     );

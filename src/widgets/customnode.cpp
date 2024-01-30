@@ -53,17 +53,23 @@ void WCustomNode::setName(QString name)
         "Node renaming",
         [](DGraph *g, QVector<const void*> *o)
         {
-            uint32_t id = *(uint32_t*)(o->at(0));
-            auto newName = (const QString*)(o->at(1));
+            uint32_t id = *(uint32_t*)o->at(0);
+            auto newName = (const QString*)o->at(1);
 
             g->nodes()[id]->setName(*newName);
         },
         [](DGraph *g, QVector<const void*> *o)
         {
-            uint32_t id = *(uint32_t*)(o->at(0));
-            auto oldName = (const QString*)(o->at(2));
+            uint32_t id = *(uint32_t*)o->at(0);
+            auto oldName = (const QString*)o->at(2);
 
             g->nodes()[id]->setName(*oldName);
+        },
+        [](QVector<const void*> *o)
+        {
+            delete (uint32_t*)o->at(0);
+            delete (const QString*)o->at(1);
+            delete (const QString*)o->at(2);
         },
         objects
     );

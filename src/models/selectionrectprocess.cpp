@@ -18,7 +18,7 @@ SelectionRectProcess::~SelectionRectProcess()
         "Node selection",
         [](DGraph *g, QVector<const void*> *o)
         {
-            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)(o->at(0));
+            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)o->at(0);
 
             std::ranges::for_each(*selectedNodes, [&](uint32_t id){
                 g->nodes()[id]->setSelected(true);
@@ -26,11 +26,15 @@ SelectionRectProcess::~SelectionRectProcess()
         },
         [](DGraph *g, QVector<const void*> *o)
         {
-            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)(o->at(0));
+            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)o->at(0);
 
             std::ranges::for_each(*selectedNodes, [&](uint32_t id){
                 g->nodes()[id]->setSelected(false);
             });
+        },
+        [](QVector<const void*>* o)
+        {
+            delete (QSet<uint32_t>*)o->at(0);
         },
         objects
     );
