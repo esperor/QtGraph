@@ -622,7 +622,7 @@ void Controller::disconnectPins(IPinData in, IPinData out)
             IPinData in = *(IPinData*)o->at(0);
             IPinData out = *(IPinData*)o->at(1);
 
-            g->_connectedPins.remove(in);
+            g->_connectedPins.remove(in, out);
 
             g->_nodes[out.nodeID]->removePinConnection(out.pinID, in.pinID);
             g->_nodes[in.nodeID]->removePinConnection(in.pinID, out.pinID);
