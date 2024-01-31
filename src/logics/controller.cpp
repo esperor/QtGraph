@@ -156,9 +156,153 @@ void Controller::onActionExecuted(EAction e)
     }
 }
 
+void Controller::onIsSelectedChanged(bool selected, uint32_t nodeID)
+{
+    switch (selected)
+    {
+    case true: _selectedNodes->insert(nodeID); 
+        return;
+    case false: _selectedNodes->remove(nodeID); 
+        return;
+    }
+}
+
 void Controller::onNodeAdded(DNode* node)
 {
     connect(node, &DNode::isSelectedChanged, this, &Controller::onIsSelectedChanged);
+}
+
+void Controller::onSelectionRemoved()
+{
+    if (_selectedNodes->empty()) return;
+
+    QVector<const void*> objects = 
+    { (void*)new QSet(*_selectedNodes)
+    };
+
+    IAction *action = new IAction(
+        EAction::Selection,
+        "Node selection",
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)o->at(0);
+
+            std::ranges::for_each(*selectedNodes, [&](uint32_t id){
+                g->nodes()[id]->setSelected(false);
+            });
+        },
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)o->at(0);
+
+            std::ranges::for_each(*selectedNodes, [&](uint32_t id){
+                g->nodes()[id]->setSelected(true);
+            });
+        },
+        [](QVector<const void*> *o)
+        {
+            delete (QSet<uint32_t>*)o->at(0);
+        },
+        objects
+    );
+
+    processAction(action);
+}
+
+void Controller::onNodeSelected(INodeSelectSignal signal)
+{
+    if (!signal.selected.has_value() && _selectedNodes->size() == 1) return;
+
+    QVector<const void*> objects = 
+    { (void*)new uint32_t(signal.nodeID)
+    , (void*)new std::optional<bool>(signal.selected)
+    , (void*)new bool(signal.bIsMultiSelectionModifierDown)
+    , (void*)new QSet(*_selectedNodes)
+    };
+
+    IAction *action = new IAction(
+        EAction::Selection,
+        "Node selection",
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            uint32_t nodeID = *(uint32_t*)o->at(0);
+            std::optional<bool> selected = *(std::optional<bool>*)o->at(1);
+            bool isMultiSelectionModifierDown = *(bool*)o->at(2);
+            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)o->at(3);
+
+            if (selected.has_value())
+                g->nodes()[nodeID]->setSelected(*selected);
+
+            if (isMultiSelectionModifierDown) return;
+            std::ranges::for_each(*selectedNodes, [&](uint32_t id){
+                if (id == nodeID) return;
+                g->nodes()[id]->setSelected(false);
+            });
+        },
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            uint32_t nodeID = *(uint32_t*)o->at(0);
+            std::optional<bool> selected = *(std::optional<bool>*)o->at(1);
+            bool isMultiSelectionModifierDown = *(bool*)o->at(2);
+            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)o->at(3);
+
+            if (selected.has_value())
+                g->nodes()[nodeID]->setSelected(!(*selected));
+
+            if (isMultiSelectionModifierDown) return;
+            std::ranges::for_each(*selectedNodes, [&](uint32_t id){
+                if (id == nodeID) return;
+                g->nodes()[id]->setSelected(true);
+            });
+        },
+        [](QVector<const void*> *o)
+        {
+            delete (uint32_t*)o->at(0);
+            delete (std::optional<bool>*)o->at(1);
+            delete (bool*)o->at(2);
+            delete (QSet<uint32_t>*)o->at(3);
+        },
+        objects
+    );
+
+    processAction(action);
+}
+
+void Controller::onNodeMoved(INodeMoveSignal signal)
+{
+    QVector<const void*> objects = 
+    { (void*)new uint32_t(signal.nodeID)
+    , (void*)new QPointF(signal.newPosition)
+    , (void*)new QPointF(nodes()[signal.nodeID]->canvasPosition()) 
+    };
+
+    IAction *action = new IAction(
+        EAction::Moving,
+        "Node movement",
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            uint32_t id = *(uint32_t*)o->at(0);
+            auto newPos = (const QPointF*)o->at(1);
+
+            g->nodes()[id]->setCanvasPosition(*newPos);
+        },
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            uint32_t id = *(uint32_t*)o->at(0);
+            auto oldPos = (const QPointF*)o->at(2);
+
+            g->nodes()[id]->setCanvasPosition(*oldPos);
+        },
+        [](QVector<const void*> *o)
+        {
+            delete (uint32_t*)o->at(0);
+            delete (const QPointF*)o->at(1);
+            delete (const QPointF*)o->at(2);
+        },
+        objects
+    );
+
+    processAction(action);
 }
 
 
@@ -211,46 +355,6 @@ WTypeBrowser *Controller::exportTypeBrowser()
     return _typeBrowser;
 }
 
-
-void Controller::connectPins(IPinData in, IPinData out)
-{   
-    if (_graph->_connectedPins.contains(in, out)) return;
-
-    QVector<const void*> objects = 
-    { (void*)new IPinData(in) 
-    , (void*)new IPinData(out)
-    };
-
-    IAction *action = new IAction(
-        EAction::Connection,
-        "Pin connection",
-        [](DGraph *g, QVector<const void*> *o)
-        {
-            IPinData in = *(IPinData*)o->at(0);
-            IPinData out = *(IPinData*)o->at(1);
-
-            g->_connectedPins.insert(in, out);
-            g->_nodes[out.nodeID]->setPinConnection(out.pinID, in);
-            g->_nodes[in.nodeID]->setPinConnection(in.pinID, out);
-        },
-        [](DGraph *g, QVector<const void*> *o)
-        {
-            IPinData in = *(IPinData*)o->at(0);
-            IPinData out = *(IPinData*)o->at(1);
-
-            g->controller()->disconnectPins(in, out);
-        },
-        [](QVector<const void*> *o)
-        {
-            delete (IPinData*)o->at(0);
-            delete (IPinData*)o->at(1);
-        },
-        objects
-    );
-
-    processAction(action);   
-}
-
 void Controller::disconnectPins(IPinData in, IPinData out)
 {
     if (_graph->_connectedPins.find(in, out) == _graph->_connectedPins.end()) 
@@ -301,6 +405,85 @@ void Controller::removeNodes(QSet<uint32_t> &&ids)
 {
     processAction(createActionRemoveNodes(std::move(ids)));   
 }
+
+void Controller::clear()
+{
+    QList<uint32_t> l = _graph->_nodes.keys();
+    removeNodes(QSet(l.begin(), l.end()));
+}
+
+void Controller::setTypeManagers(PinTypeManager* pins, NodeTypeManager* nodes)
+{
+    _factory->setPinTypeManager(pins);
+    _factory->setNodeTypeManager(nodes);
+
+    if (!_typeBrowser) return;
+    _typeBrowser->_nodeTypeManager = nodes;
+    _typeBrowser->_pinTypeManager = pins;
+    _typeBrowser->initTypes();
+    connect(_factory, &NodeFactory::clear, _typeBrowser, &WTypeBrowser::onNodeFactoryCleared);
+}
+
+DNode *Controller::addNode(QPoint canvasPosition, int typeID)
+{
+    DNode *node = _factory->makeNodeAndPinsOfType(typeID, _graph);
+    node->setCanvasPosition(canvasPosition);
+    return addNode(node);
+}
+
+DNode *Controller::addNode(QPoint canvasPosition, QString name)
+{
+    DNode *node = new DNode(_graph);
+    node->setCanvasPosition(canvasPosition);
+    node->setName(name);
+    return addNode(node);
+}
+
+DNode *Controller::addNode(DNode *node)
+{
+    DNode *nd = _graph->addNode(node);
+    if (_canvas) _canvas->visualize();
+
+    if (!_bIsRecording) return nd;
+
+    // What is happening here is that for the reverse version
+    // of addNode we use removeNode function. Accordingly,
+    // for potential redo of addNode the reversed removeNode
+    // is going to be used.
+
+    IAction *aRemoveNode = createActionRemoveNodes({ node->ID() });
+    QVector<const void*> objects = { (void*)aRemoveNode };
+
+    IAction *action = new IAction(
+        EAction::Addition,
+        "Node addition",
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            auto aRemoveNode = (IAction*)(o->at(0));
+            aRemoveNode->reverseOn(g);
+        },
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            auto aRemoveNode = (IAction*)(o->at(0));
+            aRemoveNode->executeOn(g);
+        },
+        [](QVector<const void*> *o)
+        {
+            delete (IAction*)(o->at(0));
+        },
+        objects
+    );
+
+    addAction(action, false);
+
+    return nd;
+}
+
+
+///////////////////////////////////////
+// ------------ ACTIONS ---------------
+///////////////////////////////////////
+
 
 IAction *Controller::createActionRemoveNodes(QSet<uint32_t> &&ids)
 {
@@ -421,222 +604,43 @@ IAction *Controller::createActionRemoveNodes(QSet<uint32_t> &&ids)
     return action;
 }
 
-
-void Controller::onSelectionRemoved()
-{
-    if (_selectedNodes->empty()) return;
+void Controller::connectPins(IPinData in, IPinData out)
+{   
+    if (_graph->_connectedPins.contains(in, out)) return;
 
     QVector<const void*> objects = 
-    { (void*)new QSet(*_selectedNodes)
+    { (void*)new IPinData(in) 
+    , (void*)new IPinData(out)
     };
 
     IAction *action = new IAction(
-        EAction::Selection,
-        "Node selection",
+        EAction::Connection,
+        "Pin connection",
         [](DGraph *g, QVector<const void*> *o)
         {
-            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)o->at(0);
+            IPinData in = *(IPinData*)o->at(0);
+            IPinData out = *(IPinData*)o->at(1);
 
-            std::ranges::for_each(*selectedNodes, [&](uint32_t id){
-                g->nodes()[id]->setSelected(false);
-            });
+            g->_connectedPins.insert(in, out);
+            g->_nodes[out.nodeID]->setPinConnection(out.pinID, in);
+            g->_nodes[in.nodeID]->setPinConnection(in.pinID, out);
         },
         [](DGraph *g, QVector<const void*> *o)
         {
-            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)o->at(0);
+            IPinData in = *(IPinData*)o->at(0);
+            IPinData out = *(IPinData*)o->at(1);
 
-            std::ranges::for_each(*selectedNodes, [&](uint32_t id){
-                g->nodes()[id]->setSelected(true);
-            });
+            g->controller()->disconnectPins(in, out);
         },
         [](QVector<const void*> *o)
         {
-            delete (QSet<uint32_t>*)o->at(0);
+            delete (IPinData*)o->at(0);
+            delete (IPinData*)o->at(1);
         },
         objects
     );
 
-    processAction(action);
-}
-
-void Controller::clear()
-{
-    QList<uint32_t> l = _graph->_nodes.keys();
-    removeNodes(QSet(l.begin(), l.end()));
-}
-
-void Controller::setTypeManagers(PinTypeManager* pins, NodeTypeManager* nodes)
-{
-    _factory->setPinTypeManager(pins);
-    _factory->setNodeTypeManager(nodes);
-
-    if (!_typeBrowser) return;
-    _typeBrowser->_nodeTypeManager = nodes;
-    _typeBrowser->_pinTypeManager = pins;
-    _typeBrowser->initTypes();
-    connect(_factory, &NodeFactory::clear, _typeBrowser, &WTypeBrowser::onNodeFactoryCleared);
-}
-
-DNode *Controller::addNode(QPoint canvasPosition, int typeID)
-{
-    DNode *node = _factory->makeNodeAndPinsOfType(typeID, _graph);
-    node->setCanvasPosition(canvasPosition);
-    return addNode(node);
-}
-
-DNode *Controller::addNode(QPoint canvasPosition, QString name)
-{
-    DNode *node = new DNode(_graph);
-    node->setCanvasPosition(canvasPosition);
-    node->setName(name);
-    return addNode(node);
-}
-
-DNode *Controller::addNode(DNode *node)
-{
-    DNode *nd = _graph->addNode(node);
-    if (_canvas) _canvas->visualize();
-
-    if (!_bIsRecording) return nd;
-
-    // What is happening here is that for the reverse version
-    // of addNode we use removeNode function. Accordingly,
-    // for potential redo of addNode the reversed removeNode
-    // is going to be used.
-
-    IAction *aRemoveNode = createActionRemoveNodes({ node->ID() });
-    QVector<const void*> objects = { (void*)aRemoveNode };
-
-    IAction *action = new IAction(
-        EAction::Addition,
-        "Node addition",
-        [](DGraph *g, QVector<const void*> *o)
-        {
-            auto aRemoveNode = (IAction*)(o->at(0));
-            aRemoveNode->reverseOn(g);
-        },
-        [](DGraph *g, QVector<const void*> *o)
-        {
-            auto aRemoveNode = (IAction*)(o->at(0));
-            aRemoveNode->executeOn(g);
-        },
-        [](QVector<const void*> *o)
-        {
-            delete (IAction*)(o->at(0));
-        },
-        objects
-    );
-
-    addAction(action, false);
-
-    return nd;
-}
-
-void Controller::onNodeSelected(INodeSelectSignal signal)
-{
-    if (!signal.selected.has_value() && _selectedNodes->size() == 1) return;
-
-    QVector<const void*> objects = 
-    { (void*)new uint32_t(signal.nodeID)
-    , (void*)new std::optional<bool>(signal.selected)
-    , (void*)new bool(signal.bIsMultiSelectionModifierDown)
-    , (void*)new QSet(*_selectedNodes)
-    };
-
-    IAction *action = new IAction(
-        EAction::Selection,
-        "Node selection",
-        [](DGraph *g, QVector<const void*> *o)
-        {
-            uint32_t nodeID = *(uint32_t*)o->at(0);
-            std::optional<bool> selected = *(std::optional<bool>*)o->at(1);
-            bool isMultiSelectionModifierDown = *(bool*)o->at(2);
-            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)o->at(3);
-
-            if (selected.has_value())
-                g->nodes()[nodeID]->setSelected(*selected);
-
-            if (isMultiSelectionModifierDown) return;
-            std::ranges::for_each(*selectedNodes, [&](uint32_t id){
-                if (id == nodeID) return;
-                g->nodes()[id]->setSelected(false);
-            });
-        },
-        [](DGraph *g, QVector<const void*> *o)
-        {
-            uint32_t nodeID = *(uint32_t*)o->at(0);
-            std::optional<bool> selected = *(std::optional<bool>*)o->at(1);
-            bool isMultiSelectionModifierDown = *(bool*)o->at(2);
-            QSet<uint32_t>* selectedNodes = (QSet<uint32_t>*)o->at(3);
-
-            if (selected.has_value())
-                g->nodes()[nodeID]->setSelected(!(*selected));
-
-            if (isMultiSelectionModifierDown) return;
-            std::ranges::for_each(*selectedNodes, [&](uint32_t id){
-                if (id == nodeID) return;
-                g->nodes()[id]->setSelected(true);
-            });
-        },
-        [](QVector<const void*> *o)
-        {
-            delete (uint32_t*)o->at(0);
-            delete (std::optional<bool>*)o->at(1);
-            delete (bool*)o->at(2);
-            delete (QSet<uint32_t>*)o->at(3);
-        },
-        objects
-    );
-
-    processAction(action);
-}
-
-void Controller::onNodeMoved(INodeMoveSignal signal)
-{
-    QVector<const void*> objects = 
-    { (void*)new uint32_t(signal.nodeID)
-    , (void*)new QPointF(signal.newPosition)
-    , (void*)new QPointF(nodes()[signal.nodeID]->canvasPosition()) 
-    };
-
-    IAction *action = new IAction(
-        EAction::Moving,
-        "Node movement",
-        [](DGraph *g, QVector<const void*> *o)
-        {
-            uint32_t id = *(uint32_t*)o->at(0);
-            auto newPos = (const QPointF*)o->at(1);
-
-            g->nodes()[id]->setCanvasPosition(*newPos);
-        },
-        [](DGraph *g, QVector<const void*> *o)
-        {
-            uint32_t id = *(uint32_t*)o->at(0);
-            auto oldPos = (const QPointF*)o->at(2);
-
-            g->nodes()[id]->setCanvasPosition(*oldPos);
-        },
-        [](QVector<const void*> *o)
-        {
-            delete (uint32_t*)o->at(0);
-            delete (const QPointF*)o->at(1);
-            delete (const QPointF*)o->at(2);
-        },
-        objects
-    );
-
-    processAction(action);
-}
-
-void Controller::onIsSelectedChanged(bool selected, uint32_t nodeID)
-{
-    switch (selected)
-    {
-    case true: _selectedNodes->insert(nodeID); 
-        return;
-    case false: _selectedNodes->remove(nodeID); 
-        return;
-    }
+    processAction(action);   
 }
 
 }
