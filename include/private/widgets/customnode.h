@@ -11,7 +11,9 @@ class WCustomNode : public WANode
     Q_OBJECT
 
 public:
-    WCustomNode(LNode *logical, WCanvas *canvas);
+    WCustomNode(const DNode *logical, WCanvas *canvas);
+
+    void setName(QString name); 
 
 protected slots:
     void deleteRenameEdit();

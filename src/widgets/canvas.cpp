@@ -14,6 +14,7 @@
 #include "utilities/constants.h"
 #include "utilities/utility.h"
 #include "models/nodespawndata.h"
+#include "logics/controller.h"
 
 #include "graph.pb.h"
 
@@ -30,7 +31,6 @@ namespace qtgraph {
 
 WCanvas::WCanvas(QWidget *parent)
     : QWidget{ parent }
-    , _graph{ new LGraph(this) }
     , _painter{ new QPainter(this) }
     , _dotPaintGap{ 40 }
     , _draggedPin{ std::nullopt }
@@ -39,15 +39,17 @@ WCanvas::WCanvas(QWidget *parent)
     , _offset{ QPointF(0, 0) }
     , _lastMouseDownPosition{ QPointF() }
     , _mousePosition{ QPointF(0, 0) }
-    , _zoom{ -4 }
-    , _lastResizedSize{ nullptr }
+    , _zoom{ c_standartZoomLevel }
+    , _bIsTypeBrowserBound{ false }
     , _snappingInterval{ 20 }
     , _bIsSnappingEnabled{ true }
+    , _lastResizedSize{ nullptr }
     , _bTelemetricsEnabled{ DEBUG }
+    , _selectionRectProcess{ nullptr }
     , _selectionRect{ std::nullopt }
     , _selectionAreaPreviousNodes{ QSet<uint32_t>() }
-    , _typeBrowser{ new WTypeBrowser(this) }
-    , _selectedNodes{ QMap<uint32_t, WANode*>() }
+    , _nodes{ QMap<uint32_t, WANode*>() }
+    , _selectedNodes{ QSet<uint32_t>() }
 {
     setMouseTracking(true);
     setAutoFillBackground(true);
@@ -56,11 +58,6 @@ WCanvas::WCanvas(QWidget *parent)
     QPalette palette(c_paletteDefaultColor);
     this->setPalette(palette);
     setAcceptDrops(true);
-
-    _typeBrowser->show();
-
-    connect(_typeBrowser, &WTypeBrowser::onMove, this, &WCanvas::onTypeBrowserMove);
-    connect(_graph, &LGraph::onNodeRemoved, this, &WCanvas::onLNodeRemoved);
 
     _timer = new QTimer(this);
     connect(_timer, &QTimer::timeout, this, &WCanvas::tick);
@@ -90,60 +87,13 @@ const QMap<short, float> WCanvas::_zoomMultipliers =
     { -13, 0.1f  },
 };
 
-// ------------------------ SERIALIZATION --------------------------
 
-
-bool WCanvas::serialize(std::fstream *output) const
-{
-    protocol::Graph graph;
-    if (!_graph->protocolize(graph))
-    {
-        qDebug() << "Couldn't protocolize graph";
-        return false;
-    }
-
-    *(graph.mutable_offset()) = convertTo_protocolPointF(_offset);
-    graph.set_zoom(_zoom);
-    graph.SerializeToOstream(output);
-    return true;
-}
-
-bool WCanvas::deserialize(std::fstream *input)
-{
-    setUpdatesEnabled(false);
-
-    clear();
-
-    protocol::Graph graph;
-    graph.ParseFromIstream(input);
-
-    if (!_graph->deprotocolize(graph))
-    {
-        qDebug() << "Couldn't deprotocolize graph";
-        return false;
-    }
-
-    auto *ntm = _graph->getNodeTypeManager();
-    auto *ptm = _graph->getPinTypeManager();
-
-    if (ntm) setNodeTypeManager(ntm);
-    if (ptm) setPinTypeManager(ptm);
-
-    _offset = convertFrom_protocolPointF(graph.offset());
-    _zoom = graph.zoom();
-
-    visualize();
-
-    setUpdatesEnabled(true);
-    return true;
-}
 
 void WCanvas::visualize()
 {
-    std::ranges::for_each(_graph->nodes(), [this](LNode *lnode){
-        addNode(lnode);
-        if (lnode->isSelected())
-            _selectedNodes.insert(lnode->ID(), _nodes[lnode->ID()]);
+    clear();
+    std::ranges::for_each(controller()->nodes(), [this](DNode *dnode){
+        addNode(dnode);
     });
 }
 
@@ -153,8 +103,16 @@ void WCanvas::visualize()
 
 void WCanvas::clear()
 { 
-    getGraph()->clear(); 
-    _offset = QPointF(0, 0);
+    _selectedNodes.clear();
+    std::ranges::for_each(_nodes, [this](WANode *node) {
+        delete node;
+    });
+    _nodes.clear();
+}
+
+const DGraph *WCanvas::getGraph_const() const
+{ 
+    return controller_const()->getGraph_const(); 
 }
 
 void WCanvas::moveCanvasOnPinDragNearEdge(QPointF mousePosition)
@@ -230,51 +188,70 @@ void WCanvas::processSelectionArea(const QMouseEvent *event)
         {
             if (!node->getMappedRect().intersects(*_selectionRect))
             {
-                node->setSelected(false);
+                _selectionRectProcess->removeSelected(node->ID());
                 _selectionAreaPreviousNodes.remove(node->ID());
             }
         }
         if (node->getMappedRect().intersects(*_selectionRect))
         {
-            node->setSelected(true, true);
+            _selectionRectProcess->addSelected(node->ID());
             _selectionAreaPreviousNodes.insert(node->ID());
         }
     });
 }
 
-void WCanvas::setNodeTypeManager(NodeTypeManager *manager)
+void WCanvas::setZoom(int level) 
 {
-    _graph->setNodeTypeManager(manager);
-    _typeBrowser->_nodeTypeManager = manager;
-    _typeBrowser->initTypes();
-}
-
-void WCanvas::setPinTypeManager(PinTypeManager *manager)
-{
-    _graph->setPinTypeManager(manager);
-    _typeBrowser->_pinTypeManager = manager;
-
+    if (_zoomMultipliers.contains(level))
+        _zoom = level; 
+    else 
+    {
+        _zoom = c_standartZoomLevel;
+        qDebug() << "Incorrect zoom level passed to WCanvas::setZoom()";
+    }
+        
 }
 
 
 // ---------------------------- SLOTS --------------------------------
 
 
+void WCanvas::onNodeSelected(INodeSelectSignal signal)
+{
+    emit nodeSelected(signal);
+}
+
+void WCanvas::onNodeMoved(INodeMoveSignal signal)
+{
+    emit nodeMoved(signal);
+}
+
+void WCanvas::onPinConnect(IPinData outPin, IPinData inPin)
+{
+    controller()->connectPins(inPin, outPin);  
+}
+
+void WCanvas::onPinConnectionBreak(IPinData outPin, IPinData inPin)
+{
+    controller()->disconnectPins(inPin, outPin);
+}
+
 void WCanvas::onTypeBrowserMove(QVector2D)
 {
-    QSize desiredWidgetSize = _typeBrowser->getDesiredSize();
+    auto browser = controller()->getTypeBrowser();
+    QSize desiredWidgetSize = browser->getDesiredSize();
 
-    if (_typeBrowser->getPosition().x() + desiredWidgetSize.width() > this->width())
-        _typeBrowser->setX(this->width() - desiredWidgetSize.width());
+    if (browser->getPosition().x() + desiredWidgetSize.width() > this->width())
+        browser->setX(this->width() - desiredWidgetSize.width());
 
-    if (_typeBrowser->getPosition().y() + desiredWidgetSize.height() > this->height())
-        _typeBrowser->setY(this->height() - desiredWidgetSize.height());
+    if (browser->getPosition().y() + desiredWidgetSize.height() > this->height())
+        browser->setY(this->height() - desiredWidgetSize.height());
 
-    if (_typeBrowser->getPosition().x() < 0)
-        _typeBrowser->setX(0);
+    if (browser->getPosition().x() < 0)
+        browser->setX(0);
 
-    if (_typeBrowser->getPosition().y() < 0)
-        _typeBrowser->setY(0);
+    if (browser->getPosition().y() < 0)
+        browser->setY(0);
 }
 
 void WCanvas::tick()
@@ -283,30 +260,20 @@ void WCanvas::tick()
         moveCanvasOnPinDragNearEdge(_mousePosition);
 }
 
-void WCanvas::onPinConnect(IPinData outPin, IPinData inPin)
-{
-    _graph->connectPins(inPin, outPin);  
-}
-
-void WCanvas::onPinConnectionBreak(IPinData outPin, IPinData inPin)
-{
-    _graph->disconnectPins(inPin, outPin);
-}
-
 void WCanvas::onPinDrag(IPinDragSignal signal)
 {
     switch (signal.type())
     {
     case EPinDragSignalType::Enter:
     {
-        _nodes[signal.source().nodeID]->setPinConnected(signal.source().pinID, true);
+        _nodes[signal.source().nodeID]->setPinFakeConnected(signal.source().pinID, true);
         if (_draggedPinTargetInfo)
             _draggedPinTargetInfo.value() = signal.source();
         break;
     }
     case EPinDragSignalType::Leave:
     {
-        _nodes[signal.source().nodeID]->setPinConnected(signal.source().pinID, false);
+        _nodes[signal.source().nodeID]->setPinFakeConnected(signal.source().pinID, false);
         if (_draggedPinTargetInfo)
             _draggedPinTargetInfo.value() = std::nullopt;
         break;
@@ -327,70 +294,32 @@ void WCanvas::onPinDrag(IPinDragSignal signal)
     }
 }
 
-void WCanvas::onIsSelectedChanged(bool selected, uint32_t nodeID)
+void WCanvas::onAction(IAction *action)
 {
-    switch (selected)
-    {
-    case true: _selectedNodes.insert(nodeID, _nodes[nodeID]); 
-        return;
-    case false: _selectedNodes.remove(nodeID); 
-        return;
-    }
+    controller()->processAction(action);
 }
 
-void WCanvas::onNodeSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID)
-{
-    if (bIsMultiSelectionModifierDown) return;
 
-    std::ranges::for_each(_selectedNodes.values(), [&](WANode *ptr){
-        if (ptr->ID() == nodeID)
-            return;
-        ptr->setSelected(false);
-    });
-}
-
-LNode *WCanvas::addNode(QPoint canvasPosition, QString name)
-{
-    LNode *node = _graph->addNode(canvasPosition, name);
-    return addNode(node);
-}
-
-LNode *WCanvas::addNode(LNode *lnode)
+// main AddNode function where all connections are established
+DNode *WCanvas::addNode(DNode *dnode)
 {   
-    if (!_graph->containsNode(lnode->ID()))
-        _graph->addNode(lnode);
-    
-    uint32_t id = _nodes.insert(lnode->ID(), 
-            _graph->getFactory()->makeSuitableWNode(lnode, this)
+    uint32_t id = _nodes.insert(dnode->ID(), 
+            controller()->getFactory()->makeSuitableWNode(dnode, this)
         ).key();
+
+    if (dnode->isSelected())
+        _selectedNodes.insert(id);
 
     _nodes[id]->show();
 
-    connect(lnode, &LNode::onIsSelectedChanged, this, &WCanvas::onIsSelectedChanged);
+    connect(_nodes[id], &WANode::pinDrag, this, &WCanvas::onPinDrag);
+    connect(_nodes[id], &WANode::select, this, &WCanvas::onNodeSelected);
+    connect(_nodes[id], &WANode::pinConnect, this, &WCanvas::onPinConnect);
+    connect(_nodes[id], &WANode::pinConnectionBreak, this, &WCanvas::onPinConnectionBreak);
+    connect(_nodes[id], &WANode::moved, this, &WCanvas::onNodeMoved);
+    connect(_nodes[id], &WANode::action, this, &WCanvas::onAction);
 
-    connect(_nodes[id], &WANode::onPinDrag, this, &WCanvas::onPinDrag);
-    connect(_nodes[id], &WANode::onPinConnect, this, &WCanvas::onPinConnect);
-    connect(_nodes[id], &WANode::onSelect, this, &WCanvas::onNodeSelect);
-    connect(_nodes[id], &WANode::onPinConnectionBreak, this, &WCanvas::onPinConnectionBreak);
-
-    return lnode;
-}
-
-LNode *WCanvas::addNode(QPoint canvasPosition, int typeID)
-{
-    LNode *node = _graph->addNode(canvasPosition, typeID);
-    return addNode(node);
-}
-
-void WCanvas::onLNodeRemoved(uint32_t id)
-{
-    WANode *ptr = _nodes[id];
-    _nodes.remove(id);
-    if (_selectedNodes.contains(id)) 
-        _selectedNodes.remove(id);
-
-    delete ptr;
-    onNodeRemoved(id);
+    return dnode;
 }
 
 
@@ -400,10 +329,16 @@ void WCanvas::onLNodeRemoved(uint32_t id)
 void WCanvas::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Delete && !_selectedNodes.isEmpty())
-        std::ranges::for_each(_selectedNodes.keys(), [&](uint32_t id) {
-            _graph->removeNode(id);
+    {
+        QSet<uint32_t> toRemove = {};
+
+        std::ranges::for_each(_selectedNodes, [&](uint32_t id) {
+            toRemove.insert(id);
         });
 
+        controller()->removeNodes(std::move(toRemove));
+    }
+        
     QWidget::keyPressEvent(event);
 }
 
@@ -420,11 +355,7 @@ void WCanvas::mousePressEvent(QMouseEvent *event)
         if (event->modifiers() & c_multiSelectionModifier)
             break;
 
-        std::ranges::for_each(_selectedNodes.values(), [&](WANode *ptr){
-            ptr->setSelected(false);
-        });
-
-        _selectedNodes.clear();
+        emit selectionRemoved();
         break;
     default:;
     }
@@ -441,6 +372,8 @@ void WCanvas::mouseMoveEvent(QMouseEvent *event)
         _lastMouseDownPosition = event->position();
         break;
     case Qt::MouseButton::LeftButton:
+        if (!_selectionRectProcess) 
+            _selectionRectProcess = controller()->startSelectionRectProcess();
         processSelectionArea(event);
         break;
     default:;
@@ -458,6 +391,8 @@ void WCanvas::mouseReleaseEvent(QMouseEvent *event)
     case Qt::MouseButton::LeftButton:
         _selectionRect = std::nullopt;
         _selectionAreaPreviousNodes.clear();
+        delete _selectionRectProcess;
+        _selectionRectProcess = nullptr;
         break;
     default:;
     }
@@ -465,51 +400,57 @@ void WCanvas::mouseReleaseEvent(QMouseEvent *event)
 
 void WCanvas::resizeEvent(QResizeEvent *event)
 {
-    QSize oldSize = _lastResizedSize ? *_lastResizedSize : event->oldSize();
-
-    auto approxEqual = [](int x, int y){
-        const int approximation = 3;
-        return abs(x - y) < approximation;
-    };
-
-    bool widgetBoundToRight = approxEqual(_typeBrowser->getPosition().x() + _typeBrowser->getDesiredSize().width(), oldSize.width());
-    bool widgetBoundToBottom = approxEqual(_typeBrowser->getPosition().y() + _typeBrowser->getDesiredSize().height(), oldSize.height());
-    bool widgetBoundToLeft = approxEqual(_typeBrowser->getPosition().x(), 0);
-    bool widgetBoundToTop = approxEqual(_typeBrowser->getPosition().y(), 0);
-
-    // manage NFWidget position
-    if (widgetBoundToRight)
-        _typeBrowser->setX(event->size().width() - _typeBrowser->getDesiredSize().width());
-    if (widgetBoundToLeft)
-        _typeBrowser->setX(0);
-
-    if (!widgetBoundToLeft && !widgetBoundToRight)
+    if (_bIsTypeBrowserBound)
     {
-        float widthDiff = event->size().width() - oldSize.width();
-        if (widthDiff)
+        auto typeBrowser = controller()->getTypeBrowser();
+
+        QSize oldSize = _lastResizedSize ? *_lastResizedSize : event->oldSize();
+
+        auto approxEqual = [](int x, int y){
+            const int approximation = 3;
+            return abs(x - y) < approximation;
+        };
+
+        bool widgetBoundToRight = approxEqual(typeBrowser->getPosition().x() + typeBrowser->getDesiredSize().width(), oldSize.width());
+        bool widgetBoundToBottom = approxEqual(typeBrowser->getPosition().y() + typeBrowser->getDesiredSize().height(), oldSize.height());
+        bool widgetBoundToLeft = approxEqual(typeBrowser->getPosition().x(), 0);
+        bool widgetBoundToTop = approxEqual(typeBrowser->getPosition().y(), 0);
+
+        // manage NFWidget position
+        if (widgetBoundToRight)
+            typeBrowser->setX(event->size().width() - typeBrowser->getDesiredSize().width());
+        if (widgetBoundToLeft)
+            typeBrowser->setX(0);
+
+        if (!widgetBoundToLeft && !widgetBoundToRight)
         {
-            float widthDiffCoeff = widthDiff / oldSize.width();
-            float xCenter = _typeBrowser->getPosition().x() + _typeBrowser->getDesiredSize().width() / 2.0f;
-            _typeBrowser->adjustPosition(xCenter * widthDiffCoeff, 0);
+            float widthDiff = event->size().width() - oldSize.width();
+            if (widthDiff)
+            {
+                float widthDiffCoeff = widthDiff / oldSize.width();
+                float xCenter = typeBrowser->getPosition().x() + typeBrowser->getDesiredSize().width() / 2.0f;
+                typeBrowser->adjustPosition(xCenter * widthDiffCoeff, 0);
+            }
+        }
+
+
+        if (widgetBoundToBottom)
+            typeBrowser->setY(event->size().height() - typeBrowser->getDesiredSize().height());
+        if (widgetBoundToTop)
+            typeBrowser->setY(0);
+
+        if (!widgetBoundToTop && !widgetBoundToBottom)
+        {
+            float heightDiff = event->size().height() - oldSize.height();
+            if (heightDiff)
+            {
+                float heightDiffCoeff = heightDiff / oldSize.height();
+                float yCenter = typeBrowser->getPosition().y() + typeBrowser->getDesiredSize().height() / 2.0f;
+                typeBrowser->adjustPosition(0, yCenter * heightDiffCoeff);
+            }
         }
     }
 
-
-    if (widgetBoundToBottom)
-        _typeBrowser->setY(event->size().height() - _typeBrowser->getDesiredSize().height());
-    if (widgetBoundToTop)
-        _typeBrowser->setY(0);
-
-    if (!widgetBoundToTop && !widgetBoundToBottom)
-    {
-        float heightDiff = event->size().height() - oldSize.height();
-        if (heightDiff)
-        {
-            float heightDiffCoeff = heightDiff / oldSize.height();
-            float yCenter = _typeBrowser->getPosition().y() + _typeBrowser->getDesiredSize().height() / 2.0f;
-            _typeBrowser->adjustPosition(0, yCenter * heightDiffCoeff);
-        }
-    }
 
     if (_lastResizedSize)
         *_lastResizedSize = event->size();
@@ -550,9 +491,9 @@ void WCanvas::dropEvent(QDropEvent *event)
         INodeSpawnData data = INodeSpawnData::fromByteArray(byteArray);
 
         if (data.typeID)
-            addNode(mapToCanvas(event->position()).toPoint(), *data.typeID);
+            controller()->addNode(mapToCanvas(event->position()).toPoint(), *data.typeID);
         else  
-            addNode(mapToCanvas(event->position()).toPoint(), data.name);
+            controller()->addNode(mapToCanvas(event->position()).toPoint(), data.name);
     }
 }
 
@@ -593,7 +534,7 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
     setUpdatesEnabled(false);
 
     auto getColorOfPinByPinData = [&](const IPinData &data){
-        const LPin *pin = _graph->nodes()[data.nodeID]->pin(data.pinID).value();
+        const DPin *pin = controller()->nodes()[data.nodeID]->pin(data.pinID).value();
         return pin->getColor();
     };
 
@@ -635,7 +576,7 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
         // this->rect()->center() is used instead of center purposefully
         // in order to fix flicking and lagging of the nodes (dk why it fixes the problem)
         const QPointF offset = 
-            zoomMult * (node->getLogical()->canvasPosition() - _offset) 
+            zoomMult * (node->getCanvasPosition() - _offset) 
             + this->rect().center();
 
         node->move(offset.toPoint());
@@ -694,15 +635,19 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
 
         // draw all existing pins connections
         std::ranges::for_each(_graph->getConnections().asKeyValueRange(), [&](std::pair<IPinData, IPinData> pair) {
-            // connections are being drawed from out- to in-pins only
-            if (pair.first.pinDirection == EPinDirection::In) return;
+            IPinData pdOrigin = pair.second;
+            IPinData pdTarget = pair.first;
 
-            QPoint origin = _nodes[pair.first.nodeID]->getOutlineCoordinateForPinID(pair.first.pinID);
-            QPoint target = _nodes[pair.second.nodeID]->getOutlineCoordinateForPinID(pair.second.pinID);
+            // connections are being drawed from out- to in-pins only
+            if (pair.second.pinDirection == EPinDirection::In)
+                std::swap(pdOrigin, pdTarget);
+
+            QPoint origin = _nodes[pdOrigin.nodeID]->getOutlineCoordinateForPinID(pdOrigin.pinID);
+            QPoint target = _nodes[pdTarget.nodeID]->getOutlineCoordinateForPinID(pdTarget.pinID);
 
             QLinearGradient gradient(origin, target);
-            gradient.setColorAt(0, getColorOfPinByPinData(pair.first));
-            gradient.setColorAt(1, getColorOfPinByPinData(pair.second));
+            gradient.setColorAt(0, getColorOfPinByPinData(pdOrigin));
+            gradient.setColorAt(1, getColorOfPinByPinData(pdTarget));
             pen.setBrush(QBrush(gradient));
             painter->setPen(pen);
 
@@ -712,11 +657,13 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
 
 
     // manage TYPEBROWSER
+    if (_bIsTypeBrowserBound) 
     {
-        _typeBrowser->setFixedSize(_typeBrowser->getDesiredSize());
-        _typeBrowser->move(_typeBrowser->getPosition().toPoint());
-        _typeBrowser->raise();
-
+        auto typeBrowser = controller()->getTypeBrowser();
+        
+        typeBrowser->setFixedSize(typeBrowser->getDesiredSize());
+        typeBrowser->move(typeBrowser->getPosition().toPoint());
+        typeBrowser->raise();
     }
 
 
@@ -725,22 +672,36 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
         pen.setColor(c_dotsColor);
         painter->setPen(pen);
 
-        auto pointToString = [](QPoint point) {
+        auto pointToString = [](QPoint point) -> QString {
             return QString::number(point.x()) + ", " + QString::number(point.y());
         };
 
-        auto pointfToString = [](QPointF point) {
+        auto pointfToString = [](QPointF point) -> QString {
             return QString::number(point.x()) + ", " + QString::number(point.y());
         };
 
-        auto parseSet = [](std::set<uint32_t> set) {
+        auto parseSet = [](QSet<uint32_t> set) -> QString {
             QString str = "[";
             std::ranges::for_each(set, [&str](uint32_t num) {
-                str += " ";
-                str += QString::number(num);
-                str += ",";
+                str += " " + QString::number(num) + ",";
             });
-            return str.removeLast().append(" ]");
+            return str.size() == 1 ? str.append("]") : str.removeLast().append(" ]");
+        };
+
+        auto parseStack = [](const Stack<IAction*>* stack) -> QString {
+            auto& c = stack->getContainer();
+            QString str = QString::number(stack->size()) + ": [";
+            for (IAction* a : c)
+            {
+                // making acronym
+                QString aStr = QString::fromStdString(a->desc)
+                    .split(' ')
+                    .replaceInStrings(QRegularExpression("^([A-z])([a-z]*)$"), "\\1")
+                    .join("")
+                    .toUpper();
+                str += " " + aStr + ",";
+            }   
+            return str.size() == 4 ? str.append("]") : str.removeLast().append(" ]");
         };
 
         QPoint mouseCanvasPosition = mapToCanvas(_mousePosition.toPoint());
@@ -750,8 +711,10 @@ void WCanvas::paint(QPainter *painter, QPaintEvent *event)
         painter->drawText(QPoint(20, 80), QString( "Center: " + pointfToString(_offset) ));
         painter->drawText(QPoint(20, 100), QString( "Zoom: " + QString::number(_zoom) ));
         painter->drawText(QPoint(20, 120), QString( "Drag pos: " + pointToString(_draggedPinTarget) ));
-        painter->drawText(QPoint(20, 140), QString( "Node IDs: " + parseSet(_graph->getTakenIDs()) ));
-        painter->drawText(QPoint(20, 160), QString( "Pin IDs: " + parseSet(LNode::getTakenPinIDs()) ));
+        painter->drawText(QPoint(20, 140), QString( "Node IDs: " + parseSet(QSet(ID::getTakenIDs<DNode>().begin(), ID::getTakenIDs<DNode>().end())) ));
+        painter->drawText(QPoint(20, 160), QString( "Pin IDs: " + parseSet(QSet(ID::getTakenIDs<DPin>().begin(), ID::getTakenIDs<DPin>().end())) ));
+        painter->drawText(QPoint(20, 180), QString( "Selected nodes: " + parseSet(_selectedNodes) ));
+        painter->drawText(QRect(QPoint(20, 200), QPoint(300, 280)), QString( "Stack: " + parseStack(controller()->getStack()) ));
     }
 
     setUpdatesEnabled(true);

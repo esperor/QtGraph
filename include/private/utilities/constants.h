@@ -39,6 +39,7 @@ const float c_diffCoeffForPinConnectionCurves = 0.4f;
 const short c_xDiffFunctionBlendPoint = 100;
 const short c_maxYDiff = 50;
 const short c_maxDiffsSum = 150;
+const short c_standartZoomLevel = -4;
 
 
 
@@ -68,6 +69,8 @@ const float c_nodeNameRoundedRectSizeY = 0.2f;
 const float c_nodeNameRoundedRectSizeX = 0.5f;
 const float c_nodeMaxOutlineWidth = 3.0f;
 
+// NODES GENERAL CONSTANTS
+const float c_nodeMoveMinimalDistance = 2.0f;
 
 
 // ----- NODEFACTORY ---------

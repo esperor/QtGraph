@@ -44,6 +44,9 @@ public:
     const NodeTypeManager *_nodeTypeManager;
     const PinTypeManager *_pinTypeManager;
 
+public slots:
+    void onNodeFactoryCleared();
+
 protected:
     void paintEvent(QPaintEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;

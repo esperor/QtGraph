@@ -1,10 +1,10 @@
 #include "models/pindata.h"
 #include "utilities/constants.h"
-#include "logics/pin.h"
+#include "data/pin.h"
 
 namespace qtgraph {
 
-IPinData::IPinData(const LPin *pin)
+IPinData::IPinData(const DPin *pin)
     : pinDirection{ pin->getData().pinDirection }
     , nodeID{ pin->getData().nodeID }
     , pinID{ pin->getData().pinID }

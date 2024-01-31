@@ -16,57 +16,58 @@
 #include <variant>
 #include <cstdint>
 
-#include "logics/graph.h"
+#include "data/graph.h"
 #include "widgets/typebrowser.h"
 #include "widgets/node.h"
 #include "models/pindragsignal.h"
+#include "models/nodeselectsignal.h"
+#include "models/selectionrectprocess.h"
+#include "models/nodemovesignal.h"
 
 #include "structure.pb.h"
 
 
 namespace qtgraph {
 
+class Controller;
+
 class WCanvas : public QWidget
 {
     Q_OBJECT
+
+    friend class Controller;
 
 public:
     WCanvas(QWidget *parent = nullptr);
     ~WCanvas();
 
-    // Serializes attached graph and some canvas properties
-    bool serialize(std::fstream *output) const;
-    // Deserializes attached graph and some canvas properties
-    bool deserialize(std::fstream *input);
+    Controller *controller() { return _controller; }
+    const Controller *controller_const() const { return _controller; }
 
+    int getZoom() const                 { return _zoom; }
     float getZoomMultiplier() const     { return _zoomMultipliers[_zoom]; }
     bool getTelemetricsEnabled() const  { return _bTelemetricsEnabled; }
     bool getSnappingEnabled() const     { return _bIsSnappingEnabled; }
     int getSnappingInterval() const     { return _snappingInterval; }
     const QPointF &getOffset() const    { return _offset; }
-    LGraph *getGraph() { return _graph; }
-    const LGraph *getGraph_const() const { return _graph; }
 
     // Visualizes attached graph. Performance-heavy, don't call in cycle
     void visualize();
+    void setOffset(QPointF offset) { _offset = offset; }
+    void setZoom(int level);
     void setSnappingEnabled(bool enabled = true) { _bIsSnappingEnabled = enabled; }
     void setTelemetricsEnabled(bool enabled = true) { _bTelemetricsEnabled = enabled; }
     void toggleSnapping() { _bIsSnappingEnabled = !_bIsSnappingEnabled; }
     void setSnappingInterval(int num) { _snappingInterval = num; }
     void clear();
+    void moveCanvas(QPointF offset);
     inline void moveView(QVector2D vector) { moveCanvas(QPointF(-vector.x(), -vector.y())); }
     inline void moveViewUp(float by) { moveCanvas(QPointF(0, by)); }
     inline void moveViewDown(float by) { moveCanvas(QPointF(0, -by)); }
     inline void moveViewLeft(float by) { moveCanvas(QPointF(by, 0)); }
     inline void moveViewRight(float by) { moveCanvas(QPointF(-by, 0)); }
 
-    void setNodeTypeManager(NodeTypeManager *manager);
-    void setPinTypeManager(PinTypeManager *manager);
-    inline void setTypeManagers(PinTypeManager *pins, NodeTypeManager *nodes)
-    {
-        setNodeTypeManager(nodes);
-        setPinTypeManager(pins);
-    }
+    const DGraph* getGraph_const() const;
 
     QPointF mapToCanvas(QPointF point) const;
     QPoint mapToCanvas(QPoint point) const;
@@ -77,15 +78,12 @@ public:
     // If one of params of QPointF is negative, current mouse position will be used
     void zoomOut(int times = 1, QPointF where = QPointF(-1, -1));
 
-    LNode* addNode(QPoint canvasPosition, QString name);
-    LNode* addNode(LNode *lnode);
-    LNode* addNode(QPoint canvasPosition, int typeID);
-
-public slots:
-    void moveCanvas(QPointF offset);
+    DNode* addNode(DNode *lnode); 
 
 signals:
-    void onNodeRemoved(uint32_t id);
+    void selectionRemoved();
+    void nodeSelected(INodeSelectSignal signal);
+    void nodeMoved(INodeMoveSignal signal);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -100,13 +98,13 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
-    void onIsSelectedChanged(bool selected, uint32_t nodeID);
-    void onLNodeRemoved(uint32_t id);
-    void onNodeSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID);
+    void onNodeMoved(INodeMoveSignal signal);
+    void onNodeSelected(INodeSelectSignal signal);
     void onPinDrag(IPinDragSignal signal);
     void onPinConnect(IPinData outPin, IPinData inPin);
     void onPinConnectionBreak(IPinData outPin, IPinData inPin);
     void onTypeBrowserMove(QVector2D offset);
+    void onAction(IAction *action);
     void tick();
 
 private:
@@ -115,7 +113,9 @@ private:
     void zoom(int times, QPointF where);
     void processSelectionArea(const QMouseEvent *event);
 
-    LGraph *_graph;
+    
+    Controller *_controller;
+    const DGraph *_graph;
 
     QPainter *_painter;
     int _dotPaintGap;
@@ -129,20 +129,23 @@ private:
     QPointF _offset, _lastMouseDownPosition, _mousePosition;
     short _zoom;
 
+    bool _bIsTypeBrowserBound;
+
     QSize *_lastResizedSize;
 
     int _snappingInterval;
     bool _bIsSnappingEnabled;
     bool _bTelemetricsEnabled;
+
+    SelectionRectProcess *_selectionRectProcess;
     std::optional<QRect> _selectionRect;
     QSet<uint32_t> _selectionAreaPreviousNodes;
 
     QTimer *_timer;
-    WTypeBrowser *_typeBrowser;
-    // uint32_t represents node's id 
-    QMap<uint32_t, WANode*> _selectedNodes;
+    
     // uint32_t represents node's id
     QMap<uint32_t, WANode*> _nodes;
+    QSet<uint32_t> _selectedNodes;
 
     const static QMap<short, float> _zoomMultipliers;
 

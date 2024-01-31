@@ -15,7 +15,7 @@ class WTypedNode : public WANode
     Q_OBJECT
 
 public:
-    WTypedNode(int typeID, LNode *lnode, WCanvas *canvas);
+    WTypedNode(int typeID, const DNode *lnode, WCanvas *canvas);
 
     void setNodeTypeManager(NodeTypeManager *ntm) { _nodeTypeManager = ntm; }
 

@@ -2,19 +2,24 @@
 #include <QRect>
 #include <QtDebug>
 #include <QApplication>
+#include <QVector>
 #include <algorithm>
+#include <functional>
 
 #include "widgets/node.h"
 #include "widgets/canvas.h"
 #include "utilities/utility.h"
 #include "utilities/constants.h"
 #include "widgets/pin.h"
+#include "data/node.h"
+#include "data/graph.h"
 
 #include "widgets/moc_node.cpp"
 
+
 namespace qtgraph {
 
-WANode::WANode(LNode *logical, WCanvas *canvas)
+WANode::WANode(const DNode *logical, WCanvas *canvas)
     : QWidget{ canvas }
     , _lnode{ logical }
     , _parentCanvas{ canvas }
@@ -23,6 +28,7 @@ WANode::WANode(LNode *logical, WCanvas *canvas)
     , _hiddenPosition{ QPointF() }
     , _lastMouseDownPosition{ QPointF(0, 0) }
     , _mousePressPosition{ QPointF(0, 0) }
+    , _positionDelta{ QPointF(0, 0) }
     , _pinsOutlineCoords{ QMap<uint32_t, QPoint>() }
     , _pins{ QMap<uint32_t, WPin*>() }
 {
@@ -44,15 +50,14 @@ WANode::~WANode()
 // ------------------- GENERAL --------------------
 
 
-void WANode::setSelected(bool b, bool bIsMultiSelectionModifierDown)
-{ 
-    _lnode->setSelected(b);
-    if (b) onSelect(bIsMultiSelectionModifierDown, ID()); 
-}
-
-void WANode::setPinConnected(uint32_t pinID, bool isConnected)
+void WANode::setPinFakeConnected(uint32_t pinID, bool isConnected)
 {
     _pins[pinID]->setFakeConnected(isConnected);
+}
+
+void WANode::setNodePosition(QPointF pos)
+{
+    emit moved({ pos, ID() });
 }
 
 float WANode::getParentCanvasZoomMultiplier() const
@@ -68,12 +73,17 @@ QRect WANode::getMappedRect() const
     return mapped;
 }
 
+QPointF WANode::getCanvasPosition() const
+{
+    return _lnode->canvasPosition() + _positionDelta.toPointF();
+}
+
 void WANode::addPin(WPin *pin)
 {
     _pins.insert(pin->getLogical()->ID(), pin);
-    connect(pin, &WPin::onDrag, this, &WANode::slot_onPinDrag);
-    connect(pin, &WPin::onConnect, this, &WANode::slot_onPinConnect);
-    connect(pin, &WPin::onConnectionBreak, this, &WANode::slot_onPinConnectionBreak);
+    connect(pin, &WPin::onDrag, this, &WANode::onPinDrag);
+    connect(pin, &WPin::onConnect, this, &WANode::onPinConnect);
+    connect(pin, &WPin::onConnectionBreak, this, &WANode::onPinConnectionBreak);
     pin->show();
     _pinsOutlineCoords.insert(pin->getLogical()->ID(), QPoint(0, 0));
 }
@@ -81,7 +91,7 @@ void WANode::addPin(WPin *pin)
 // -------------------- SLOTS ---------------------
 
 
-void WANode::slot_onPinDrag(IPinDragSignal signal)
+void WANode::onPinDrag(IPinDragSignal signal)
 {
     switch (signal.type())
     {
@@ -93,15 +103,15 @@ void WANode::slot_onPinDrag(IPinDragSignal signal)
         break;
     default:;
     }
-    onPinDrag(signal);
+    emit pinDrag(signal);
 }
 
-void WANode::slot_onPinConnect(IPinData outPin, IPinData inPin)
-{ onPinConnect(outPin, inPin); }
 
-void WANode::slot_onPinConnectionBreak(IPinData outPin, IPinData inPin)
-{ onPinConnectionBreak(outPin, inPin); }
+void WANode::onPinConnect(IPinData outPin, IPinData inPin)
+{ emit pinConnect(outPin, inPin); }
 
+void WANode::onPinConnectionBreak(IPinData outPin, IPinData inPin)
+{ emit pinConnectionBreak(outPin, inPin); }
 
 // -------------------- EVENTS ---------------------
 
@@ -113,14 +123,28 @@ void WANode::mousePressEvent(QMouseEvent *event)
         _lastMouseDownPosition = mapToParent(event->position());
         _mousePressPosition = event->position();
         _hiddenPosition = _lnode->canvasPosition();
+
+        bool isMultiSelectionModifierDown = event->modifiers() & c_multiSelectionModifier;
+        
+        if (isMultiSelectionModifierDown && _lnode->isSelected())
+            emit select({ false, true, _lnode->ID() });
+        else if (_lnode->isSelected())
+        
+            // this means that selection state shouldn't change neither 
+            // on action execution nor inversion
+            emit select({ {}, isMultiSelectionModifierDown, _lnode->ID() });
+        else
+            emit select({ true, isMultiSelectionModifierDown, _lnode->ID() });
     }
 }
 
 void WANode::mouseReleaseEvent(QMouseEvent *event)
 {
     this->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
-    _lnode->setSelected(true);
-    onSelect(event->modifiers() & c_multiSelectionModifier, _lnode->ID());
+
+    if (_positionDelta.length() >= c_nodeMoveMinimalDistance) 
+        setNodePosition(_lnode->canvasPosition() + _positionDelta.toPointF());
+    _positionDelta = { 0, 0 };
 }
 
 void WANode::mouseMoveEvent(QMouseEvent *event)
@@ -129,20 +153,16 @@ void WANode::mouseMoveEvent(QMouseEvent *event)
     {
         if ((event->position() - _mousePressPosition).manhattanLength()
             > QApplication::startDragDistance())
-        {
             this->setCursor(QCursor(Qt::CursorShape::OpenHandCursor));
-            if (!_lnode->isSelected())
-                onSelect(event->modifiers() & c_multiSelectionModifier, _lnode->ID());
-        }
 
         QPointF offset = mapToParent(event->position()) - _lastMouseDownPosition;
         if (_parentCanvas->getSnappingEnabled())
         {
             _hiddenPosition += (offset / _zoom);
-            _lnode->setCanvasPosition(snap(_hiddenPosition, _parentCanvas->getSnappingInterval()));
+            _positionDelta = QVector2D(snap(_hiddenPosition, _parentCanvas->getSnappingInterval()) - _lnode->canvasPosition());
         }
         else
-            _lnode->moveCanvasPosition(offset / _zoom);
+            _positionDelta += QVector2D(offset / _zoom);
 
         _lastMouseDownPosition = mapToParent(event->position());
     }
@@ -250,6 +270,9 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
 
     QPainterPath path;
 
+    // painter paints inner and outer at the same time
+    // where the outer is being drawn by the pen
+
     // paint OUTER
     if (_lnode->isSelected())
     {
@@ -307,7 +330,7 @@ void WANode::paint(QPainter *painter, QPaintEvent *)
             default:;
             }
 
-            const LPin *logicalPin = pin->getLogical();
+            const DPin *logicalPin = pin->getLogical();
 
             pin->setFixedSize(pin->getDesiredWidth(_zoom), pin->getNormalD() * _zoom);
             _pinsOutlineCoords[logicalPin->ID()] = QPoint(pin->isInPin() ? 0 : desiredWidth, pin->getCenter().y());

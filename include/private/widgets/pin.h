@@ -19,7 +19,7 @@
 #include "qtgraph.h"
 #include "models/pindata.h"
 #include "models/pindragsignal.h"
-#include "logics/pin.h"
+#include "data/pin.h"
 
 #include "pin.pb.h"
 
@@ -32,12 +32,12 @@ class WPin : public QWidget
     Q_OBJECT
 
 public:
-    WPin(LPin *lpin, WANode *parent);
+    WPin(const DPin *lpin, WANode *parent);
     ~WPin();
 
     void setFakeConnected(bool isConnected) { _fakeConnected = isConnected; }
     void setNormalD(float newD) { _normalD = newD; }
-    void setLogical(LPin *logical) { _lpin = logical; }
+    void setSource(DPin *logical) { _lpin = logical; }
 
     bool isFakeConnected() const { return _fakeConnected; }
     const float &getNormalD() const { return _normalD; }
@@ -46,7 +46,7 @@ public:
     bool isInPin() const { return _lpin->getData().pinDirection == EPinDirection::In; }
     QPoint getCenter() const { return mapToParent(_center); }
     QPixmap getPixmap() const;
-    const LPin *getLogical() const { return _lpin; }
+    const DPin *getLogical() const { return _lpin; }
 
 signals:
     void onDrag(IPinDragSignal signal);
@@ -69,8 +69,8 @@ private:
     void showContextMenu(const QMouseEvent *event);
 
 protected:
-    WANode *_parentNode;
-    LPin *_lpin;
+    const WANode *_parentNode;
+    const DPin *_lpin;
     float _normalD;
     // used to show pin as connected when connection is in progress
     bool _fakeConnected;

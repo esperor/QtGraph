@@ -12,6 +12,8 @@
 
 #include <QtGraph/NodeFactory>
 #include <QtGraph/TypeManagers>
+#include <QtGraph/DNode>
+#include <QtGraph/DGraph>
 #include "private/models/nodespawndata.h"
 #include "private/utilities/utility.h"
 #include "private/helpers/idgenerator.h"
@@ -20,10 +22,10 @@
 using namespace testing;
 using namespace qtgraph;
 
-class TypeManagers : public ::testing::Test
+class TestTypeManagers : public ::testing::Test
 {
 protected:
-    TypeManagers() {}
+    TestTypeManagers() {}
 
     void SetUp() override
     {
@@ -40,9 +42,18 @@ protected:
     PinTypeManager _PinTypeManager;
 };
 
+class TestIdGenerator : public ::testing::Test
+{
+protected:
+    TestIdGenerator() {}
+
+    void SetUp() override { ASSERT_TRUE(ID::getTakenIDs().empty()); }
+    void TearDown() override { ID::clear(); }
+};
 
 
-TEST(IPinData, ByteArrayConversions)
+
+TEST(TestIPinData, ByteArrayConversions)
 {
     IPinData first(EPinDirection::In, 5, 6);
     QByteArray arr = first.toByteArray();
@@ -55,7 +66,7 @@ TEST(IPinData, ByteArrayConversions)
     EXPECT_EQ(first, second);
 }
 
-TEST(INodeSpawnData, ByteArrayConversions)
+TEST(TestINodeSpawnData, ByteArrayConversions)
 {
     QString str("Text");
     INodeSpawnData first(str);
@@ -69,7 +80,7 @@ TEST(INodeSpawnData, ByteArrayConversions)
     EXPECT_EQ(third, fourth);
 }
 
-TEST(Utilities, Snapping)
+TEST(TestUtilities, Snapping)
 {
     auto pointToString = [](QPoint point) {
         return std::to_string(point.x()) + ", " + std::to_string(point.y());
@@ -95,7 +106,7 @@ TEST(Utilities, Snapping)
     });
 }
 
-TEST(Utilities, ParseToColor)
+TEST(TestUtilities, ParseToColor)
 {
     auto check = [](QString str, int r, int g, int b) {
         QColor clr = parseToColor(str);
@@ -115,24 +126,54 @@ TEST(Utilities, ParseToColor)
     check(str3, 0xFF, 0xFF, 0xFF);
 }
 
-TEST(IDGenerator, General)
+//TEST(TestUtilities, ParseStack)
+//{
+//    auto stack = Stack<IAction*>();
+//
+//    stack.push(new IAction(
+//        EAction::Disconnection,
+//        "Pin disconnection",
+//        [](DGraph*, QVector<const void *>*){},
+//        [](DGraph*, QVector<const void *>*){},
+//        {}
+//    ));
+//
+//    stack.push(new IAction(
+//        EAction::Addition,
+//        "Node addition",
+//        [](DGraph*, QVector<const void *>*){},
+//        [](DGraph*, QVector<const void *>*){},
+//        {}
+//    ));
+//
+//    EXPECT_EQ("[ PD, NA ]", parseStack(&stack));
+//}
+
+TEST_F(TestIdGenerator, General)
 {
-    IDGenerator gen;
-    EXPECT_EQ(0, gen.generate());
-    EXPECT_EQ(1, gen.generate());
-    EXPECT_EQ(2, gen.generate());
-    gen.removeTaken(1);
-    EXPECT_EQ(1, gen.generate());
-    EXPECT_EQ(3, gen.generate());
-    gen = IDGenerator(std::set({ 0U, 1U, 2U, 3U, 4U, 5U, 6U }));
-    EXPECT_EQ(7, gen.generate());
-    gen.removeTaken(4);
-    EXPECT_EQ(4, gen.generate());
-    gen.removeTaken(0);
-    EXPECT_EQ(0, gen.generate());
+    EXPECT_EQ(0, ID::generate<DNode>());
+    EXPECT_EQ(1, ID::generate<DNode>());
+    EXPECT_EQ(2, ID::generate<DNode>());
+    ID::removeTaken<DNode>(1);
+    EXPECT_EQ(1, ID::generate<DNode>());
+    EXPECT_EQ(3, ID::generate<DNode>());
 }
 
-TEST_F(TypeManagers, ParseJSON)
+TEST_F(TestIdGenerator, TypeSeparation)
+{
+    EXPECT_EQ(0, ID::generate<DNode>());
+    EXPECT_EQ(1, ID::generate<DNode>());
+    EXPECT_EQ(2, ID::generate<DNode>());
+
+    EXPECT_EQ(0, ID::generate<DPin>());
+    EXPECT_EQ(1, ID::generate<DPin>());
+
+    EXPECT_EQ(3, ID::generate<DNode>());
+
+    EXPECT_EQ(0, ID::generate<DGraph>());
+}
+
+TEST_F(TestTypeManagers, ParseJSON)
 {
     int node_types = 6;
     int pin_types = 5;
@@ -141,7 +182,7 @@ TEST_F(TypeManagers, ParseJSON)
     EXPECT_EQ(pin_types, _PinTypeManager.Types().size()) << "Expected " << pin_types << " and got " << _PinTypeManager.Types().size() << " pin types.";
 }
 
-TEST_F(TypeManagers, Properties)
+TEST_F(TestTypeManagers, Properties)
 {
     EXPECT_EQ("power", _PinTypeManager.typeNameByID(0));
     EXPECT_EQ(0, _PinTypeManager.TypeNames()["power"]);

@@ -125,6 +125,11 @@ bool WTypeBrowser::initTypes()
     return true;
 }
 
+void WTypeBrowser::onNodeFactoryCleared()
+{
+    clear();
+}
+
 
 // ------------------ EVENTS --------------------
 

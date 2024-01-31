@@ -7,9 +7,9 @@
 
 namespace qtgraph {
 
-class LNode;
-class LGraph;
-class LPin;
+class DNode;
+class DGraph;
+class DPin;
 class WANode;
 class WCanvas;
 enum class EPinDirection;
@@ -18,9 +18,9 @@ enum class EPinDirection;
 /* 
     NodeFactory puts out variations of creating a node. There are two main
     functions (as in capabilities): 
-    - logical: creating LNode of needed type and
+    - logical: creating DNode of needed type and
     - visual: creating an object of one of the child classes of WANode
-              depending on whether LNode::typeID exists or not
+              depending on whether DNode::typeID exists or not
 
 */
 class NodeFactory : public QObject
@@ -29,16 +29,15 @@ class NodeFactory : public QObject
 
 public:
     NodeFactory(QObject *parent = nullptr);
-
     
-    LNode *makeNodeOfType(int typeID, LGraph *graph) const;
-    LNode *makeNodeAndPinsOfType(int typeID, LGraph *graph) const;
+    DNode *makeNodeOfType(int typeID, DGraph *graph) const;
+    DNode *makeNodeAndPinsOfType(int typeID, DGraph *graph) const;
 
     // This function must be kept up to date with all the
     // changes made for WANode and its children classes
-    WANode *makeSuitableWNode(LNode *lnode, WCanvas *canvas) const;
+    WANode *makeSuitableWNode(DNode *lnode, WCanvas *canvas) const;
 
-    LPin *makePinOfType(int typeID, LNode *node) const;
+    DPin *makePinOfType(int typeID, DNode *node) const;
 
     NodeTypeManager *getNodeTypeManager() const { return _nodeTypeManager; }
     PinTypeManager *getPinTypeManager() const { return _pinTypeManager; }
@@ -46,8 +45,13 @@ public:
     void setNodeTypeManager(NodeTypeManager *manager);
     void setPinTypeManager(PinTypeManager *manager);
 
+    void clear();
+
+signals:
+    void cleared();
+
 private:
-    void addPinsToNodeByJsonValue(const QJsonValue &val, LNode *node, EPinDirection direction) const;
+    void addPinsToNodeByJsonValue(const QJsonValue &val, DNode *node, EPinDirection direction) const;
 
     NodeTypeManager *_nodeTypeManager;
     PinTypeManager *_pinTypeManager;

@@ -4,6 +4,7 @@
 #include "private/utilities/constants.h"
 #include <QtGraph/TypeManagers>
 #include "private/utilities/utility.h"
+#include "private/logics/controller.h"
 
 #include <fstream>
 #include <iostream>
@@ -22,7 +23,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    _canvas = new WCanvas(this);
+    _controller = new Controller(this);
+    _canvas = _controller->createCanvas(this);
     setCentralWidget(_canvas);
 
     initMenuBar();
@@ -72,7 +74,7 @@ void MainWindow::openTypes()
     PinTypeManager *pinManager = new PinTypeManager();
     nodeManager->readTypes(fileName);
     pinManager->readTypes(fileName);
-    _canvas->setTypeManagers(pinManager, nodeManager);
+    _controller->setTypeManagers(pinManager, nodeManager);
 }
 
 std::string MainWindow::getFileName(QFileDialog::FileMode mode)
@@ -118,7 +120,7 @@ void MainWindow::internal_save(std::string file)
     }
     else
     {
-        if (!_canvas->serialize(&out))
+        if (!_controller->serialize(&out))
             // TODO: ui friendly error
             qDebug() << "[Example] error serializing";
     }
@@ -140,7 +142,7 @@ void MainWindow::open()
     }
     else
     {
-        if (!_canvas->deserialize(&in))
+        if (!_controller->deserialize(&in))
             // TODO: ui friendly error
             qDebug() << "[Example] error deserializing";
     }
@@ -157,11 +159,13 @@ void MainWindow::close()
 
 void MainWindow::clear()
 {
-    _canvas->clear();
+    _controller->clear();
 }
 
 void MainWindow::initMenuBar()
 {
+    _menuBar = new QMenuBar(this);
+
     _menuFile = new QMenu("Menu", this);
 
     _open = new QAction("Open saved", this);
@@ -181,7 +185,7 @@ void MainWindow::initMenuBar()
 
     _close = new QAction("Close file", this);
     _close->setShortcut(QKeySequence::Close);
-    _close->setToolTip("Clears related file and canvas. Doesn't save the file.");
+    _close->setToolTip("Closes related file and canvas. Doesn't save the file.");
     _menuFile->addAction(_close);
     connect(_close, &QAction::triggered, this, &MainWindow::close);
 
@@ -191,8 +195,18 @@ void MainWindow::initMenuBar()
     _menuFile->addAction(_openTypes);
     connect(_openTypes, &QAction::triggered, this, &MainWindow::openTypes);
 
-    _menuBar = new QMenuBar(this);
     _menuBar->addMenu(_menuFile);
+
+    _menuEdit = new QMenu("Edit", this);
+
+    _undo = new QAction("Undo", this);
+    _undo->setShortcut(QKeySequence::Undo);
+    _menuEdit->addAction(_undo);
+    connect(_undo, &QAction::triggered, this, [this](){
+        _controller->undo(); 
+    });
+
+    _menuBar->addMenu(_menuEdit);
 
     _menuOptions = new QMenu("Options", this);
 
@@ -202,6 +216,14 @@ void MainWindow::initMenuBar()
     _snapping->setChecked(_canvas->getSnappingEnabled());
     connect(_snapping, &QAction::triggered, this, [this](bool checked){
         _canvas->setSnappingEnabled(checked); 
+    });
+
+    _recordActions = new QAction("Record actions", this);
+    _menuOptions->addAction(_recordActions);
+    _recordActions->setCheckable(true);
+    _recordActions->setChecked(_controller->getRecordingActions());
+    connect(_recordActions, &QAction::triggered, this, [this](bool checked){
+        _controller->setRecordingActions(checked); 
     });
 
     _clear = new QAction("Clear canvas", this);

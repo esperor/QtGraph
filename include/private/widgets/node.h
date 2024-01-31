@@ -13,8 +13,12 @@
 #include <QMap>
 
 #include "widgets/pin.h"
+#include "data/node.h"
+#include "models/action.h"
+#include "models/nodeselectsignal.h"
+#include "models/nodemovesignal.h"
+
 #include "qtgraph.h"
-#include "logics/node.h"
 
 #include "node.pb.h"
 
@@ -27,7 +31,7 @@ class WANode : public QWidget
     Q_OBJECT
 
 public:
-    WANode(LNode *logical, WCanvas *canvas);
+    WANode(const DNode *logical, WCanvas *canvas);
     ~WANode();
     
     const QSize &normalSize() const { return _normalSize; }
@@ -37,26 +41,30 @@ public:
     QPoint getOutlineCoordinateForPinID(uint32_t pinID) const { return mapToParent(_pinsOutlineCoords[pinID]); }
     QRect getMappedRect() const;
     QSize getNameBounding(const QPainter *painter) const { return painter->fontMetrics().size(Qt::TextSingleLine, _lnode->getName()); }
+    QPointF getCanvasPosition() const;
     const WCanvas *getParentCanvas() const { return _parentCanvas; }
-    const LNode *getLogical() const { return _lnode; }
+    const DNode *getLogical() const { return _lnode; }
 
-    void setLogical(LNode *logical) { _lnode = logical; }
+    void setSource(DNode *logical) { _lnode = logical; }
     void setNormalSize(QSize newSize) { _normalSize = newSize; }
-    void setSelected(bool b, bool bIsMultiSelectionModifierDown = false);
-    void setPinConnected(uint32_t pinID, bool isConnected);
+    void setPinFakeConnected(uint32_t pinID, bool isConnected);
+    inline void moveNode(QPointF by) { setNodePosition(_lnode->canvasPosition() + by); }
+    void setNodePosition(QPointF pos);
 
     void addPin(WPin *pin);
 
 signals:
-    void onSelect(bool bIsMultiSelectionModifierDown, uint32_t nodeID);
+    void select(INodeSelectSignal signal);
+    void pinDrag(IPinDragSignal signal);
+    void pinConnect(IPinData outPin, IPinData inPin);
+    void pinConnectionBreak(IPinData outPin, IPinData inPin);
+    void moved(INodeMoveSignal signal);
+    void action(IAction *action);
+
+private slots:
     void onPinDrag(IPinDragSignal signal);
     void onPinConnect(IPinData outPin, IPinData inPin);
     void onPinConnectionBreak(IPinData outPin, IPinData inPin);
-
-private slots:
-    void slot_onPinDrag(IPinDragSignal signal);
-    void slot_onPinConnect(IPinData outPin, IPinData inPin);
-    void slot_onPinConnectionBreak(IPinData outPin, IPinData inPin);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -77,9 +85,9 @@ protected:
 // -----------------------------------------------------------
 
 
-    LNode *_lnode;
-
     const WCanvas *_parentCanvas;
+    const DNode *_lnode;
+
     float _zoom;
     QSize _normalSize;
     QPainter *_painter;
@@ -87,6 +95,7 @@ protected:
     QPointF _hiddenPosition;
     QPointF _lastMouseDownPosition;
     QPointF _mousePressPosition;
+    QVector2D _positionDelta;
     
     QMap<uint32_t, QPoint> _pinsOutlineCoords;
 

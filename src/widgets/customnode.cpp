@@ -5,13 +5,16 @@
 #include "helpers/focuswatcher.h"
 #include "helpers/keywatcher.h"
 
-#include "widgets/moc_customnode.cpp"
 #include "utilities/utility.h"
 #include "utilities/constants.h"
+#include "models/action.h"
+#include "data/graph.h"
+
+#include "widgets/moc_customnode.cpp"
 
 namespace qtgraph {
     
-WCustomNode::WCustomNode(LNode *logical, WCanvas *canvas) 
+WCustomNode::WCustomNode(const DNode *logical, WCanvas *canvas) 
     : WANode{ logical, canvas }
     , _renameEdit{ nullptr }
 {}
@@ -30,12 +33,48 @@ void WCustomNode::mouseDoubleClickEvent(QMouseEvent *event)
             // idk why, but it works only this way
             if (event->key() + 1 != Qt::Key_Enter) return;
 
-            _lnode->setName(_renameEdit->text());
+            setName(_renameEdit->text());
             deleteRenameEdit();
         });
 
         _renameEdit->show();
     }
+}
+
+void WCustomNode::setName(QString name)
+{
+    QVector<const void*> objects = 
+    { (void*)new uint32_t(_lnode->ID())
+    , (void*)new QString(name)
+    , (void*)new QString(_lnode->getName())
+    };
+
+    IAction *_action = new IAction(
+        EAction::Renaming,
+        "Node renaming",
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            uint32_t id = *(uint32_t*)o->at(0);
+            auto newName = (const QString*)o->at(1);
+
+            g->nodes()[id]->setName(*newName);
+        },
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            uint32_t id = *(uint32_t*)o->at(0);
+            auto oldName = (const QString*)o->at(2);
+
+            g->nodes()[id]->setName(*oldName);
+        },
+        [](QVector<const void*> *o)
+        {
+            delete (uint32_t*)o->at(0);
+            delete (const QString*)o->at(1);
+            delete (const QString*)o->at(2);
+        },
+        objects
+    );
+    emit action(_action);
 }
 
 void WCustomNode::deleteRenameEdit()
