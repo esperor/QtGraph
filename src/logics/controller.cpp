@@ -564,26 +564,28 @@ IAction *Controller::createActionRemoveNodes(QSet<uint32_t> &&ids)
             for (auto it_node = removedNodes->begin(); it_node != removedNodes->end(); )
             {   
                 DNode *node = *it_node;
-                node_id nodeId = node->ID();
-                const QMap<pin_id, QVector<IPinData> >* connections = map->value(nodeId);
-
-                g->nodes().insert(nodeId, node);
-                it_node = removedNodes->erase(it_node);
                 
-                if (!connections->empty())
-                {
-                    std::ranges::for_each(connections->asKeyValueRange(), [&](std::pair<const pin_id&, const QVector<IPinData>&> pair){
-                        pin_id id = pair.first;
-                        IPinData firstPin = node->pin(id).value();
+                g->nodes().insert(node->ID(), node);
+                it_node = removedNodes->erase(it_node);
+            }
+            for (node_id id : map->keys())
+            {
+                const QMap<pin_id, QVector<IPinData> >* connections = map->value(id);
+                if (connections->empty()) continue;
+                
+                DNode* node = g->nodes()[id];
 
-                        std::ranges::for_each(pair.second, [&](IPinData secondPin){
-                            if (firstPin.pinDirection == EPinDirection::In)
-                                g->controller()->connectPins(firstPin, secondPin);
-                            else
-                                g->controller()->connectPins(secondPin, firstPin);
-                        });
+                std::ranges::for_each(connections->asKeyValueRange(), [&](std::pair<const pin_id&, const QVector<IPinData>&> pair) {
+                    pin_id id = pair.first;
+                    IPinData firstPin = node->pin(id).value();
+
+                    std::ranges::for_each(pair.second, [&](IPinData secondPin) {
+                        if (firstPin.pinDirection == EPinDirection::In)
+                            g->controller()->connectPins(firstPin, secondPin);
+                        else
+                            g->controller()->connectPins(secondPin, firstPin);
                     });
-                }
+                });
             }
         },
         [](QVector<const void*> *o)
