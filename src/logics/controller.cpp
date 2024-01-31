@@ -355,47 +355,6 @@ WTypeBrowser *Controller::exportTypeBrowser()
     return _typeBrowser;
 }
 
-void Controller::disconnectPins(IPinData in, IPinData out)
-{
-    if (_graph->_connectedPins.find(in, out) == _graph->_connectedPins.end()) 
-        return;
-
-    QVector<const void*> objects = 
-    { (void*)new IPinData(in) 
-    , (void*)new IPinData(out)
-    };
-
-    IAction *action = new IAction(
-        EAction::Connection,
-        "Pin connection",
-        [](DGraph *g, QVector<const void*> *o)
-        {
-            IPinData in = *(IPinData*)o->at(0);
-            IPinData out = *(IPinData*)o->at(1);
-
-            g->_connectedPins.remove(in);
-
-            g->_nodes[out.nodeID]->removePinConnection(out.pinID, in.pinID);
-            g->_nodes[in.nodeID]->removePinConnection(in.pinID, out.pinID);
-        },
-        [](DGraph *g, QVector<const void*> *o)
-        {
-            IPinData in = *(IPinData*)o->at(0);
-            IPinData out = *(IPinData*)o->at(1);
-
-            g->controller()->connectPins(in, out);
-        },
-        [](QVector<const void*> *o)
-        {
-            delete (IPinData*)o->at(0);
-            delete (IPinData*)o->at(1);
-        },
-        objects
-    );
-
-    processAction(action);  
-}
-
 void Controller::removeNode(uint32_t id)
 {
     removeNodes({ id });
@@ -643,6 +602,47 @@ void Controller::connectPins(IPinData in, IPinData out)
     );
 
     processAction(action);   
+}
+
+void Controller::disconnectPins(IPinData in, IPinData out)
+{
+    if (_graph->_connectedPins.find(in, out) == _graph->_connectedPins.end()) 
+        return;
+
+    QVector<const void*> objects = 
+    { (void*)new IPinData(in) 
+    , (void*)new IPinData(out)
+    };
+
+    IAction *action = new IAction(
+        EAction::Connection,
+        "Pin connection",
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            IPinData in = *(IPinData*)o->at(0);
+            IPinData out = *(IPinData*)o->at(1);
+
+            g->_connectedPins.remove(in);
+
+            g->_nodes[out.nodeID]->removePinConnection(out.pinID, in.pinID);
+            g->_nodes[in.nodeID]->removePinConnection(in.pinID, out.pinID);
+        },
+        [](DGraph *g, QVector<const void*> *o)
+        {
+            IPinData in = *(IPinData*)o->at(0);
+            IPinData out = *(IPinData*)o->at(1);
+
+            g->controller()->connectPins(in, out);
+        },
+        [](QVector<const void*> *o)
+        {
+            delete (IPinData*)o->at(0);
+            delete (IPinData*)o->at(1);
+        },
+        objects
+    );
+
+    processAction(action);  
 }
 
 }
